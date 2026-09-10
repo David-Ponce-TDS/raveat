@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Variante oscura del tema de lanzamiento. En modo noche @drawable/splash
+         resuelve a drawable-night/splash.png (splash oscuro generado por @capacitor/assets). -->
+    <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
+        <item name="android:background">@drawable/splash</item>
+    </style>
+</resources>

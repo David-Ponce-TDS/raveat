@@ -1,7 +1,9 @@
-// Unico lugar que resuelve la URL base de la API: repetida en cada service, cambiar de maquina
-// obligaria a buscarla en varios archivos.
-// El predeterminado sirve para el navegador. En el telefono, localhost es el propio telefono:
-// para el APK cada uno pone la IP de su maquina en VITE_API_URL_DEBUG.
+// Unico lugar de la app que resuelve la URL base de la API. Si estuviera repetida en cada service,
+// cambiar de maquina obligaria a buscarla en varios archivos.
+//
+// El valor predeterminado permite empezar en el navegador sin configurar nada. Un telefono no
+// puede usar localhost: ahi vive el propio telefono, no la PC. Para probar el APK, cada alumno
+// configura en su .env la IP de su maquina mediante VITE_API_URL_DEBUG.
 const api_url_debug_predeterminada = 'http://localhost:5080';
 
 export const debug_config = {

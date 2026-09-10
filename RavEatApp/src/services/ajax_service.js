@@ -11,8 +11,9 @@ function construir_url(endpoint){
 	return `${api_url}/${String(endpoint).replace(/^\/+/, '')}`;
 }
 
-// Timeout, cancelado o respuesta de la API: tres formas distintas de fallar. Se normalizan a un
-// objeto unico para que el store solo tenga que leer `mensaje`.
+// Los errores de red llegan en tres formas distintas (timeout, cancelado, respuesta de la API) y
+// cada pantalla tendria que distinguirlas. Se normalizan a un solo objeto para que el store solo
+// tenga que leer `mensaje`.
 function normalizar_error(xhr, text_status, error_thrown){
 	const respuesta = xhr.responseJSON || null;
 	if(text_status === 'timeout'){

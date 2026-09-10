@@ -16,6 +16,7 @@ import '@ionic/vue/css/flex-utils.css';
 import '@ionic/vue/css/display.css';
 import '@ionic/vue/css/palettes/dark.class.css';
 import './theme/global.css';
+import './theme/componentes.css';
 
 const app = createApp(App)
 	.use(IonicVue)

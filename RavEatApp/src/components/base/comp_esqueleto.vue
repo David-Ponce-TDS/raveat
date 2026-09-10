@@ -30,7 +30,8 @@ export default {
 		IonThumbnail
 	},
 	props: {
-		// Ocupan mas o menos lo mismo que los datos reales: asi la pantalla no salta al llegar.
+		// Cuantas filas fantasma dibujar. La idea es que ocupen mas o menos lo mismo que
+		// los datos reales, para que la pantalla no salte cuando terminan de llegar.
 		filas: {
 			type: Number,
 			default: 4

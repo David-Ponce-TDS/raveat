@@ -22,8 +22,9 @@ import { IMAGEN_PRODUCTO_DEFAULT } from '@/config/constantes';
 import { formatear_importe } from '@/utils/formato_moneda';
 import { resolver_url_imagen } from '@/utils/imagenes';
 
-// Primer componente de `dominio/`: sabe que existe un producto. Los de `base/` no saben nada del
-// negocio y los de `estructura/` arman la pagina; esa es la diferencia entre las tres carpetas.
+// Primer componente de `dominio/`: sabe que existe un producto y como se muestra. Los de `base/`
+// no saben nada del negocio y los de `estructura/` arman la pagina; esa es la diferencia entre
+// las tres carpetas.
 export default {
 	name: 'comp_producto_lista_item',
 	components: {

@@ -4,6 +4,9 @@ using RavEat.Api.Domain.Entities;
 namespace RavEat.Api.Data;
 
 public sealed class RavEatDbContext(DbContextOptions<RavEatDbContext> options) : DbContext(options) {
+    public DbSet<Rol> Roles => Set<Rol>();
+    public DbSet<Usuario> Usuarios => Set<Usuario>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<Categoria> Categorias => Set<Categoria>();
     public DbSet<Producto> Productos => Set<Producto>();
     public DbSet<Cliente> Clientes => Set<Cliente>();

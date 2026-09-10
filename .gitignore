@@ -1,0 +1,43 @@
+# RavEat — qué no entra al repositorio
+#
+# Dos reglas y nada más: lo que genera una máquina no se versiona, y un secreto
+# nunca. De cada secreto sí se versiona su plantilla, con el sufijo .example.
+#
+# Las carpetas del frontend y de Android traen además su propio .gitignore, que
+# ya cubre node_modules, dist, el build de Gradle y local.properties.
+
+# ── Secretos y credenciales ──────────────────────────────────────────────
+.env
+.env.*
+*.jks
+*.keystore
+keystore.properties
+google-services*.json
+produccion.local.env
+
+# Las plantillas sí: son las que le dicen al que clona qué tiene que completar.
+!*.example
+!.env.release
+
+# ── Lo que produce compilar ──────────────────────────────────────────────
+bin/
+obj/
+dist/
+TestResults/
+graphify-out/
+
+# ── Lo que se sube desde la app ──────────────────────────────────────────
+# Las fotos que carga el usuario en tiempo de ejecución. Las de ejemplo, que
+# sí se versionan, viven en wwwroot/seed/.
+**/wwwroot/uploads/
+
+# ── Estado local del editor y de las herramientas ────────────────────────
+.vs/
+.idea/
+.claude/
+*.user
+.vscode/
+
+# ── Sistema operativo ────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db

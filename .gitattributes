@@ -1,0 +1,10 @@
+# Los archivos de texto se guardan con LF en el repositorio.
+* text=auto
+
+# Los archivos que regenera una herramienta se dejan con LF tambien en el disco.
+# Sin esto, `cap sync` y Gradle los reescriben con LF, git los ve distintos de la
+# copia con CRLF que dejo el checkout, y aparecen como modificados en cada build
+# aunque no haya cambiado una sola linea.
+*.gradle          text eol=lf
+*.properties      text eol=lf
+gradlew           text eol=lf

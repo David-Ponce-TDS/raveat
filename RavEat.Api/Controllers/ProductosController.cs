@@ -1,16 +1,22 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using RavEat.Api.Auth;
 using RavEat.Api.Data;
 using RavEat.Api.Domain.Entities;
 
 namespace RavEat.Api.Controllers;
 
+// Cerrado por defecto: lo publico se marca endpoint por endpoint. Olvidarse del atributo deja el
+// endpoint cerrado de mas, que es el error barato; al reves, deja un agujero.
 [ApiController]
+[Authorize(Roles = RolCodigos.Admin)]
 [Route("api/productos")]
 public sealed class ProductosController(RavEatDbContext db) : ControllerBase {
     // La vitrina: la carta entera con sus categorias y los contadores del encabezado.
     // Devuelve todo de una sola vez, que alcanza para una carta de restaurante. El catalogo de
     // gestion, que si puede crecer sin limite, va por "listado" y esta paginado.
+    [AllowAnonymous]
     [HttpGet("resumen")]
     public async Task<IActionResult> Resumen(CancellationToken cancellationToken) {
         // Los contadores se cuentan en la base, no sobre la lista devuelta: son dos preguntas
@@ -61,6 +67,7 @@ public sealed class ProductosController(RavEatDbContext db) : ControllerBase {
         return Ok(new {resumen, categorias, productos});
     }
 
+    [AllowAnonymous]
     [HttpGet("{id:long}")]
     public async Task<IActionResult> Detalle(long id, CancellationToken cancellationToken) {
         var producto = await (

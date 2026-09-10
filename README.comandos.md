@@ -1,10 +1,10 @@
-# Comandos · versión 4
+# Comandos · versión 5
 
 Todo lo que se tipea para poner esta versión a andar, en orden. Los comandos son para
 **PowerShell en Windows** y se ejecutan **desde la raíz del repositorio**, salvo que se indique
 otra cosa.
 
-Qué es esta versión y por qué está hecha así: [`README.unidad-04.md`](README.unidad-04.md).
+Qué es esta versión y por qué está hecha así: [`README.unidad-05.md`](README.unidad-05.md).
 
 ## 1 · Instalar
 
@@ -16,13 +16,14 @@ Set-Location ..
 dotnet tool restore
 ```
 
-`dotnet tool restore` instala `dotnet-ef` en la versión que fija `dotnet-tools.json`, en el propio
-repositorio y no en la máquina: todos usan la misma sin pisar otras instalaciones.
+`npm install` trae también los dos plugins nuevos de esta versión —
+`@aparajita/capacitor-biometric-auth` y `@aparajita/capacitor-secure-storage`—: están declarados
+en `package.json`, no hay que instalarlos aparte. `dotnet tool restore` instala `dotnet-ef` en la
+versión que fija `dotnet-tools.json`.
 
 ## 2 · Crear la base y el usuario
 
-Solo si no venís de la versión 3 con la base ya creada. La API no crea la base: crea las
-**tablas** dentro de una base que ya existe. Desde `mysql -u root -p`:
+Solo si no venís de una versión anterior con la base ya creada. Desde `mysql -u root -p`:
 
 ```sql
 CREATE DATABASE raveat_app CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
@@ -31,8 +32,7 @@ GRANT ALL PRIVILEGES ON raveat_app.* TO 'raveat_app'@'localhost';
 FLUSH PRIVILEGES;
 ```
 
-La contraseña **no va en `appsettings.json`** —ese archivo se versiona, y una clave ahí termina en
-git—. Va en User Secrets:
+La contraseña va en User Secrets, nunca en `appsettings.json`:
 
 ```powershell
 Set-Location .\RavEat.Api
@@ -40,9 +40,8 @@ dotnet user-secrets set "ConnectionStrings:Default" "Server=localhost;Port=3306;
 Set-Location ..
 ```
 
-El secreto pisa la plantilla `Password=CAMBIAR`. El `UserSecretsId` del `.csproj` es **el mismo en
-todas las ramas**: se configura una vez y sigue andando al cambiar de versión. Para ver qué quedó
-guardado: `dotnet user-secrets list`.
+El `UserSecretsId` es el mismo en todas las ramas: se configura una vez. Para ver qué quedó:
+`dotnet user-secrets list`.
 
 ## 3 · Crear el esquema
 
@@ -52,12 +51,11 @@ dotnet tool run dotnet-ef -- database update
 Set-Location ..
 ```
 
-Las migraciones crean las tablas **y cargan los datos de prueba**: la carta con sus fotos y los
-clientes. Si la base queda vacía después de esto, no corrió la migración de datos.
+Las migraciones crean las tablas y cargan los datos de prueba — la carta, los clientes, los cinco
+roles **y el administrador inicial**, que es la puerta de entrada de esta versión.
 
 > **Si venís de otra versión, la base hay que reconstruirla** (`database drop --force` y de nuevo
 > `update`): cada rama tiene su propia cadena de migraciones y no es acumulativa entre ramas.
-> Cambiar de rama no cambia la base real, y el esquema queda desincronizado del código.
 
 ## 4 · La URL de la API en el frontend
 
@@ -67,17 +65,14 @@ Copy-Item .\.env.example .\.env
 Set-Location ..
 ```
 
-Editá `.env` y poné la IP de tu máquina en la red local:
+Editá `.env` y poné la IP de tu máquina en la red local (`ipconfig`):
 
 ```
 VITE_API_URL_DEBUG=http://TU_IP_LAN:5080
 ```
 
-**Por qué una IP y no `localhost`**: en el teléfono, `localhost` es el propio teléfono. La IP la
-averiguás con `ipconfig` y **cambia según la red**. Para trabajar solo en el navegador, poné
-`VITE_DEBUG_ACTIVADO=false` y la app usa `VITE_API_URL` (`http://localhost:5080`).
-
-`.env` está en `.gitignore` y nunca se versiona; `.env.example` sí.
+En el teléfono, `localhost` es el propio teléfono. Para trabajar solo en el navegador:
+`VITE_DEBUG_ACTIVADO=false`, y la app usa `VITE_API_URL` (`http://localhost:5080`).
 
 ## 5 · Correr
 
@@ -99,32 +94,8 @@ npm run dev
 | Health | `http://localhost:5080/health` |
 | App (Vite) | `http://localhost:5173` |
 
-**Empezá siempre por `/health`.** Si no responde, no hay nada que revisar del lado del frontend.
-Desde la app la misma prueba está en **Mi cuenta → Diagnóstico**, que además muestra contra qué
-URL está pegando: es la única forma de verla en el teléfono, donde no hay consola a mano.
-
-Cada bloque se prueba por consola antes de tocar la pantalla, en **otra** terminal:
-
-```powershell
-Invoke-RestMethod http://localhost:5080/health
-Invoke-RestMethod "http://localhost:5080/api/clientes?tamano=2" | ConvertTo-Json -Depth 4
-Invoke-RestMethod "http://localhost:5080/api/productos/listado?busqueda=empanadas&disponible=true"
-```
-
-Cada listado responde con `pagina: {pagina, tamano, total, hay_mas}`: con `tamano=2` y los cinco
-clientes sembrados, `hay_mas` dice `true`. La búsqueda filtra **en la base**, no en la página
-descargada.
-
-Los rechazos de la API se provocan a propósito: también son una prueba. `Invoke-RestMethod` tira
-la excepción en rojo con un 400 y esconde el cuerpo; se lee así:
-
-```powershell
-try { Invoke-RestMethod -Method Post "http://localhost:5080/api/clientes" -ContentType "application/json" -Body '{"nombre":"","telefono":""}' } catch { (New-Object IO.StreamReader($_.Exception.Response.GetResponseStream())).ReadToEnd() }
-```
-
-Responde `cliente_nombre_requerido`. El mismo gesto con el teléfono de María (`11-5555-1001`)
-responde `cliente_duplicado`; y en un pedido creado desde la app, un salto de estado inválido por
-`PUT /api/pedidos/{id}/estado` responde `transicion_invalida`.
+**Empezá siempre por `/health`.** Lo primero que muestra la app es **el login**: se entra con el
+administrador que sembró la migración.
 
 ## 6 · Compilar
 
@@ -137,9 +108,8 @@ Set-Location ..
 dotnet build .\RavEat.Api\RavEat.Api.csproj
 ```
 
-El resultado del frontend queda en `RavEatApp/dist/`. De ahí lo toma Capacitor: **`cap sync` copia
-lo que hay en `dist/`, no lo que hay en `src/`** — sin un `build` previo, el APK lleva el código
-viejo. Es el olvido más común.
+**`cap sync` copia lo que hay en `dist/`, no lo que hay en `src/`** — sin un `build` previo, el
+APK lleva el código viejo. Es el olvido más común.
 
 ## 7 · Llevarlo al teléfono
 
@@ -153,54 +123,38 @@ Set-Location .\android
 .\gradlew assembleDebug     # solo generar el APK
 ```
 
-Salidas en `android/app/build/outputs/`. Para desinstalar una versión previa (por ejemplo si
-cambió la firma): `adb uninstall app.raveat`. Para abrirlo en Android Studio:
-`npx cap open android`.
+Salidas en `android/app/build/outputs/`. Si cambió la firma: `adb uninstall app.raveat`. La
+**huella se prueba acá**: en el navegador no existe.
 
 ## 8 · Migraciones
 
 ```powershell
 Set-Location .\RavEat.Api
-dotnet tool run dotnet-ef -- migrations list      # ver cuáles hay y cuáles faltan aplicar
-dotnet tool run dotnet-ef -- database update      # aplicar las pendientes
+dotnet tool run dotnet-ef -- migrations list
+dotnet tool run dotnet-ef -- database update
 dotnet tool run dotnet-ef -- database drop --force
 ```
 
-El `--` no es decorativo: sin él, `dotnet tool run` se come los argumentos en vez de pasárselos a
-`dotnet-ef`. También podés aplicarlas al arrancar, con `dotnet run -- --migrate`.
-
-Para crear una migración propia, el ciclo es **compilar, generar, revisar, aplicar** — `dotnet-ef`
-lee el ensamblado **compilado**, así que sin `dotnet build` antes del `add` la migración sale vacía
-o vieja:
-
-```powershell
-Set-Location .\RavEat.Api
-dotnet build
-dotnet tool run dotnet-ef -- migrations add MiCambio
-dotnet tool run dotnet-ef -- migrations list
-dotnet tool run dotnet-ef -- database update
-```
-
-Una migración de datos se genera **vacía** y se completa a mano con `InsertData` — así se
-escribieron los clientes de prueba. Conviene leer el `Up()` antes de aplicar.
+El `--` no es decorativo: sin él, `dotnet tool run` se come los argumentos. También podés aplicar
+las migraciones al arrancar, con `dotnet run -- --migrate`.
 
 ## Si algo falla
 
 | Síntoma | Causa probable | Qué hacer |
 |---|---|---|
-| «No se pudo conectar con la API» | La API no está levantada, o la URL apunta a otro lado | **Mi cuenta → Diagnóstico**: ahí se ven la URL y la respuesta de `/health` |
+| «No se pudo conectar con la API» | La API no está levantada, o la URL apunta a otro lado | Probar `/health`; revisar `VITE_API_URL_DEBUG` |
+| Todo devuelve **401** | Sin sesión: desde esta versión los endpoints exigen token | Entrar con el administrador sembrado |
+| Renueva la sesión y la cierra igual | Dos renovaciones en paralelo: el refresh **rota** y se revocan entre sí | La renovación tiene que ser única en curso — ya lo resuelve `ajax_service` |
+| El botón de huella no aparece | No hay biometría en el dispositivo, o no hay sesión guardada | Entrar primero con email y contraseña |
 | En el navegador anda y en el teléfono no | `VITE_API_URL_DEBUG` apunta a `localhost` | Poner la IP LAN de la PC (`ipconfig`) |
 | Cambié la IP del `.env` y el APK sigue con la vieja | La URL queda **grabada dentro del bundle** | `npm run build` + `npx cap sync android` de nuevo |
-| Error de CORS en la consola | El origen no está permitido | En Development se aceptan localhost e IPs privadas |
 | `dotnet build` falla con MSB3026/3027 | La API corriendo tiene tomados sus `.dll` | Pararla (`Ctrl+C`) y recompilar |
 | `Access denied for user ...` | Falta el secreto: `appsettings.json` dice `Password=CAMBIAR` | Sección 2 |
-| `dotnet-ef` no encontrado | Falta `dotnet tool restore` | Sección 1 |
-| La migración se genera vacía | No compilaste antes del `migrations add` | `dotnet build` y regenerar |
-| El 400 sale en rojo y sin cuerpo | `Invoke-RestMethod` esconde el body | Leerlo con el `StreamReader` de la Sección 5 |
-| Error de CORS **con la API levantada** | Dos API pelearon el puerto 5080 | `Get-NetTCPConnection -LocalPort 5080 -State Listen`, cerrar todas y levantar una |
 | La lista sale vacía pero la API responde | No corrió la migración de datos de prueba | `migrations list` y `database update` |
 | Toqué `src/` y el teléfono muestra lo viejo | Falta `npm run build` antes de `cap sync` | Sección 6 |
-| Parpadeo blanco al abrir la app | Se quitó el script inline de `index.html` | Restaurarlo: aplica el tema antes del bundle |
+
+El catálogo completo está en
+[`comandos-por-modulo.md` en `main`](https://github.com/David9-dev/raveat/blob/main/diagramas/comandos-por-modulo.md).
 
 ## Datos del proyecto Android
 
@@ -212,27 +166,19 @@ escribieron los clientes de prueba. Conviene leer el `Up()` antes de aplicar.
 | `compileSdkVersion` / `targetSdkVersion` | 36 |
 | Capacitor | 8.4.1 |
 
-**Gradle** es el motor de build y el **Android Gradle Plugin** es lo que le enseña a Gradle qué es
-un APK: son dos versiones distintas. `gradlew` (el *wrapper*) fija cuál Gradle se usa, y por eso el
-build es reproducible; siempre se invoca `.\gradlew`, nunca `gradle`. El único permiso declarado
-es `INTERNET`.
+`gradlew` (el *wrapper*) fija qué Gradle se usa: siempre se invoca `.\gradlew`, nunca `gradle`.
+El permiso de biometría lo declara el plugin por fusión de manifiestos: no se toca a mano.
 
 ### Firma
 
-En esta versión alcanza con el `debug.keystore` automático: Android Studio lo genera solo en
-`$env:USERPROFILE\.android\debug.keystore` y `assembleDebug` lo usa sin configurar nada. Si
-generás un keystore propio, la regla es una sola: **el keystore y sus contraseñas nunca se
-versionan.**
+Sigue alcanzando el `debug.keystore` automático de Android Studio. El keystore de **release**
+llega en la versión 8, con su regla: **el keystore y sus contraseñas nunca se versionan.**
 
 ### Íconos y splash · bajo demanda
 
-Los recursos gráficos de Android ya están generados y versionados. Solo si se modifican las
-imágenes fuente de `RavEatApp/assets/` se regeneran con:
+Solo si se modifican las imágenes fuente de `RavEatApp/assets/`:
 
 ```powershell
 Set-Location .\RavEatApp
 npx --yes --package @capacitor/assets@3.0.5 capacitor-assets generate --android
 ```
-
-`npx` descarga la versión indicada, la ejecuta y no toca `package.json`. No forma parte de la
-instalación normal.

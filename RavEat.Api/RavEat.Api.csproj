@@ -3,8 +3,9 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <!-- La cadena real va en User Secrets: appsettings.json se versiona y una clave ahi termina
-         en git. El id es el mismo en todas las ramas: se configura una vez para todo el recorrido. -->
+    <!-- La cadena de conexion real va en User Secrets, fuera del repo: appsettings.json se versiona
+         y una contrasena ahi termina en git. El id es el mismo en todas las ramas para no tener que
+         reconfigurar el secreto al cambiar de version. -->
     <UserSecretsId>e2542659-9c93-4557-9cc2-89734ae29752</UserSecretsId>
   </PropertyGroup>
 

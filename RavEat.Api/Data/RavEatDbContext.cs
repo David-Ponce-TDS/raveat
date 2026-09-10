@@ -6,6 +6,9 @@ namespace RavEat.Api.Data;
 public sealed class RavEatDbContext(DbContextOptions<RavEatDbContext> options) : DbContext(options) {
     public DbSet<Categoria> Categorias => Set<Categoria>();
     public DbSet<Producto> Productos => Set<Producto>();
+    public DbSet<Cliente> Clientes => Set<Cliente>();
+    public DbSet<Pedido> Pedidos => Set<Pedido>();
+    public DbSet<PedidoItem> PedidosItems => Set<PedidoItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder){
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(RavEatDbContext).Assembly);

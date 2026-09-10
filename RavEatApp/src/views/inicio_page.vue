@@ -1,114 +1,81 @@
 <template>
-	<ion-page>
-		<ion-header>
-			<ion-toolbar>
-				<ion-title>RavEat</ion-title>
-				<ion-buttons slot="end">
-					<ion-button @click="cambiar_tema">
-						<ion-icon slot="icon-only" :icon="icono_tema" />
-					</ion-button>
-				</ion-buttons>
-			</ion-toolbar>
-		</ion-header>
+	<comp-page titulo="RavEat">
+		<div class="ion-padding raveat-page-stack">
+			<comp-vidriera lema="Versión 2 · una sola fuente de verdad para navegar" />
 
-		<ion-content class="ion-padding">
-			<div class="raveat-page-stack">
-				<header class="raveat-vidriera">
-					<img class="raveat-vidriera__logo" src="/logo_final.png" alt="RavEat" />
-					<p class="raveat-vidriera__lema">Version 1 · el proyecto ya corre en el telefono</p>
-				</header>
+			<ion-card class="raveat-card">
+				<ion-card-header>
+					<ion-card-title>Navegación por configuración</ion-card-title>
+				</ion-card-header>
+				<ion-card-content>
+					El menú lateral, la barra de abajo y las rutas de esta app no se escriben por
+					separado: los tres salen del mismo archivo,
+					<strong>src/config/navegacion.js</strong>. Agregar una pantalla es agregar un
+					objeto ahí.
+				</ion-card-content>
+			</ion-card>
 
-				<ion-card class="raveat-card">
-					<ion-card-header>
-						<ion-card-title>Hola, RavEat</ion-card-title>
-					</ion-card-header>
-					<ion-card-content>
-						Proyecto Ionic Vue corriendo en el navegador y en el telefono con Capacitor.
-						El tema actual es <strong>{{ nombre_tema }}</strong> y queda guardado para el
-						proximo arranque.
-					</ion-card-content>
-				</ion-card>
-
-				<h2 class="raveat-seccion-titulo">De la carta</h2>
-				<div v-if="cargando" class="ion-text-center ion-padding">
-					<ion-spinner name="crescent" />
-				</div>
-				<div v-else class="raveat-grilla">
-					<article v-for="producto in destacados" :key="producto.id" class="raveat-producto-card" :class="{ agotado: !producto.disponible }">
-						<div class="raveat-producto-card__imagen">
-							<img :src="producto.imagen_url" :alt="producto.nombre" loading="lazy" />
-							<span class="raveat-producto-card__precio">{{ formatear_precio(producto.precio) }}</span>
-							<span v-if="!producto.disponible" class="raveat-producto-card__agotado">No disponible</span>
-						</div>
-						<div class="raveat-producto-card__info">
-							<h3>{{ producto.nombre }}</h3>
-							<p>{{ producto.descripcion }}</p>
-						</div>
-					</article>
-				</div>
-
-				<h2 class="raveat-seccion-titulo">Con que esta hecha</h2>
-				<ion-list class="raveat-card">
-					<ion-item v-for="(pieza, indice) in piezas" :key="pieza.nombre" :lines="indice === piezas.length - 1 ? 'none' : 'full'">
-						<ion-icon slot="start" :icon="pieza.icono" />
-						<ion-label>
-							<h3 class="raveat-item-title">{{ pieza.nombre }}</h3>
-							<p class="raveat-item-meta">{{ pieza.para_que }}</p>
-						</ion-label>
-					</ion-item>
-				</ion-list>
-
-				<ion-button expand="block" @click="saludar">
-					Probar un boton de Ionic
-				</ion-button>
+			<h2 class="raveat-seccion-titulo">De la carta</h2>
+			<comp-esqueleto v-if="cargando" :filas="2" />
+			<div v-else class="raveat-grilla">
+				<comp-producto-card
+					v-for="producto in destacados"
+					:key="producto.id"
+					:producto="producto"
+				/>
 			</div>
-		</ion-content>
-	</ion-page>
+
+			<h2 class="raveat-seccion-titulo">Qué sale de ese archivo</h2>
+			<ion-list class="raveat-card">
+				<ion-item v-for="(pieza, indice) in piezas" :key="pieza.nombre" :lines="indice === piezas.length - 1 ? 'none' : 'full'">
+					<ion-icon slot="start" :icon="pieza.icono" />
+					<ion-label>
+						<h3 class="raveat-item-title">{{ pieza.nombre }}</h3>
+						<p class="raveat-item-meta">{{ pieza.para_que }}</p>
+					</ion-label>
+				</ion-item>
+			</ion-list>
+		</div>
+	</comp-page>
 </template>
 
 <script>import {
-	IonButton,
-	IonButtons,
 	IonCard,
 	IonCardContent,
 	IonCardHeader,
 	IonCardTitle,
-	IonContent,
-	IonHeader,
 	IonIcon,
 	IonItem,
 	IonLabel,
-	IonList,
-	IonPage,
-	IonSpinner,
-	IonTitle,
-	IonToolbar,
-	alertController
+	IonList
 } from '@ionic/vue';
-import { contrastOutline, logoAndroid, logoVue, phonePortraitOutline, serverOutline } from 'ionicons/icons';
-import { mapActions, mapState } from 'pinia';
+import {
+	gitBranchOutline,
+	listOutline,
+	menuOutline,
+	shieldCheckmarkOutline
+} from 'ionicons/icons';
+import comp_esqueleto from '@/components/base/comp_esqueleto.vue';
+import comp_page from '@/components/estructura/comp_page.vue';
+import comp_producto_card from '@/components/dominio/comp_producto_card.vue';
+import comp_vidriera from '@/components/estructura/comp_vidriera.vue';
 import { obtener_carta } from '@/datos/carta';
-import { use_app_store } from '@/stores/app_store';
 
 export default {
 	name: 'inicio_page',
 	components: {
-		IonButton,
-		IonButtons,
+		CompEsqueleto: comp_esqueleto,
+		CompPage: comp_page,
+		CompProductoCard: comp_producto_card,
+		CompVidriera: comp_vidriera,
 		IonCard,
 		IonCardContent,
 		IonCardHeader,
 		IonCardTitle,
-		IonContent,
-		IonHeader,
 		IonIcon,
 		IonItem,
 		IonLabel,
-		IonList,
-		IonPage,
-		IonSpinner,
-		IonTitle,
-		IonToolbar
+		IonList
 	},
 	data(){
 		return {
@@ -116,69 +83,41 @@ export default {
 			destacados: [],
 			piezas: [
 				{
-					nombre: 'Vue 3',
-					para_que: 'El framework de la interfaz, con Options API y JavaScript.',
-					icono: logoVue
+					nombre: 'Rutas',
+					para_que: 'El router se genera recorriendo la configuración.',
+					icono: gitBranchOutline
 				},
 				{
-					nombre: 'Ionic',
-					para_que: 'Los componentes con apariencia de app movil.',
-					icono: phonePortraitOutline
+					nombre: 'Menú lateral',
+					para_que: 'Se arma con los items agrupados de la misma lista.',
+					icono: menuOutline
 				},
 				{
-					nombre: 'Capacitor',
-					para_que: 'Empaqueta el proyecto web como app nativa.',
-					icono: logoAndroid
+					nombre: 'Tabs',
+					para_que: 'Salen de la misma lista, con un máximo de cinco.',
+					icono: listOutline
 				},
 				{
-					nombre: 'Vite',
-					para_que: 'Servidor de desarrollo y compilador de produccion.',
-					icono: serverOutline
+					nombre: 'Guard',
+					para_que: 'Lee los roles declarados. Empieza a bloquear en v5.',
+					icono: shieldCheckmarkOutline
 				}
 			]
 		};
-	},
-	computed: {
-		...mapState(use_app_store, [
-			'tema_oscuro'
-		]),
-		nombre_tema(){
-			var vm = this;
-			return vm.tema_oscuro ? 'oscuro' : 'claro';
-		},
-		icono_tema(){
-			return contrastOutline;
-		}
 	},
 	mounted(){
 		var vm = this;
 		vm.cargar_destacados();
 	},
 	methods: {
-		...mapActions(use_app_store, {
-			cambiar_tema: 'alternar_tema'
-		}),
-		// En v1 los datos salen de un archivo, pero se piden como se pediran despues: async y con
-		// un estado de carga. En v3 cambia de donde vienen y esta pantalla no se entera.
+		// Los datos salen de un archivo, pero se piden como se pediran despues: async y con un
+		// estado de carga. En v3 cambia de donde vienen y esta pantalla no se entera.
 		cargar_destacados: async function(){
 			var vm = this;
 			vm.cargando = true;
 			const carta = await obtener_carta();
 			vm.destacados = carta.productos.slice(0, 4);
 			vm.cargando = false;
-		},
-		formatear_precio: function(valor){
-			return new Intl.NumberFormat('es-AR', {style: 'currency', currency: 'ARS', maximumFractionDigits: 0}).format(valor || 0);
-		},
-		saludar: async function(){
-			const alerta = await alertController.create({
-				header: 'Funciona',
-				message: 'Este dialogo lo dibuja Ionic, igual en el navegador y en el telefono.',
-				buttons: [
-					'Listo'
-				]
-			});
-			await alerta.present();
 		}
 	}
 };</script>

@@ -5,9 +5,10 @@ namespace RavEat.Api.Domain.Entities;
 // El pago (estado, medio, propina) son campos del pedido y no una tabla de cobros: un pedido del
 // taller tiene un solo cobro.
 // ClienteId es opcional: un pedido de mostrador no siempre tiene a quien asociarse.
-// Todavia no hay UsuarioCreadorId porque no existen los usuarios: entra en v5 con la sesion.
+// UsuarioCreadorId NO es opcional y **no llega del cliente**: sale del token, en el controller.
 public sealed class Pedido : EntityBase {
     public long? ClienteId { get; set; }
+    public long UsuarioCreadorId { get; set; }
     public string Codigo { get; set; } = string.Empty;
     public TipoPedido Tipo { get; set; }
     public EstadoPedido Estado { get; set; } = EstadoPedido.Borrador;

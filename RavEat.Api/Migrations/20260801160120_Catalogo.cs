@@ -6,8 +6,11 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace RavEat.Api.Migrations
 {
-    // Etapa 1 — Catalogo: categorias ordenadas y productos con precio, imagen y disponibilidad.
-    // Por que activo y disponible son dos columnas distintas: Domain/Entities/Producto.cs.
+    // Etapa 1 — Catalogo.
+    // Lo que se vende: categorias ordenadas y productos con precio, imagen y disponibilidad.
+    // La baja es siempre logica (activo = false): un producto vendido alguna vez no se borra,
+    // porque los pedidos viejos lo referencian. Disponible es otra cosa: sigue en la carta pero
+    // hoy no se puede pedir.
     public partial class Catalogo : Migration
     {
         /// <inheritdoc />

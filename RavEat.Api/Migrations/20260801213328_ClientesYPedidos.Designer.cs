@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RavEat.Api.Data;
 
@@ -11,9 +12,11 @@ using RavEat.Api.Data;
 namespace RavEat.Api.Migrations
 {
     [DbContext(typeof(RavEatDbContext))]
-    partial class RavEatDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260801213328_ClientesYPedidos")]
+    partial class ClientesYPedidos
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

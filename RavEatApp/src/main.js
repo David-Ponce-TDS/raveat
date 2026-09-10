@@ -4,6 +4,7 @@ import App from './App.vue';
 import router from './router';
 import pinia from './stores/pinia';
 import { use_app_store } from './stores/app_store';
+import { use_sesion_store } from './stores/sesion_store';
 import '@ionic/vue/css/core.css';
 import '@ionic/vue/css/normalize.css';
 import '@ionic/vue/css/structure.css';
@@ -23,9 +24,13 @@ const app = createApp(App)
 	.use(pinia)
 	.use(router);
 
-router.isReady().then(function(){
-	// El index.html ya aplico la clase del tema para evitar el flash inicial; aca el store lee
-	// el mismo valor guardado para que el toggle de la pantalla arranque sincronizado con el.
-	use_app_store().aplicar_tema_guardado();
-	app.mount('#app');
+// La sesion se restaura ANTES de montar. Si se hiciera despues, el guard correria sin saber si hay
+// usuario y mandaria al login en cada arranque, incluso con una sesion guardada valida.
+use_sesion_store().iniciar().finally(function(){
+	router.isReady().then(function(){
+		// El index.html ya aplico la clase del tema para evitar el flash inicial; aca el store lee
+		// el mismo valor guardado para que el toggle de la pantalla arranque sincronizado con el.
+		use_app_store().aplicar_tema_guardado();
+		app.mount('#app');
+	});
 });

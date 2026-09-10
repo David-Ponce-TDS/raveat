@@ -1,21 +1,26 @@
 import {
 	homeOutline,
 	peopleOutline,
+	peopleCircleOutline,
 	personCircleOutline,
 	pricetagsOutline,
 	receiptOutline
 } from 'ionicons/icons';
 
-// Fuente de verdad unica de la navegacion. De este archivo salen cuatro cosas que antes
-// se escribian por separado y se desincronizaban: las rutas del router, el guard, los
-// items del menu lateral y los tabs de abajo. Agregar una pantalla es agregar un objeto aca.
-const todos_roles = [
-	'administrador',
-	'vendedor',
-	'proceso',
-	'caja',
-	'delivery'
-];
+// Fuente de verdad unica de la navegacion. De aca salen cuatro cosas que antes se escribian
+// por separado y se desincronizaban:
+//   - las rutas del router
+//   - el guard
+//   - los items del menu lateral
+//   - los tabs de abajo
+// Agregar una pantalla es agregar un objeto aca.
+
+// "Cualquier usuario autenticado, tenga rol o no". Es un valor explicito y no una lista vacia:
+//   - []      -> nadie, sin excepciones
+//   - [TODOS] -> cualquiera que haya iniciado sesion
+// Vacio se leia igual de bien como "todos" que como "nadie", y esa ambiguedad ya dejo una
+// pantalla de administracion visible en los tabs de todo el mundo.
+export const TODOS = 'todos';
 
 // Dos grupos: el operativo va sin encabezado (es el cuerpo del menu) y el de ajustes si lo lleva.
 export const grupos_menu = [
@@ -42,9 +47,11 @@ export const navegacion = [
 		titulo: 'Inicio',
 		ruta: '/app/inicio',
 		icono: homeOutline,
-		roles: todos_roles,
-		menu_roles: todos_roles,
-		tab_roles: todos_roles,
+		// Cualquier autenticado, incluso sin rol: es lo que le deja ver la vitrina mientras
+		// espera que un admin lo habilite.
+		roles: [TODOS],
+		menu_roles: [TODOS],
+		tab_roles: [TODOS],
 		grupo_menu: 'operacion',
 		orden: 10,
 		componente: () => import('@/views/inicio_page.vue')
@@ -90,29 +97,55 @@ export const navegacion = [
 		titulo: 'Mi cuenta',
 		ruta: '/app/perfil',
 		icono: personCircleOutline,
-		roles: todos_roles,
-		menu_roles: todos_roles,
-		tab_roles: todos_roles,
+		roles: [TODOS],
+		menu_roles: [TODOS],
+		tab_roles: [TODOS],
 		grupo_menu: 'configuracion',
 		orden: 100,
 		componente: () => import('@/views/perfil_page.vue')
+	},
+	{
+		id: 'usuarios',
+		titulo: 'Usuarios',
+		ruta: '/app/usuarios',
+		icono: peopleCircleOutline,
+		roles: ['administrador'],
+		menu_roles: ['administrador'],
+		// A proposito NO va en los tabs: los tabs son para lo que se usa todo el dia, y
+		// administrar usuarios no lo es. Es el caso que muestra para que sirve tener tres listas
+		// separadas en vez de una.
+		tab_roles: [],
+		grupo_menu: 'configuracion',
+		orden: 90,
+		componente: () => import('@/views/usuarios_page.vue')
 	}
 ];
 
-// Sin rol todavia no hay filtrado real: la sesion llega en v5. Hasta entonces estas tres
-// funciones devuelven todo, y el dia que exista un rol activo empiezan a recortar solas.
-export function obtener_navegacion_rol(rol){
-	if(!rol) return [...navegacion].sort((item_a, item_b) => item_a.orden - item_b.orden);
+// Desde v5 el filtrado es real. La regla de lectura es una sola y aplica a las tres listas:
+//
+//   [TODOS]            -> cualquier usuario autenticado, tenga rol o no
+//   ['admin', ...]     -> solo esos roles
+//   []                 -> nadie
+//
+// Hasta v4 estas funciones devolvian TODO cuando no habia rol, porque no habia sesion. Mantener
+// ese atajo ahora seria un agujero: un usuario recien creado, todavia sin habilitar, veria el
+// menu completo.
+function filtrar(lista_de_roles, rol){
 	return navegacion
-		.filter(item => item.roles.includes(rol))
+		.filter(item =>{
+			const permitidos = item[lista_de_roles] || [];
+			if(permitidos.includes(TODOS)) return true;
+			return Boolean(rol) && permitidos.includes(rol);
+		})
 		.sort((item_a, item_b) => item_a.orden - item_b.orden);
 }
 
+export function obtener_navegacion_rol(rol){
+	return filtrar('roles', rol);
+}
+
 export function obtener_menu_rol(rol){
-	if(!rol) return [...navegacion].sort((item_a, item_b) => item_a.orden - item_b.orden);
-	return navegacion
-		.filter(item => item.menu_roles.includes(rol))
-		.sort((item_a, item_b) => item_a.orden - item_b.orden);
+	return filtrar('menu_roles', rol);
 }
 
 export function obtener_grupos_menu_rol(rol){
@@ -131,10 +164,5 @@ export function obtener_grupos_menu_rol(rol){
 export const MAXIMO_TABS = 5;
 
 export function obtener_tabs_rol(rol){
-	const items = !rol
-		? [...navegacion].sort((item_a, item_b) => item_a.orden - item_b.orden)
-		: navegacion
-			.filter(item => item.tab_roles.includes(rol))
-			.sort((item_a, item_b) => item_a.orden - item_b.orden);
-	return items.slice(0, MAXIMO_TABS);
+	return filtrar('tab_roles', rol).slice(0, MAXIMO_TABS);
 }

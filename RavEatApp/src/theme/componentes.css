@@ -1,0 +1,104 @@
+/* Estilos de los componentes del armazon. Las variables --raveat-* viven en global.css.
+   Cada version agrega aca lo que necesitan sus componentes nuevos. */
+
+/* --- menu lateral ------------------------------------------------------- */
+
+ion-menu ion-item.seleccionado {
+    --background: var(--raveat-surface-strong);
+    font-weight: 700;
+}
+
+ion-menu ion-item.seleccionado ion-icon {
+    color: var(--ion-color-primary);
+}
+
+/* --- estado vacio ------------------------------------------------------- */
+
+.raveat-estado-vacio {
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+    padding: 40px 24px;
+    border: 1px solid var(--raveat-border);
+    border-radius: 8px;
+    background: var(--raveat-surface);
+    text-align: center;
+}
+
+.raveat-estado-vacio__icono {
+    font-size: 2.5rem;
+    color: var(--raveat-muted);
+}
+
+.raveat-estado-vacio__titulo {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.raveat-estado-vacio__mensaje {
+    margin: 0;
+    max-width: 36ch;
+    color: var(--raveat-muted);
+    font-size: 0.88rem;
+    line-height: 1.4;
+}
+
+/* --- chips de filtro ----------------------------------------------------- */
+
+.raveat-chips {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 2px 0;
+    /* Los chips desbordan a lo ancho: se scrollean, no se apilan. La barra se oculta porque en
+       telefono el gesto ya es evidente y en escritorio ensucia la fila. */
+    scrollbar-width: none;
+}
+
+.raveat-chips::-webkit-scrollbar {
+    display: none;
+}
+
+.raveat-chip {
+    flex: 0 0 auto;
+    padding: 7px 14px;
+    border: 1px solid var(--raveat-border);
+    border-radius: 999px;
+    background: var(--raveat-surface);
+    color: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.raveat-chip.activo {
+    border-color: var(--ion-color-primary);
+    background: var(--ion-color-primary);
+    color: #fff;
+}
+
+/* --- avatar con la inicial ----------------------------------------------- */
+
+/* Sin fotos de clientes, la inicial sobre un circulo de color da un ancla visual para recorrer
+   la lista. Es mas util que un icono generico repetido en todas las filas. */
+.raveat-avatar-inicial {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--raveat-surface-strong);
+    color: var(--ion-color-primary);
+    font-weight: 700;
+}
+
+/* --- estados de un pedido ------------------------------------------------ */
+
+/* Dos badges apilados: el del pedido y el del pago. Son dos ejes distintos —un pedido entregado
+   puede seguir impago— y por eso no se resumen en uno solo. */
+.raveat-pedido-estados {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}

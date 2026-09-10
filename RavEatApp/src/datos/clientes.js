@@ -1,9 +1,7 @@
-// Datos de prueba de clientes. Los mismos que despues siembra la migracion `DatosDePrueba` de la
-// API, con los mismos nombres de campo en snake_case: cuando la lista pase a venir del servidor,
-// la pantalla no cambia.
-//
-// Las direcciones son reales de CABA y con coordenadas verdaderas, porque a partir de v7 se
-// dibujan en un mapa: con datos inventados los marcadores caen en el oceano.
+// Datos de prueba de clientes, con los nombres de campo en snake_case que va a devolver la API:
+// cuando en v4 la lista venga del servidor, la pantalla no cambia.
+// Las direcciones son reales de CABA porque en v7 se dibujan en un mapa: inventadas, los
+// marcadores caen en el oceano.
 
 export const CLIENTES = [
 	{
@@ -36,9 +34,8 @@ export const CLIENTES = [
 		direccion_latitud: -34.62077,
 		direccion_longitud: -58.37145
 	},
-	// Sin email y sin referencia: los campos opcionales tienen que poder faltar, y la pantalla
-	// tiene que seguir viendose bien. Si todos los datos de prueba estan completos, el primer
-	// cliente real con un campo vacio rompe la vista.
+	// Sin email ni referencia: si todos los datos de prueba estuvieran completos, el primer
+	// cliente real con un campo vacio romperia la vista.
 	{
 		id: 4,
 		nombre: 'Roberto Díaz',

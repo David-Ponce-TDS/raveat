@@ -1,14 +1,10 @@
-// Datos de prueba de pedidos, con la misma forma que tendra la API.
-//
-// Los estados son los mismos valores que despues serializa el backend, en snake_case:
+// Datos de prueba de pedidos, con la forma que va a devolver la API. Los valores viajan en
+// snake_case, igual que los serializa el backend:
 //   pedido -> borrador, confirmado, en_preparacion, listo, entregado, cerrado, cancelado
 //   pago   -> pendiente, pagado, anulado
 //   tipo   -> presencial, retiro, entregas
-// Conviene que la lista cubra varios estados a la vez: si todos los pedidos de prueba estuvieran
-// en el mismo, no se veria que cada uno se pinta distinto.
-//
-// El pago vive dentro del pedido (estado, medio y propina) y no en una tabla aparte. Es una
-// decision del modelo del taller, no un recorte de esta version.
+// La lista cubre varios estados a proposito: con todos iguales no se veria que cada uno se pinta
+// distinto. El pago vive dentro del pedido y no en una tabla aparte: es el modelo del taller.
 
 export const PEDIDOS = [
 	{
@@ -94,8 +90,8 @@ export const PEDIDOS = [
 	}
 ];
 
-// Cada estado con su color de Ionic. Vive con los datos y no en la pantalla porque lo van a
-// necesitar varias: la lista, el detalle y, mas adelante, cocina.
+// Cada estado con su color de Ionic. Vive con los datos y no en la pantalla porque mas de una
+// pantalla lo va a necesitar.
 export const COLOR_ESTADO_PEDIDO = {
 	borrador: 'medium',
 	confirmado: 'primary',
@@ -106,8 +102,7 @@ export const COLOR_ESTADO_PEDIDO = {
 	cancelado: 'danger'
 };
 
-// Los estados viajan en snake_case porque asi los serializa la API. Para mostrarlos hay que
-// pasarlos a texto legible; hacerlo en un solo lugar evita que cada pantalla invente el suyo.
+// De snake_case a texto legible, en un solo lugar: si no, cada pantalla inventa el suyo.
 export function etiqueta_estado(estado){
 	if(!estado) return '';
 	return estado.replace(/_/g, ' ').replace(/^./, letra => letra.toUpperCase());

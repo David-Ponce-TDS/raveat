@@ -1,92 +1,71 @@
 <template>
 	<comp-page titulo="Productos" :mostrar_actualizar="true" @actualizar="cargar">
 		<div class="ion-padding raveat-page-stack">
-			<comp-esqueleto v-if="cargando" />
+			<comp-esqueleto v-if="productos_store.cargando" />
+			<comp-estado-error
+				v-else-if="productos_store.error"
+				:mensaje="productos_store.error"
+				@reintentar="cargar"
+			/>
 			<comp-estado-vacio
-				v-else-if="productos.length === 0"
+				v-else-if="!productos_store.hay_productos"
 				:icono="icono"
 				titulo="Todavía no hay productos"
-				mensaje="Agregá productos a src/datos/carta.js para verlos acá."
+				mensaje="La API respondió, pero la carta está vacía."
 			/>
 			<template v-else>
-				<div class="raveat-chips">
-					<button
-						v-for="chip in chips"
-						:key="chip.id"
-						type="button"
-						class="raveat-chip"
-						:class="{ activo: String(chip.id) === String(categoria_activa) }"
-						@click="categoria_activa = chip.id"
-					>
-						{{ chip.nombre }}
-					</button>
+				<div class="raveat-resumen">
+					<span>{{ productos_store.resumen.total }} productos</span>
+					<span>{{ productos_store.resumen.disponibles }} disponibles</span>
+					<span>{{ productos_store.categorias.length }} categorías</span>
 				</div>
-				<div class="raveat-grilla">
-					<comp-producto-card
-						v-for="producto in productos_visibles"
+				<ion-list class="raveat-panel">
+					<comp-producto-lista-item
+						v-for="producto in productos_store.productos"
 						:key="producto.id"
 						:producto="producto"
 					/>
-				</div>
+				</ion-list>
 			</template>
 		</div>
 	</comp-page>
 </template>
 
-<script>import { pricetagsOutline } from 'ionicons/icons';
+<script>import { IonList } from '@ionic/vue';
+import { pricetagsOutline } from 'ionicons/icons';
+import comp_estado_error from '@/components/base/comp_estado_error.vue';
 import comp_estado_vacio from '@/components/base/comp_estado_vacio.vue';
 import comp_esqueleto from '@/components/base/comp_esqueleto.vue';
 import comp_page from '@/components/estructura/comp_page.vue';
-import comp_producto_card from '@/components/dominio/comp_producto_card.vue';
-import { obtener_carta } from '@/datos/carta';
+import comp_producto_lista_item from '@/components/dominio/comp_producto_lista_item.vue';
+import { use_productos_store } from '@/stores/productos_store';
 
+// Primera pantalla con datos reales. La pagina no sabe que existe la API: le pide al store y lee
+// `cargando`, `error` y `productos`. Los tres estados se dibujan siempre, porque los tres pasan.
 export default {
 	name: 'productos_page',
 	components: {
+		CompEstadoError: comp_estado_error,
 		CompEstadoVacio: comp_estado_vacio,
 		CompEsqueleto: comp_esqueleto,
 		CompPage: comp_page,
-		CompProductoCard: comp_producto_card
+		CompProductoListaItem: comp_producto_lista_item,
+		IonList
 	},
 	data(){
 		return {
-			cargando: true,
-			categoria_activa: 'todas',
-			categorias: [],
 			icono: pricetagsOutline,
-			productos: []
+			productos_store: use_productos_store()
 		};
-	},
-	computed: {
-		// Los chips salen de las categorias, no de los productos en pantalla: con una categoria
-		// elegida, derivarlos de la lista dejaria sin forma de volver al resto.
-		chips(){
-			var vm = this;
-			return [
-				{id: 'todas', nombre: 'Todos'},
-				...vm.categorias.map(categoria => ({id: categoria.id, nombre: categoria.nombre}))
-			];
-		},
-		productos_visibles(){
-			var vm = this;
-			if(vm.categoria_activa === 'todas') return vm.productos;
-			return vm.productos.filter(producto => String(producto.categoria_id) === String(vm.categoria_activa));
-		}
 	},
 	mounted(){
 		var vm = this;
 		vm.cargar();
 	},
 	methods: {
-		// Los datos salen de un archivo, pero se piden async y con estado de carga, igual que
-		// cuando vengan de la API en v3. Asi la pantalla no cambia al conectarla.
-		cargar: async function(){
+		cargar: function(){
 			var vm = this;
-			vm.cargando = true;
-			const carta = await obtener_carta();
-			vm.categorias = carta.categorias;
-			vm.productos = carta.productos;
-			vm.cargando = false;
+			return vm.productos_store.cargar_productos();
 		}
 	}
 };</script>

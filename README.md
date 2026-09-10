@@ -4,11 +4,11 @@
 
 # RavEat
 
-### U2 · Navegación por configuración
+### U3 · Backend, base de datos y primera lista
 
-*Rutas, menú, tabs y permisos son un solo dato visto de cuatro maneras.*
+*El núcleo del sistema: persistencia, API REST y la primera pantalla con datos reales.*
 
-`version-02` &nbsp;·&nbsp; Ionic Vue 3 &nbsp;·&nbsp; Capacitor 8 &nbsp;·&nbsp; Pinia 3 &nbsp;·&nbsp; Vite
+`version-03` &nbsp;·&nbsp; Ionic Vue 3 &nbsp;·&nbsp; Capacitor 8 &nbsp;·&nbsp; ASP.NET Core (.NET 10) &nbsp;·&nbsp; EF Core 9 &nbsp;·&nbsp; MySQL 8
 
 </div>
 
@@ -20,9 +20,9 @@ Tres documentos, en este orden:
 
 | # | Documento | Responde |
 |---|---|---|
-| 1 | [**Requisitos**](README.requisitos.md) | qué tiene que estar instalado — en esta versión, nada nuevo: solo el chequeo |
+| 1 | [**Requisitos**](README.requisitos.md) | qué tiene que estar instalado, cómo saber qué te falta y cómo dejarlo listo |
 | 2 | [**Comandos**](README.comandos.md) | todo lo que se tipea para poner la app a andar, en orden, con su «si algo falla» |
-| 3 | [**La unidad**](README.unidad-02.md) | qué es esta versión, qué cambia desde la anterior y por qué está hecha así |
+| 3 | [**La unidad**](README.unidad-03.md) | qué es esta versión, qué cambia desde la anterior y por qué está hecha así |
 
 Los dos primeros te dejan **corriendo**; el tercero te deja **entendiendo**.
 

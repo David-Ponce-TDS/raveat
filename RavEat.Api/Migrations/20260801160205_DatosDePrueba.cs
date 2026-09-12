@@ -5,9 +5,12 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace RavEat.Api.Migrations
 {
-    // Etapa 2 — Datos de prueba: cinco categorias y catorce productos, uno por cada imagen de
-    // wwwroot/seed/productos. Va por migracion y no por un endpoint de siembra porque el lanzador
-    // borra y reconstruye la base en cada arranque: lo que no este aca no existe al levantar.
+    // Etapa 2 — Datos de prueba.
+    // La carta de un restaurante de ejemplo: cinco categorias y catorce productos, uno por cada
+    // imagen de wwwroot/seed/productos. Sin esto la app levanta con la lista vacia y no se puede
+    // ver nada del modulo.
+    // Va por migracion y no por un endpoint de siembra porque la task borra y reconstruye la base
+    // en cada arranque del backend: lo que no este en las migraciones no existe al levantar.
     // Es la unica migracion escrita a mano: solo inserta datos, no toca el esquema.
     public partial class DatosDePrueba : Migration
     {
@@ -37,8 +40,9 @@ namespace RavEat.Api.Migrations
                     {5L, "Postres", 5, true, FechaSemilla, FechaSemilla}
                 });
 
-            // imagen_url guarda una ruta relativa y nunca el host: guardarlo invalidaria todas las
-            // imagenes al mover la API de maquina. El frontend la completa en utils/imagenes.js.
+            // imagen_url guarda una ruta relativa, nunca el host: si guardara el host, mover la API
+            // de maquina invalidaria todas las imagenes de la base. El frontend la completa en
+            // utils/imagenes.js con la URL que resuelve config/debug.js.
             migrationBuilder.InsertData(
                 table: "productos",
                 columns: ColumnasProducto,

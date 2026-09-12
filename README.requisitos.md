@@ -1,7 +1,7 @@
-# Requisitos · versión 4
+# Requisitos · versión 5
 
-**Nada nuevo.** El entorno es el mismo de la versión 3: la versión agrega entidades, endpoints y
-pantallas, no herramientas.
+**Nada nuevo que instalar.** El entorno es el mismo de la versión 3. Los dos plugins de esta versión
+—biometría y almacenamiento seguro— entran solos con `npm install`; no son programas de la máquina.
 
 - [x] Git
 - [x] Node.js 22 o superior — trae `npm`
@@ -10,6 +10,9 @@ pantallas, no herramientas.
 - [x] Visual Studio Code
 - [x] .NET SDK 10
 - [x] MySQL Server 8
+
+Para probar la **huella** hace falta un teléfono con biometría configurada (o un emulador con
+huella simulada). En el navegador el botón no aparece, y es lo esperado.
 
 ## Comprobarlo
 
@@ -23,9 +26,8 @@ Lo que responda con una versión ya está; lo que diga `FALTA`, no.
 }
 ```
 
-Si algo dice `FALTA`: la instalación base (Git, Node, JDK, Android SDK, VS Code) está en
-`README.requisitos.md` de `version-01`; .NET SDK y MySQL, con su configuración, en el de
-`version-03`. Si acabás de instalarlo, cerrá la terminal y abrí una nueva: el `PATH` se lee al
-abrir la sesión.
+Si algo dice `FALTA`: la instalación base está en `README.requisitos.md` de `version-01`; .NET SDK
+y MySQL, con su configuración, en el de `version-03`. Si acabás de instalarlo, cerrá la terminal y
+abrí una nueva: el `PATH` se lee al abrir la sesión.
 
 MySQL además tiene que estar **corriendo**: `Get-Service MySQL*` tiene que decir `Running`.

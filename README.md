@@ -4,11 +4,11 @@
 
 # RavEat
 
-### U1 · Entorno, proyecto y primer APK
+### U2 · Navegación por configuración
 
-*Una app móvil es una web empaquetada en un contenedor nativo.*
+*Rutas, menú, tabs y permisos son un solo dato visto de cuatro maneras.*
 
-`version-01` &nbsp;·&nbsp; Ionic Vue 3 &nbsp;·&nbsp; Capacitor 8 &nbsp;·&nbsp; Pinia 3 &nbsp;·&nbsp; Vite
+`version-02` &nbsp;·&nbsp; Ionic Vue 3 &nbsp;·&nbsp; Capacitor 8 &nbsp;·&nbsp; Pinia 3 &nbsp;·&nbsp; Vite
 
 </div>
 
@@ -20,9 +20,9 @@ Tres documentos, en este orden:
 
 | # | Documento | Responde |
 |---|---|---|
-| 1 | [**Requisitos**](README.requisitos.md) | qué tiene que estar instalado, cómo saber qué te falta y cómo dejarlo listo |
+| 1 | [**Requisitos**](README.requisitos.md) | qué tiene que estar instalado — en esta versión, nada nuevo: solo el chequeo |
 | 2 | [**Comandos**](README.comandos.md) | todo lo que se tipea para poner la app a andar, en orden, con su «si algo falla» |
-| 3 | [**La unidad**](README.unidad-01.md) | qué es esta versión, qué resuelve y por qué está hecha así |
+| 3 | [**La unidad**](README.unidad-02.md) | qué es esta versión, qué cambia desde la anterior y por qué está hecha así |
 
 Los dos primeros te dejan **corriendo**; el tercero te deja **entendiendo**.
 

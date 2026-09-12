@@ -1,14 +1,31 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using RavEat.Api.Auth;
 using RavEat.Api.Data;
 using RavEat.Api.Domain.Entities;
 using RavEat.Api.Domain.Enums;
 
 namespace RavEat.Api.Controllers;
 
+// Todos los roles operativos ven pedidos, pero no todos hacen lo mismo: crear y cobrar se restringe
+// endpoint por endpoint. Cocina mueve estados y no cobra; caja cobra y no crea.
+//
+// Se listan los cinco roles en vez de usar `[Authorize]` a secas. No es lo mismo: `[Authorize]`
+// solo exige estar **autenticado**, asi que un usuario recien creado —que todavia no tiene rol—
+// entraria a ver los pedidos del local. Autenticado no es autorizado, y el atributo tiene que
+// decirlo.
 [ApiController]
+[Authorize(Roles = RolesOperativos)]
 [Route("api/pedidos")]
 public sealed class PedidosController(RavEatDbContext db) : ControllerBase {
+    // Los roles van en constantes y no escritos a mano en cada atributo: `[Authorize(Roles = ...)]`
+    // exige una constante en tiempo de compilacion, y un error de tipeo ahi no falla el build,
+    // simplemente deja el endpoint inalcanzable para todos.
+    private const string RolesOperativos = $"{RolCodigos.Admin},{RolCodigos.Vendedor},{RolCodigos.Proceso},{RolCodigos.Caja},{RolCodigos.Delivery}";
+    private const string RolesQueVenden = $"{RolCodigos.Admin},{RolCodigos.Vendedor},{RolCodigos.Caja}";
+    private const string RolesQueCobran = $"{RolCodigos.Admin},{RolCodigos.Caja}";
+
     // Las transiciones validas de estado. Un pedido entregado no vuelve a preparacion, y uno
     // cancelado no revive. Tenerlas en un diccionario en vez de en una cadena de ifs deja la regla
     // a la vista y hace que agregar un estado sea tocar un solo lugar.
@@ -98,6 +115,7 @@ public sealed class PedidosController(RavEatDbContext db) : ControllerBase {
         return Ok(new {pedido, items});
     }
 
+    [Authorize(Roles = RolesQueVenden)]
     [HttpPost]
     public async Task<IActionResult> Crear(CrearPedidoRequest request, CancellationToken cancellationToken) {
         if(request.Items is null || request.Items.Count == 0) return BadRequest(new {codigo = "pedido_sin_items", mensaje = "El pedido necesita al menos un producto."});
@@ -121,6 +139,9 @@ public sealed class PedidosController(RavEatDbContext db) : ControllerBase {
         var descuento = request.Descuento < 0 ? 0 : request.Descuento;
         var pedido = new Pedido {
             ClienteId = request.ClienteId,
+            // Quien crea el pedido sale del token, NUNCA del body. `CrearPedidoRequest` ni siquiera
+            // tiene un campo para mandarlo: si no existe, no se puede falsificar.
+            UsuarioCreadorId = User.UsuarioId(),
             Codigo = await GenerarCodigoAsync(cancellationToken),
             Tipo = request.Tipo,
             Estado = EstadoPedido.Borrador,
@@ -175,6 +196,8 @@ public sealed class PedidosController(RavEatDbContext db) : ControllerBase {
         return Ok(new {estado = pedido.Estado});
     }
 
+    // Cobrar es de caja (y del admin). Cocina y delivery mueven estados pero no tocan la plata.
+    [Authorize(Roles = RolesQueCobran)]
     [HttpPut("{id:long}/pago")]
     public async Task<IActionResult> RegistrarPago(long id, RegistrarPagoRequest request, CancellationToken cancellationToken) {
         var pedido = await db.Pedidos.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
@@ -192,6 +215,7 @@ public sealed class PedidosController(RavEatDbContext db) : ControllerBase {
 
     // Un pedido no se borra: se cancela. El historial de lo que paso en el local es justamente lo
     // que no hay que perder.
+    [Authorize(Roles = RolesQueVenden)]
     [HttpDelete("{id:long}")]
     public async Task<IActionResult> Cancelar(long id, CancellationToken cancellationToken) {
         var pedido = await db.Pedidos.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);

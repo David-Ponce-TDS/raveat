@@ -1,11 +1,16 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using RavEat.Api.Auth;
 using RavEat.Api.Data;
 using RavEat.Api.Domain.Entities;
 
 namespace RavEat.Api.Controllers;
 
+// Ningun endpoint de clientes es publico: la vitrina no los necesita y son datos personales.
+// Tres roles los tocan; cocina y delivery no tienen nada que hacer acá.
 [ApiController]
+[Authorize(Roles = $"{RolCodigos.Admin},{RolCodigos.Vendedor},{RolCodigos.Caja}")]
 [Route("api/clientes")]
 public sealed class ClientesController(RavEatDbContext db) : ControllerBase {
     // La busqueda va contra la base y no contra la lista devuelta. Con el listado paginado, filtrar

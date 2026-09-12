@@ -1,13 +1,21 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using RavEat.Api.Auth;
 using RavEat.Api.Data;
 using RavEat.Api.Domain.Entities;
 
 namespace RavEat.Api.Controllers;
 
+// El controller entero pide ADMIN; lo publico se marca endpoint por endpoint con [AllowAnonymous].
+// Al reves —abierto por defecto y cerrando lo sensible— el dia que se agrega un endpoint y alguien
+// se olvida del atributo, queda expuesto. Así, olvidarse deja el endpoint cerrado de más.
 [ApiController]
+[Authorize(Roles = RolCodigos.Admin)]
 [Route("api/categorias")]
 public sealed class CategoriasController(RavEatDbContext db) : ControllerBase {
+    // Las categorias arman los filtros de la vitrina publica, asi que se listan sin token.
+    [AllowAnonymous]
     [HttpGet]
     public async Task<IActionResult> Listar(CancellationToken cancellationToken) {
         // Proyeccion a un record en vez de devolver la entidad: la respuesta no arrastra las fechas

@@ -20,6 +20,20 @@ internal static class ConfigurationExtensions {
     }
 }
 
+public sealed class RolConfiguration : IEntityTypeConfiguration<Rol> {
+    public void Configure(EntityTypeBuilder<Rol> b){ ConfigurationExtensions.Base(b, "roles"); b.Property(x => x.Nombre).HasMaxLength(80).IsRequired(); b.Property(x => x.Codigo).HasMaxLength(40).IsRequired(); b.HasIndex(x => x.Codigo).IsUnique(); }
+}
+
+public sealed class UsuarioConfiguration : IEntityTypeConfiguration<Usuario> {
+    // SetNull en el rol: dar de baja un rol no borra a sus usuarios, los deja sin rol. Vuelven a
+    // estar autenticados y no autorizados, que es un estado valido del modelo.
+    public void Configure(EntityTypeBuilder<Usuario> b){ ConfigurationExtensions.Base(b, "usuarios"); b.Property(x => x.Nombre).HasMaxLength(120).IsRequired(); b.Property(x => x.Email).HasMaxLength(180).IsRequired(); b.Property(x => x.PasswordHash).HasMaxLength(500).IsRequired(); b.HasIndex(x => x.Email).IsUnique(); b.HasOne<Rol>().WithMany().HasForeignKey(x => x.RolId).OnDelete(DeleteBehavior.SetNull); }
+}
+
+public sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken> {
+    public void Configure(EntityTypeBuilder<RefreshToken> b){ ConfigurationExtensions.Base(b, "refresh_tokens"); b.Property(x => x.TokenHash).HasMaxLength(120).IsRequired(); b.HasIndex(x => x.TokenHash).IsUnique(); b.HasIndex(x => new {x.UsuarioId, x.ExpiraEn}); b.HasOne<Usuario>().WithMany().HasForeignKey(x => x.UsuarioId).OnDelete(DeleteBehavior.Cascade); }
+}
+
 public sealed class CategoriaConfiguration : IEntityTypeConfiguration<Categoria> {
     public void Configure(EntityTypeBuilder<Categoria> b){ ConfigurationExtensions.Base(b, "categorias"); b.Property(x => x.Nombre).HasMaxLength(100).IsRequired(); b.HasIndex(x => x.Nombre).IsUnique(); }
 }
@@ -35,7 +49,7 @@ public sealed class ClienteConfiguration : IEntityTypeConfiguration<Cliente> {
 public sealed class PedidoConfiguration : IEntityTypeConfiguration<Pedido> {
     // El indice por (estado, creado_en) es el que usa el listado: filtra por estado y ordena por
     // fecha. Sin el, cada pagina recorre la tabla entera.
-    public void Configure(EntityTypeBuilder<Pedido> b){ ConfigurationExtensions.Base(b, "pedidos"); b.Property(x => x.Codigo).HasMaxLength(40).IsRequired(); b.Property(x => x.Tipo).EnumTexto(); b.Property(x => x.Estado).EnumTexto(); b.Property(x => x.Subtotal).HasPrecision(12, 2); b.Property(x => x.Descuento).HasPrecision(12, 2); b.Property(x => x.Total).HasPrecision(12, 2); b.Property(x => x.EstadoPago).EnumTexto(); b.Property(x => x.MedioPago).HasConversion<string>().HasMaxLength(30); b.Property(x => x.PropinaImporte).HasPrecision(12, 2); b.Property(x => x.Observaciones).HasMaxLength(1000); b.HasIndex(x => x.Codigo).IsUnique(); b.HasIndex(x => new {x.Estado, x.CreadoEn}); b.HasOne<Cliente>().WithMany().HasForeignKey(x => x.ClienteId).OnDelete(DeleteBehavior.SetNull); }
+    public void Configure(EntityTypeBuilder<Pedido> b){ ConfigurationExtensions.Base(b, "pedidos"); b.Property(x => x.Codigo).HasMaxLength(40).IsRequired(); b.Property(x => x.Tipo).EnumTexto(); b.Property(x => x.Estado).EnumTexto(); b.Property(x => x.Subtotal).HasPrecision(12, 2); b.Property(x => x.Descuento).HasPrecision(12, 2); b.Property(x => x.Total).HasPrecision(12, 2); b.Property(x => x.EstadoPago).EnumTexto(); b.Property(x => x.MedioPago).HasConversion<string>().HasMaxLength(30); b.Property(x => x.PropinaImporte).HasPrecision(12, 2); b.Property(x => x.Observaciones).HasMaxLength(1000); b.HasIndex(x => x.Codigo).IsUnique(); b.HasIndex(x => new {x.Estado, x.CreadoEn}); b.HasOne<Cliente>().WithMany().HasForeignKey(x => x.ClienteId).OnDelete(DeleteBehavior.SetNull); b.HasOne<Usuario>().WithMany().HasForeignKey(x => x.UsuarioCreadorId).OnDelete(DeleteBehavior.Restrict); }
 }
 
 public sealed class PedidoItemConfiguration : IEntityTypeConfiguration<PedidoItem> {

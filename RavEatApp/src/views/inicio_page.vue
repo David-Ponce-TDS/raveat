@@ -53,9 +53,11 @@ import comp_producto_card from '@/components/dominio/comp_producto_card.vue';
 import comp_vidriera from '@/components/estructura/comp_vidriera.vue';
 import { use_productos_store } from '@/stores/productos_store';
 
-// La vitrina: los mismos tres estados que Productos, con otra presentacion.
-// El chip filtra en memoria porque la carta entera ya esta en el store. Cuando en v4 se pagine,
-// el filtro tiene que mudarse a la API: si no, solo miraria la pagina descargada.
+// La vitrina: lo primero que ve alguien que abre la app. Los mismos tres estados que la lista
+// de Productos —cargando, error y vacio—, con otra presentacion.
+// El chip de categoria filtra en memoria a proposito: en v3 la carta entera ya esta en el
+// store. Cuando en v4 la lista pase a estar paginada, este filtro tiene que mudarse a la API,
+// porque si no solo miraria la pagina descargada.
 export default {
 	name: 'inicio_page',
 	components: {

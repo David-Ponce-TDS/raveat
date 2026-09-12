@@ -217,6 +217,40 @@ ion-menu ion-item.seleccionado ion-icon {
     gap: 4px;
 }
 
+/* --- buscador y lista paginada ------------------------------------------- */
+
+.raveat-buscador {
+    padding: 0;
+    --box-shadow: none;
+    --background: var(--raveat-surface);
+    --border-radius: 12px;
+}
+
+.raveat-ver-mas {
+    margin-top: 10px;
+}
+
+.raveat-lista-pie {
+    margin: 6px 2px 0;
+    color: var(--raveat-muted);
+    font-size: 0.8rem;
+    text-align: center;
+}
+
+/* --- selector de cantidad ------------------------------------------------ */
+
+.raveat-cantidad {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+/* Ancho fijo para que la fila no se mueva al pasar de 9 a 10 unidades. */
+.raveat-cantidad strong {
+    min-width: 2ch;
+    text-align: center;
+}
+
 /* --- diagnostico de conexion --------------------------------------------- */
 
 .raveat-diagnostico__api {

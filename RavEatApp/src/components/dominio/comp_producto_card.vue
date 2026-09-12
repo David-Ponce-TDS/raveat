@@ -20,8 +20,9 @@ import { fastFoodOutline } from 'ionicons/icons';
 import { formatear_importe } from '@/utils/formato_moneda';
 import { resolver_url_imagen } from '@/utils/imagenes';
 
-// La tarjeta de la vitrina. Si la imagen no carga —API caida, ruta cambiada— se pasa al
-// placeholder: el estado degradado tambien hay que dibujarlo.
+// La tarjeta de la vitrina. Si la imagen no carga —la API caida, la ruta cambiada— se pasa al
+// placeholder en vez de dejar el marco roto del navegador: el estado degradado tambien es un
+// estado que hay que dibujar.
 export default {
 	name: 'comp_producto_card',
 	components: {

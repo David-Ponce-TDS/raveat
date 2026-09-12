@@ -44,6 +44,10 @@ ion-menu ion-item.seleccionado ion-icon {
     line-height: 1.4;
 }
 
+.raveat-estado-vacio__icono--error {
+    color: var(--ion-color-danger);
+}
+
 /* --- chips de filtro ----------------------------------------------------- */
 
 .raveat-chips {
@@ -51,8 +55,8 @@ ion-menu ion-item.seleccionado ion-icon {
     gap: 8px;
     overflow-x: auto;
     padding: 2px 0;
-    /* Los chips desbordan a lo ancho: se scrollean, no se apilan. La barra se oculta porque en
-       telefono el gesto ya es evidente y en escritorio ensucia la fila. */
+    /* Los chips desbordan a lo ancho: se scrollean, no se apilan. La barra se oculta porque
+       en telefono el gesto ya es evidente y en escritorio ensucia la fila. */
     scrollbar-width: none;
 }
 
@@ -79,6 +83,116 @@ ion-menu ion-item.seleccionado ion-icon {
     color: #fff;
 }
 
+/* --- grilla y tarjeta de producto ---------------------------------------- */
+
+/* auto-fill con minmax deja que la grilla decida cuantas columnas entran: dos en un telefono,
+   mas en una tablet, sin media queries. */
+.raveat-grilla {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 14px;
+    margin-top: 12px;
+}
+
+.raveat-producto-card {
+    overflow: hidden;
+    border: 1px solid var(--raveat-border);
+    border-radius: 16px;
+    background: var(--raveat-surface);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+.raveat-producto-card.agotado {
+    opacity: 0.55;
+}
+
+.raveat-producto-card__imagen {
+    position: relative;
+    /* Cuadrada siempre: con fotos de distinta proporcion, la grilla quedaria despareja. */
+    aspect-ratio: 1 / 1;
+    background: #000;
+}
+
+.raveat-producto-card__imagen img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.raveat-producto-card__placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background: var(--raveat-surface-strong);
+    color: var(--raveat-muted);
+}
+
+.raveat-producto-card__placeholder ion-icon {
+    font-size: 2.4rem;
+}
+
+.raveat-producto-card__precio {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.65);
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.raveat-producto-card__agotado {
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    padding: 3px 8px;
+    border-radius: 8px;
+    background: var(--ion-color-medium);
+    color: #fff;
+    font-size: 0.7rem;
+}
+
+.raveat-producto-card__info {
+    padding: 10px 12px 12px;
+}
+
+.raveat-producto-card__info h3 {
+    margin: 0 0 2px;
+    font-size: 0.98rem;
+    font-weight: 600;
+}
+
+/* Dos lineas y corta: las descripciones tienen largos muy distintos y sin el tope las
+   tarjetas de una misma fila quedan de alturas diferentes. */
+.raveat-producto-card__info p {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin: 0;
+    color: var(--raveat-muted);
+    font-size: 0.8rem;
+}
+
+/* --- resumen de una lista ----------------------------------------------- */
+
+.raveat-resumen {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    padding: 10px 14px;
+    border: 1px solid var(--raveat-border);
+    border-radius: 8px;
+    background: var(--raveat-surface);
+    color: var(--raveat-muted);
+    font-size: 0.85rem;
+}
+
 /* --- avatar con la inicial ----------------------------------------------- */
 
 /* Sin fotos de clientes, la inicial sobre un circulo de color da un ancla visual para recorrer
@@ -101,4 +215,47 @@ ion-menu ion-item.seleccionado ion-icon {
     flex-direction: column;
     align-items: flex-end;
     gap: 4px;
+}
+
+/* --- diagnostico de conexion --------------------------------------------- */
+
+.raveat-diagnostico__api {
+    --padding-start: 0;
+    --inner-padding-end: 0;
+}
+
+/* La URL puede ser larga: se parte en dos lineas en vez de recortarse. */
+.raveat-diagnostico__api h3 {
+    white-space: normal;
+    word-break: break-all;
+}
+
+.raveat-diagnostico__resultado {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 4px 0 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: var(--raveat-surface-strong);
+    font-size: 0.88rem;
+    line-height: 1.35;
+}
+
+.raveat-diagnostico__resultado ion-icon,
+.raveat-diagnostico__resultado ion-spinner {
+    flex: 0 0 auto;
+    font-size: 1.3rem;
+}
+
+.raveat-diagnostico__resultado.ok ion-icon {
+    color: var(--ion-color-success);
+}
+
+.raveat-diagnostico__resultado.error ion-icon {
+    color: var(--ion-color-danger);
+}
+
+.raveat-diagnostico__resultado.probando {
+    color: var(--raveat-muted);
 }

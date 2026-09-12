@@ -1,12 +1,10 @@
-# Comandos · versión 3
+# Comandos · versión 4
 
-PowerShell en Windows, desde la raíz del repositorio. Entorno:
-[`README.requisitos.md`](README.requisitos.md).
+Todo lo que se tipea para poner esta versión a andar, en orden. Los comandos son para
+**PowerShell en Windows** y se ejecutan **desde la raíz del repositorio**, salvo que se indique
+otra cosa.
 
-Primera versión con dos procesos: **la API y el frontend corren a la vez**, cada uno en su
-terminal. Los pasos 1 a 3 se hacen una sola vez; del 4 en adelante es el día a día.
-
----
+Qué es esta versión y por qué está hecha así: [`README.unidad-04.md`](README.unidad-04.md).
 
 ## 1 · Instalar
 
@@ -18,28 +16,23 @@ Set-Location ..
 dotnet tool restore
 ```
 
-`dotnet tool restore` instala `dotnet-ef` en la versión que fija `dotnet-tools.json` — en el
-repositorio, no en la máquina: todos usan la misma sin pisar otras instalaciones.
+`dotnet tool restore` instala `dotnet-ef` en la versión que fija `dotnet-tools.json`, en el propio
+repositorio y no en la máquina: todos usan la misma sin pisar otras instalaciones.
 
 ## 2 · Crear la base y el usuario
 
-La API no crea la base: crea las **tablas** dentro de una base que ya existe. Con la contraseña de
-`root` de la instalación:
-
-```powershell
-mysql -u root -p
-```
+Solo si no venís de la versión 3 con la base ya creada. La API no crea la base: crea las
+**tablas** dentro de una base que ya existe. Desde `mysql -u root -p`:
 
 ```sql
 CREATE DATABASE raveat_app CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 CREATE USER 'raveat_app'@'localhost' IDENTIFIED BY 'TU_CLAVE';
 GRANT ALL PRIVILEGES ON raveat_app.* TO 'raveat_app'@'localhost';
 FLUSH PRIVILEGES;
-exit
 ```
 
-La contraseña **no va en `appsettings.json`** — ese archivo se versiona, y una clave ahí termina en
-git. Va en User Secrets, que la guarda fuera del repositorio:
+La contraseña **no va en `appsettings.json`** —ese archivo se versiona, y una clave ahí termina en
+git—. Va en User Secrets:
 
 ```powershell
 Set-Location .\RavEat.Api
@@ -47,11 +40,11 @@ dotnet user-secrets set "ConnectionStrings:Default" "Server=localhost;Port=3306;
 Set-Location ..
 ```
 
-El secreto pisa la plantilla de `appsettings.json` (`Password=CAMBIAR`). El `UserSecretsId` es el
-mismo en todas las ramas: se configura una vez y sirve para todo el recorrido. Ver qué quedó:
-`dotnet user-secrets list`.
+El secreto pisa la plantilla `Password=CAMBIAR`. El `UserSecretsId` del `.csproj` es **el mismo en
+todas las ramas**: se configura una vez y sigue andando al cambiar de versión. Para ver qué quedó
+guardado: `dotnet user-secrets list`.
 
-Después, el esquema — crea las tablas **y carga la carta de prueba**:
+## 3 · Crear el esquema
 
 ```powershell
 Set-Location .\RavEat.Api
@@ -59,7 +52,14 @@ dotnet tool run dotnet-ef -- database update
 Set-Location ..
 ```
 
-## 3 · La URL de la API en el frontend
+Las migraciones crean las tablas **y cargan los datos de prueba**: la carta con sus fotos y los
+clientes. Si la base queda vacía después de esto, no corrió la migración de datos.
+
+> **Si venís de otra versión, la base hay que reconstruirla** (`database drop --force` y de nuevo
+> `update`): cada rama tiene su propia cadena de migraciones y no es acumulativa entre ramas.
+> Cambiar de rama no cambia la base real, y el esquema queda desincronizado del código.
+
+## 4 · La URL de la API en el frontend
 
 ```powershell
 Set-Location .\RavEatApp
@@ -67,23 +67,19 @@ Copy-Item .\.env.example .\.env
 Set-Location ..
 ```
 
-Editá `.env`: la línea de `VITE_API_URL_DEBUG` viene **comentada** — descomentala y poné la IP de
-tu máquina en la red (`ipconfig` la muestra, y cambia con la red):
+Editá `.env` y poné la IP de tu máquina en la red local:
 
 ```
 VITE_API_URL_DEBUG=http://TU_IP_LAN:5080
 ```
 
-Es **esa** variable y no `VITE_API_URL`: con el modo debug activo —el valor por defecto— la app lee
-la `_DEBUG` e ignora la otra. Si editás el `.env` con `npm run dev` corriendo, reinicialo: Vite lo
-lee al arrancar.
-
-**Por qué una IP y no `localhost`**: en el teléfono, `localhost` es el propio teléfono. Para
-trabajar solo en el navegador, `VITE_DEBUG_ACTIVADO=false` y la app usa `http://localhost:5080`.
+**Por qué una IP y no `localhost`**: en el teléfono, `localhost` es el propio teléfono. La IP la
+averiguás con `ipconfig` y **cambia según la red**. Para trabajar solo en el navegador, poné
+`VITE_DEBUG_ACTIVADO=false` y la app usa `VITE_API_URL` (`http://localhost:5080`).
 
 `.env` está en `.gitignore` y nunca se versiona; `.env.example` sí.
 
-## 4 · Correr
+## 5 · Correr
 
 Dos terminales:
 
@@ -99,20 +95,38 @@ npm run dev
 
 | Servicio | URL |
 |---|---|
+| API | `http://localhost:5080` |
 | Health | `http://localhost:5080/health` |
-| La carta | `http://localhost:5080/api/productos/resumen` |
-| App | `http://localhost:5173` |
+| App (Vite) | `http://localhost:5173` |
 
 **Empezá siempre por `/health`.** Si no responde, no hay nada que revisar del lado del frontend.
+Desde la app la misma prueba está en **Mi cuenta → Diagnóstico**, que además muestra contra qué
+URL está pegando: es la única forma de verla en el teléfono, donde no hay consola a mano.
 
-Alternativa en VS Code: `Ctrl+Shift+P` → `Tasks: Run Task` → **`RavEat: elegir entorno`** levanta
-los dos procesos en terminales integradas. **Debug web** es el entorno del día a día.
+Cada bloque se prueba por consola antes de tocar la pantalla, en **otra** terminal:
 
-> ⚠️ **La task borra la base y la reconstruye en cada arranque del backend.** Es intencional: cada
-> rama tiene su propia cadena de migraciones, y cambiar de rama no cambia la base real — reconstruir
-> elimina esa clase entera de bug. **Los datos que cargues no sobreviven al próximo arranque.**
+```powershell
+Invoke-RestMethod http://localhost:5080/health
+Invoke-RestMethod "http://localhost:5080/api/clientes?tamano=2" | ConvertTo-Json -Depth 4
+Invoke-RestMethod "http://localhost:5080/api/productos/listado?busqueda=empanadas&disponible=true"
+```
 
-## 5 · Compilar
+Cada listado responde con `pagina: {pagina, tamano, total, hay_mas}`: con `tamano=2` y los cinco
+clientes sembrados, `hay_mas` dice `true`. La búsqueda filtra **en la base**, no en la página
+descargada.
+
+Los rechazos de la API se provocan a propósito: también son una prueba. `Invoke-RestMethod` tira
+la excepción en rojo con un 400 y esconde el cuerpo; se lee así:
+
+```powershell
+try { Invoke-RestMethod -Method Post "http://localhost:5080/api/clientes" -ContentType "application/json" -Body '{"nombre":"","telefono":""}' } catch { (New-Object IO.StreamReader($_.Exception.Response.GetResponseStream())).ReadToEnd() }
+```
+
+Responde `cliente_nombre_requerido`. El mismo gesto con el teléfono de María (`11-5555-1001`)
+responde `cliente_duplicado`; y en un pedido creado desde la app, un salto de estado inválido por
+`PUT /api/pedidos/{id}/estado` responde `transicion_invalida`.
+
+## 6 · Compilar
 
 ```powershell
 Set-Location .\RavEatApp
@@ -123,124 +137,70 @@ Set-Location ..
 dotnet build .\RavEat.Api\RavEat.Api.csproj
 ```
 
-Si `dotnet build` falla con MSB3026/3027, la API está corriendo y tiene tomados sus `.dll`:
-pararla con `Ctrl+C` y compilar de nuevo.
+El resultado del frontend queda en `RavEatApp/dist/`. De ahí lo toma Capacitor: **`cap sync` copia
+lo que hay en `dist/`, no lo que hay en `src/`** — sin un `build` previo, el APK lleva el código
+viejo. Es el olvido más común.
 
-## 6 · Llevarlo al teléfono
-
-Con el teléfono conectado, la depuración USB activada y **la IP de la red en `.env`**:
+## 7 · Llevarlo al teléfono
 
 ```powershell
 Set-Location .\RavEatApp
 npm run build
-npx cap run android
+npx cap sync android
+
+Set-Location .\android
+.\gradlew installDebug      # instalar en el dispositivo conectado
+.\gradlew assembleDebug     # solo generar el APK
 ```
 
-> ⚠️ **`cap run` no compila la web.** Sincroniza lo que hay en `dist/`, así que sin `npm run build`
-> antes el APK lleva el código de la vez anterior, sin avisar. Vale también para la URL: si
-> cambiaste el `.env`, hace falta `build` de nuevo — la URL queda grabada dentro del bundle.
+Salidas en `android/app/build/outputs/`. Para desinstalar una versión previa (por ejemplo si
+cambió la firma): `adb uninstall app.raveat`. Para abrirlo en Android Studio:
+`npx cap open android`.
 
-`INSTALL_FAILED_UPDATE_INCOMPATIBLE`: la app instalada se compiló en otra máquina y su firma no
-coincide — `adb uninstall app.raveat`.
-
-## 7 · Migraciones
+## 8 · Migraciones
 
 ```powershell
 Set-Location .\RavEat.Api
-dotnet tool run dotnet-ef -- migrations list      # cuáles hay y cuáles faltan aplicar
+dotnet tool run dotnet-ef -- migrations list      # ver cuáles hay y cuáles faltan aplicar
 dotnet tool run dotnet-ef -- database update      # aplicar las pendientes
 dotnet tool run dotnet-ef -- database drop --force
 ```
 
 El `--` no es decorativo: sin él, `dotnet tool run` se come los argumentos en vez de pasárselos a
-`dotnet-ef`.
+`dotnet-ef`. También podés aplicarlas al arrancar, con `dotnet run -- --migrate`.
 
-### Aplicarlas al arrancar: `dotnet run -- --migrate`
-
-Las mismas migraciones, sin el paso aparte: la API aplica lo que falte y después queda escuchando.
+Para crear una migración propia, el ciclo es **compilar, generar, revisar, aplicar** — `dotnet-ef`
+lee el ensamblado **compilado**, así que sin `dotnet build` antes del `add` la migración sale vacía
+o vieja:
 
 ```powershell
 Set-Location .\RavEat.Api
-dotnet run -- --migrate
+dotnet build
+dotnet tool run dotnet-ef -- migrations add MiCambio
+dotnet tool run dotnet-ef -- migrations list
+dotnet tool run dotnet-ef -- database update
 ```
 
-| Comando | Aplica lo pendiente | Levanta la API |
-|---|---|---|
-| `dotnet run` | no | sí |
-| `dotnet run -- --migrate` | sí, **antes** de escuchar | sí |
-| `dotnet tool run dotnet-ef -- database update` | sí | no |
-
-Acá también el `--` separa: lo que va antes es para `dotnet run`, lo que va después es para la API.
-Sin él, `dotnet` toma `--migrate` como opción suya y no la reconoce.
-
-Lo hace `Program.cs`: si `--migrate` está entre los argumentos, corre `MigrateAsync()` y recién
-entonces `app.Run()`. **No borra nada** — aplica las migraciones que falten, igual que
-`database update`. Si la base quedó con el esquema de otra rama, primero `database drop --force`.
-
-Si la base no está accesible, el arranque corta con la excepción de conexión y la API no llega a
-escuchar. Es lo que se busca: peor sería levantar contra un esquema que no es el de esta rama.
-
----
-
-## 8 · Depurar de punta a punta
-
-**Siempre en este orden**, de adentro hacia afuera: la API sola, después la app, y recién después
-el teléfono. Saltear pasos es lo que hace buscar el problema donde no está.
-
-### 1. ¿Responde la API?
-
-```powershell
-Invoke-RestMethod http://localhost:5080/health
-Invoke-RestMethod http://localhost:5080/api/productos/resumen | Select-Object -ExpandProperty resumen
-```
-
-`/health` tiene que devolver `status: ok`. Si no responde, no hay nada que revisar del lado del
-frontend.
-
-### 2. ¿Contra qué dirección pega la app?
-
-En la app, **Mi cuenta → Diagnóstico**: muestra la URL que resolvió `config/debug.js` y prueba
-`/health` con un botón. Es la misma respuesta del paso anterior, pero vista desde donde importa —
-adentro de la app, y en el teléfono, donde no hay consola a mano.
-
-| Lo que muestra | Qué significa |
-|---|---|
-| `http://localhost:5080` **en el teléfono** | está mal: ahí `localhost` es el propio teléfono |
-| la IP de tu máquina y «La API respondió: ok» | el camino completo funciona |
-| la IP correcta y un error | la API no está levantada, o el teléfono no está en la misma red |
-
-### 3. La consola de red del teléfono
-
-Con el teléfono conectado por USB y la depuración USB activada:
-
-1. en Chrome de la PC, ir a `chrome://inspect/#devices`
-2. buscar la WebView de tu app — figura con el id del paquete, `app.raveat`
-3. **inspect**, y se abre un DevTools apuntando a lo que corre en el teléfono
-4. pestaña **Red**, tocar **Reintentar** en la pantalla con error
-5. tiene que aparecer la fila del pedido, con la dirección a la que salió
-
-Esa fila es la prueba: si dice `localhost`, el `.env` no llegó al bundle; si dice tu IP y falla
-igual, el problema está del lado de la API o de la red.
-
-> La consola de red también sirve en el navegador (`F12` → Red), pero ahí `localhost` funciona
-> siempre. El error de `localhost` **solo se ve en el teléfono**.
-
----
+Una migración de datos se genera **vacía** y se completa a mano con `InsertData` — así se
+escribieron los clientes de prueba. Conviene leer el `Up()` antes de aplicar.
 
 ## Si algo falla
 
 | Síntoma | Causa probable | Qué hacer |
 |---|---|---|
-| «No se pudo conectar con la API» | la API no está levantada, o la URL apunta a otro lado | probar `/health` en el navegador; revisar `.env` |
-| En el navegador anda, en el teléfono no | `VITE_API_URL_DEBUG` dice `localhost` | poner la IP de la red (`ipconfig`) |
-| Cambié el `.env` y el APK sigue igual | la URL queda grabada en el bundle | `npm run build` + `npx cap run android` |
-| `Access denied for user ...` | falta el secreto: la conexión sigue con `Password=CAMBIAR` | paso 2 |
-| `dotnet-ef` no encontrado | falta `dotnet tool restore` | paso 1 |
-| La lista sale vacía pero la API responde | no corrió la migración de datos | `migrations list` — paso 7 |
-| Puse la IP en el `.env` y sigue llamando a `localhost` | la IP fue a `VITE_API_URL`, pero con el modo debug activo la app usa **`VITE_API_URL_DEBUG`**, que viene comentada en la plantilla | descomentar `VITE_API_URL_DEBUG` con la IP, y **reiniciar `npm run dev`**: Vite lee el `.env` al arrancar |
-| Error de CORS en la consola | el origen no está permitido | en desarrollo se aceptan `localhost` e IPs privadas; revisar `Cors:AllowedOrigins` |
-
----
+| «No se pudo conectar con la API» | La API no está levantada, o la URL apunta a otro lado | **Mi cuenta → Diagnóstico**: ahí se ven la URL y la respuesta de `/health` |
+| En el navegador anda y en el teléfono no | `VITE_API_URL_DEBUG` apunta a `localhost` | Poner la IP LAN de la PC (`ipconfig`) |
+| Cambié la IP del `.env` y el APK sigue con la vieja | La URL queda **grabada dentro del bundle** | `npm run build` + `npx cap sync android` de nuevo |
+| Error de CORS en la consola | El origen no está permitido | En Development se aceptan localhost e IPs privadas |
+| `dotnet build` falla con MSB3026/3027 | La API corriendo tiene tomados sus `.dll` | Pararla (`Ctrl+C`) y recompilar |
+| `Access denied for user ...` | Falta el secreto: `appsettings.json` dice `Password=CAMBIAR` | Sección 2 |
+| `dotnet-ef` no encontrado | Falta `dotnet tool restore` | Sección 1 |
+| La migración se genera vacía | No compilaste antes del `migrations add` | `dotnet build` y regenerar |
+| El 400 sale en rojo y sin cuerpo | `Invoke-RestMethod` esconde el body | Leerlo con el `StreamReader` de la Sección 5 |
+| Error de CORS **con la API levantada** | Dos API pelearon el puerto 5080 | `Get-NetTCPConnection -LocalPort 5080 -State Listen`, cerrar todas y levantar una |
+| La lista sale vacía pero la API responde | No corrió la migración de datos de prueba | `migrations list` y `database update` |
+| Toqué `src/` y el teléfono muestra lo viejo | Falta `npm run build` antes de `cap sync` | Sección 6 |
+| Parpadeo blanco al abrir la app | Se quitó el script inline de `index.html` | Restaurarlo: aplica el tema antes del bundle |
 
 ## Datos del proyecto Android
 
@@ -250,20 +210,29 @@ igual, el problema está del lado de la API o de la red.
 | `webDir` | `dist` |
 | `minSdkVersion` | 24 |
 | `compileSdkVersion` / `targetSdkVersion` | 36 |
-| Android Gradle Plugin | 9.3.0 |
-| Gradle (wrapper) | 9.5.0 |
 | Capacitor | 8.4.1 |
-| Permiso declarado | `INTERNET` |
 
-Siempre `.\gradlew`, nunca `gradle`: el *wrapper* fija la versión y el build es reproducible.
-`android/local.properties` **no se versiona**: lo genera Android Studio en cada máquina.
-
-Los íconos y el splash ya vienen generados y versionados. Solo si cambiás las fuentes de
-`RavEatApp/assets/` se regeneran: `npx @capacitor/assets generate --android` — con npm 11+ hace
-falta aprobar antes el script de `sharp` (`npm install-scripts approve sharp`).
+**Gradle** es el motor de build y el **Android Gradle Plugin** es lo que le enseña a Gradle qué es
+un APK: son dos versiones distintas. `gradlew` (el *wrapper*) fija cuál Gradle se usa, y por eso el
+build es reproducible; siempre se invoca `.\gradlew`, nunca `gradle`. El único permiso declarado
+es `INTERNET`.
 
 ### Firma
 
-El APK de depuración usa el `debug.keystore` que Android Studio genera solo en cada máquina. No hay
-nada que configurar. El keystore de **release** —el que firma para publicar— tiene una sola regla:
-**nunca se versiona.** El `.gitignore` ya lo corta.
+En esta versión alcanza con el `debug.keystore` automático: Android Studio lo genera solo en
+`$env:USERPROFILE\.android\debug.keystore` y `assembleDebug` lo usa sin configurar nada. Si
+generás un keystore propio, la regla es una sola: **el keystore y sus contraseñas nunca se
+versionan.**
+
+### Íconos y splash · bajo demanda
+
+Los recursos gráficos de Android ya están generados y versionados. Solo si se modifican las
+imágenes fuente de `RavEatApp/assets/` se regeneran con:
+
+```powershell
+Set-Location .\RavEatApp
+npx --yes --package @capacitor/assets@3.0.5 capacitor-assets generate --android
+```
+
+`npx` descarga la versión indicada, la ejecuta y no toca `package.json`. No forma parte de la
+instalación normal.

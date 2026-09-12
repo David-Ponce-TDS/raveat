@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">RavEat</string>
+    <string name="title_activity_main">RavEat</string>
+    <string name="package_name">app.raveat</string>
+    <string name="custom_url_scheme">app.raveat</string>
+</resources>

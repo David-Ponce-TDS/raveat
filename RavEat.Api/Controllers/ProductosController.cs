@@ -1,14 +1,16 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RavEat.Api.Data;
+using RavEat.Api.Domain.Entities;
 
 namespace RavEat.Api.Controllers;
 
 [ApiController]
 [Route("api/productos")]
 public sealed class ProductosController(RavEatDbContext db) : ControllerBase {
-    // La carta entera de una sola vez, que alcanza para un restaurante. Cuando la lista pueda
-    // crecer sin limite hay que paginar: eso es v4.
+    // La vitrina: la carta entera con sus categorias y los contadores del encabezado.
+    // Devuelve todo de una sola vez, que alcanza para una carta de restaurante. El catalogo de
+    // gestion, que si puede crecer sin limite, va por "listado" y esta paginado.
     [HttpGet("resumen")]
     public async Task<IActionResult> Resumen(CancellationToken cancellationToken) {
         // Los contadores se cuentan en la base, no sobre la lista devuelta: son dos preguntas
@@ -17,9 +19,10 @@ public sealed class ProductosController(RavEatDbContext db) : ControllerBase {
         var disponibles = await db.Productos.CountAsync(x => x.Activo && x.Disponible, cancellationToken);
         var resumen = new ProductosResumenResponse(total, disponibles, total - disponibles);
 
-        // Proyeccion intermedia a un tipo anonimo y no al record: EF no sabe traducir un Where
-        // sobre una propiedad de un record recien construido ("could not be translated"). Se
-        // filtra y ordena en la base; el record se arma despues, en memoria.
+        // La proyeccion intermedia es a un tipo anonimo y no al record directamente: EF no sabe
+        // traducir un Where sobre una propiedad de un record recien construido (falla en tiempo de
+        // ejecucion con "could not be translated"). Se filtra y ordena en la base, y el record se
+        // arma despues, ya en memoria.
         var categoriasBase = await db.Categorias.AsNoTracking()
             .Where(x => x.Activo)
             .Select(categoria => new {
@@ -78,6 +81,116 @@ public sealed class ProductosController(RavEatDbContext db) : ControllerBase {
         if(producto is null) return NotFound(new {codigo = "producto_no_encontrado", mensaje = "El producto no existe o fue dado de baja."});
         return Ok(new {producto});
     }
+
+    // El catalogo de gestion: paginado y con los filtros resueltos en la base. A diferencia de la
+    // vitrina, muestra tambien los no disponibles, porque desde aca se editan.
+    [HttpGet("listado")]
+    public async Task<IActionResult> Listado(
+        [FromQuery] string? busqueda,
+        [FromQuery(Name = "categoria_id")] long? categoriaId,
+        [FromQuery] bool? disponible,
+        [FromQuery] int? pagina,
+        [FromQuery] int? tamano,
+        CancellationToken cancellationToken
+    ) {
+        var consulta = db.Productos.AsNoTracking().Where(x => x.Activo);
+        var texto = (busqueda ?? string.Empty).Trim();
+        if(texto.Length > 0) consulta = consulta.Where(x => x.Nombre.Contains(texto) || (x.Descripcion != null && x.Descripcion.Contains(texto)));
+        if(categoriaId.HasValue && categoriaId.Value > 0) consulta = consulta.Where(x => x.CategoriaId == categoriaId.Value);
+
+        // Los contadores cuentan sobre lo que coincide con la busqueda y la categoria, pero NO con
+        // el filtro de disponibilidad: ese filtro se elige tocando esos mismos contadores, y si se
+        // contaran a si mismos, al filtrar por "disponibles" el numero de no disponibles daria 0.
+        var total = await consulta.CountAsync(cancellationToken);
+        var disponibles = await consulta.CountAsync(x => x.Disponible, cancellationToken);
+        var resumen = new ProductosResumenResponse(total, disponibles, total - disponibles);
+
+        if(disponible.HasValue) consulta = consulta.Where(x => x.Disponible == disponible.Value);
+
+        var (items, paginaResponse) = await (
+            from producto in consulta
+            join categoria in db.Categorias.AsNoTracking() on producto.CategoriaId equals categoria.Id
+            orderby producto.Nombre
+            select new ProductoResumenResponse(
+                producto.Id,
+                producto.Nombre,
+                producto.Descripcion,
+                producto.Precio,
+                producto.ImagenUrl,
+                producto.Disponible,
+                categoria.Id,
+                categoria.Nombre
+            )
+        ).PaginarAsync(PaginaConsulta.Desde(pagina, tamano), cancellationToken);
+
+        return Ok(new {resumen, productos = items, pagina = paginaResponse});
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Crear(GuardarProductoRequest request, CancellationToken cancellationToken) {
+        var error = await ValidarAsync(request, cancellationToken);
+        if(error is not null) return BadRequest(error);
+
+        var nombre = request.Nombre.Trim();
+        var duplicado = await db.Productos.AnyAsync(x => x.CategoriaId == request.CategoriaId && x.Nombre == nombre && x.Activo, cancellationToken);
+        if(duplicado) return BadRequest(new {codigo = "producto_duplicado", mensaje = "Ya existe un producto con ese nombre en la categoría."});
+
+        var producto = new Producto();
+        Aplicar(producto, request);
+        db.Productos.Add(producto);
+        await db.SaveChangesAsync(cancellationToken);
+        return Ok(new {producto = await ProyectarAsync(producto, cancellationToken)});
+    }
+
+    [HttpPut("{id:long}")]
+    public async Task<IActionResult> Actualizar(long id, GuardarProductoRequest request, CancellationToken cancellationToken) {
+        var error = await ValidarAsync(request, cancellationToken);
+        if(error is not null) return BadRequest(error);
+
+        var producto = await db.Productos.FirstOrDefaultAsync(x => x.Id == id && x.Activo, cancellationToken);
+        if(producto is null) return NotFound(new {codigo = "producto_no_encontrado", mensaje = "El producto no existe o fue dado de baja."});
+
+        var nombre = request.Nombre.Trim();
+        var duplicado = await db.Productos.AnyAsync(x => x.CategoriaId == request.CategoriaId && x.Nombre == nombre && x.Activo && x.Id != id, cancellationToken);
+        if(duplicado) return BadRequest(new {codigo = "producto_duplicado", mensaje = "Ya existe otro producto con ese nombre en la categoría."});
+
+        Aplicar(producto, request);
+        await db.SaveChangesAsync(cancellationToken);
+        return Ok(new {producto = await ProyectarAsync(producto, cancellationToken)});
+    }
+
+    // Baja logica: un producto vendido alguna vez no se borra, porque los items de pedidos viejos
+    // lo referencian. La FK es Restrict justamente para que un DELETE real falle.
+    [HttpDelete("{id:long}")]
+    public async Task<IActionResult> Eliminar(long id, CancellationToken cancellationToken) {
+        var producto = await db.Productos.FirstOrDefaultAsync(x => x.Id == id && x.Activo, cancellationToken);
+        if(producto is null) return NotFound(new {codigo = "producto_no_encontrado", mensaje = "El producto no existe o ya fue dado de baja."});
+        producto.Activo = false;
+        await db.SaveChangesAsync(cancellationToken);
+        return Ok(new {eliminado = true});
+    }
+
+    private async Task<object?> ValidarAsync(GuardarProductoRequest request, CancellationToken cancellationToken) {
+        if(string.IsNullOrWhiteSpace(request.Nombre)) return new {codigo = "producto_nombre_requerido", mensaje = "El nombre es obligatorio."};
+        if(request.Precio < 0) return new {codigo = "producto_precio_invalido", mensaje = "El precio no puede ser negativo."};
+        var categoriaExiste = await db.Categorias.AnyAsync(x => x.Id == request.CategoriaId && x.Activo, cancellationToken);
+        if(!categoriaExiste) return new {codigo = "categoria_no_encontrada", mensaje = "La categoría indicada no existe."};
+        return null;
+    }
+
+    private static void Aplicar(Producto producto, GuardarProductoRequest request) {
+        producto.CategoriaId = request.CategoriaId;
+        producto.Nombre = request.Nombre.Trim();
+        producto.Descripcion = string.IsNullOrWhiteSpace(request.Descripcion) ? null : request.Descripcion.Trim();
+        producto.Precio = request.Precio;
+        producto.ImagenUrl = string.IsNullOrWhiteSpace(request.ImagenUrl) ? null : request.ImagenUrl.Trim();
+        producto.Disponible = request.Disponible;
+    }
+
+    private async Task<ProductoResumenResponse> ProyectarAsync(Producto x, CancellationToken cancellationToken) {
+        var categoriaNombre = await db.Categorias.Where(c => c.Id == x.CategoriaId).Select(c => c.Nombre).FirstAsync(cancellationToken);
+        return new ProductoResumenResponse(x.Id, x.Nombre, x.Descripcion, x.Precio, x.ImagenUrl, x.Disponible, x.CategoriaId, categoriaNombre);
+    }
 }
 
 public sealed record ProductosResumenResponse(int Total, int Disponibles, int NoDisponibles);
@@ -91,4 +204,13 @@ public sealed record ProductoResumenResponse(
     bool Disponible,
     long CategoriaId,
     string CategoriaNombre
+);
+
+public sealed record GuardarProductoRequest(
+    long CategoriaId,
+    string Nombre,
+    string? Descripcion,
+    decimal Precio,
+    string? ImagenUrl,
+    bool Disponible
 );

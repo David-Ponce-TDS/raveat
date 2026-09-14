@@ -61,9 +61,11 @@ export const navegacion = [
 		titulo: 'Productos',
 		ruta: '/app/productos',
 		icono: pricetagsOutline,
-		roles: ['administrador', 'vendedor'],
-		menu_roles: ['administrador', 'vendedor'],
-		tab_roles: ['administrador', 'vendedor'],
+		// El catalogo lo administra solo el ADMIN, igual que en la API: el vendedor lo consulta
+		// desde la vitrina de Inicio.
+		roles: ['administrador'],
+		menu_roles: ['administrador'],
+		tab_roles: ['administrador'],
 		grupo_menu: 'operacion',
 		orden: 20,
 		componente: () => import('@/views/productos_page.vue')

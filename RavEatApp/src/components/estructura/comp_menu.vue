@@ -41,6 +41,7 @@
 	IonToolbar
 } from '@ionic/vue';
 import { obtener_grupos_menu_rol } from '@/config/navegacion';
+import { use_sesion_store } from '@/stores/sesion_store';
 
 export default {
 	name: 'comp_menu',
@@ -62,10 +63,17 @@ export default {
 			required: true
 		}
 	},
+	data(){
+		return {
+			sesion_store: use_sesion_store()
+		};
+	},
 	computed: {
+		// El menu muestra solo lo que el rol de la sesion puede abrir. Sin rol quedan Inicio y
+		// Mi cuenta, que es exactamente lo que puede hacer un usuario sin habilitar.
 		grupos_menu(){
-			// Sin rol activo devuelve todo. En v5 se le pasa el rol de la sesion y filtra solo.
-			return obtener_grupos_menu_rol(null);
+			var vm = this;
+			return obtener_grupos_menu_rol(vm.sesion_store.rol_activo);
 		}
 	},
 	methods: {

@@ -19,6 +19,7 @@
 	IonTabButton
 } from '@ionic/vue';
 import { obtener_tabs_rol } from '@/config/navegacion';
+import { use_sesion_store } from '@/stores/sesion_store';
 
 export default {
 	name: 'comp_tabs',
@@ -28,10 +29,16 @@ export default {
 		IonTabBar,
 		IonTabButton
 	},
+	data(){
+		return {
+			sesion_store: use_sesion_store()
+		};
+	},
 	computed: {
+		// Los tabs siguen al rol de la sesion: la misma lista que el menu, recortada al maximo.
 		items_tabs(){
-			// Sin rol activo devuelve todo, recortado al maximo de tabs. En v5 filtra por rol.
-			return obtener_tabs_rol(null);
+			var vm = this;
+			return obtener_tabs_rol(vm.sesion_store.rol_activo);
 		}
 	}
 };</script>

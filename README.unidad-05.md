@@ -193,7 +193,7 @@ RavEat/
 - [ ] La app abre en el **login**; con el administrador sembrado se ven los cinco tabs
 - [ ] `GET /api/productos/listado` **sin token devuelve 401**; con el token del admin, 200
 - [ ] El admin crea un usuario **sin rol**: ese usuario entra, ve solo Inicio y Mi cuenta, y Mi cuenta le explica que falta habilitarlo
-- [ ] Al asignarle el rol Caja, pasa a ver Pedidos — y al intentar crear uno recibe 403: cobrar sí, crear no
+- [ ] Al asignarle el rol Vendedor, pasa a ver Clientes y Pedidos — y al intentar cobrar uno recibe 403: crear sí, cobrar no
 - [ ] Cerrar sesión y renovar funcionan; dos renovaciones seguidas no cierran la sesión
 - [ ] En el teléfono, la huella desbloquea la sesión guardada sin pedir la contraseña
 - [ ] `npm run lint`, `npm run build` y `dotnet build` terminan sin errores

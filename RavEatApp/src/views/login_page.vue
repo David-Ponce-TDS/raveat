@@ -38,7 +38,7 @@
 
 				<!-- Solo aparece si hay una sesión guardada Y el dispositivo tiene biometría. La
 				     huella no reemplaza al login: desbloquea la sesión que ya existe. -->
-				<ion-button v-if="puede_biometria" expand="block" fill="outline" @click="entrar_con_biometria">
+				<ion-button v-if="puede_biometria" expand="block" fill="outline" :disabled="sesion_store.cargando" @click="entrar_con_biometria">
 					<ion-icon slot="start" :icon="icono_huella" />
 					Entrar con huella
 				</ion-button>
@@ -109,7 +109,14 @@ export default {
 			// porque cancelar la huella es una decision del usuario, no una falla.
 			if(!confirmado) return;
 			const usuario = await vm.sesion_store.iniciar();
-			if(usuario) vm.$router.replace('/app/inicio');
+			if(usuario){
+				vm.$router.replace('/app/inicio');
+				return;
+			}
+			// La huella dijo que si y la sesion guardada no sirvio igual. El store ya puso el motivo
+			// en `error`; aca solo se vuelve a preguntar si quedo algo que desbloquear, porque si la
+			// API la revoco el token se borro y el boton no tiene mas sentido.
+			vm.puede_biometria = Boolean(await restaurar_sesion());
 		}
 	}
 };</script>

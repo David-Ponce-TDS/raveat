@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
+import { obtener_rol_por_codigo } from '@/config/roles';
 import { cerrar_sesion, iniciar_sesion, obtener_mi_usuario } from '@/services/sesion_service';
 import {
-	al_expirar,
 	borrar_sesion,
 	guardar_sesion,
 	obtener_refresh_token,
@@ -27,26 +27,43 @@ export const use_sesion_store = defineStore('sesion', {
 		autenticado(state){
 			return Boolean(state.usuario);
 		},
+		// Se entrega ya traducido al id de navegacion ('administrador'), no al codigo de la API
+		// ('ADMIN'): el guard, el menu y los tabs comparan contra navegacion.js, y la traduccion
+		// vive en un solo lugar.
 		rol_activo(state){
-			return state.usuario?.rol_codigo || null;
+			return obtener_rol_por_codigo(state.usuario?.rol_codigo)?.id || null;
 		},
-		// Autenticado pero sin rol: entro y no puede hacer nada hasta que lo habiliten.
+		// Autenticado pero sin rol: entro y no puede hacer nada hasta que lo habiliten. Mira el
+		// codigo crudo a proposito: un rol que la app todavia no sabe traducir sigue siendo un rol.
 		pendiente_de_habilitacion(state){
 			return Boolean(state.usuario) && !state.usuario.rol_codigo;
 		},
 		es_admin(){
-			return this.rol_activo === 'ADMIN';
+			return this.rol_activo === 'administrador';
 		}
 	},
 	actions: {
-		// Se llama una vez al arrancar la app. Si hay un token guardado, pregunta a la API si
-		// todavia vale: el rol pudo haber cambiado desde la ultima vez, y solo el servidor lo sabe.
-		iniciar: async function(){
+		// Se llama una vez al arrancar la app, y NO entra: solo trae a memoria el token guardado
+		// para que el login sepa si hay una sesion que desbloquear. Entrar es una decision del
+		// usuario y pasa por la huella: la app siempre arranca en el login, y desde ahi la huella
+		// desbloquea la sesion que ya existe en vez de volver a pedir email y contrasena.
+		preparar: async function(){
 			var vm = this;
 			vm.restaurando = true;
-			// El service avisa por callback cuando ya no se puede renovar. Se conecta aca y no en
-			// ajax_service para no crear un ciclo de imports entre los dos.
-			al_expirar(() => vm.limpiar());
+			try{
+				return Boolean(await restaurar_sesion());
+			}finally{
+				vm.restaurando = false;
+			}
+		},
+
+		// Desbloquea la sesion guardada: pregunta a la API si el token todavia vale antes de dejar
+		// pasar, porque el rol pudo haber cambiado desde la ultima vez y solo el servidor lo sabe.
+		// La huella confirma quien es; esto confirma que la sesion sigue siendo valida.
+		iniciar: async function(){
+			var vm = this;
+			vm.cargando = true;
+			vm.error = null;
 			try{
 				const token = await restaurar_sesion();
 				if(!token){
@@ -56,13 +73,21 @@ export const use_sesion_store = defineStore('sesion', {
 				const respuesta = await obtener_mi_usuario();
 				vm.usuario = respuesta?.usuario || null;
 				return vm.usuario;
-			}catch{
-				// Token vencido o revocado: no es un error que haya que mostrar, es que no hay sesion.
-				await borrar_sesion();
+			}catch(error){
+				// Solo se borra cuando la API dijo que la sesion ya no vale: un 401 que ademas no se
+				// pudo renovar. Un error de red no prueba nada sobre el token, y borrarlo ahi obligaria
+				// a escribir la contrasena de nuevo por un problema de wifi.
+				const revocada = error?.estado_http === 401;
+				if(revocada) await borrar_sesion();
+				// El error se muestra si o si: la huella salio bien y el usuario se quedo afuera igual,
+				// asi que desde afuera parece que fallo la huella. Hay que decirle que fue la sesion.
+				vm.error = revocada
+					? 'La sesión guardada ya no vale. Entrá con tu email y contraseña.'
+					: error?.mensaje || 'No se pudo reanudar la sesión.';
 				vm.usuario = null;
 				return null;
 			}finally{
-				vm.restaurando = false;
+				vm.cargando = false;
 			}
 		},
 		entrar: async function(email, password){

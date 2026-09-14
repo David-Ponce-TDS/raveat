@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router';
-import { navegacion } from '@/config/navegacion';
-import { obtener_rol_por_codigo } from '@/config/roles';
+import { navegacion, TODOS } from '@/config/navegacion';
 import main_layout from '@/layouts/main_layout.vue';
 import { use_sesion_store } from '@/stores/sesion_store';
 
@@ -51,15 +50,8 @@ const router = createRouter({
 	routes
 });
 
-// Desde v5 el rol sale del store de sesion. Es el unico cambio que hizo falta: la estructura del
-// guard estaba armada desde v2 y no se toco.
-// La API habla en codigos (`ADMIN`) y la navegacion en ids (`administrador`); la traduccion la
-// hace `roles.js`.
-function obtener_rol_activo(){
-	const sesion = use_sesion_store();
-	return obtener_rol_por_codigo(sesion.rol_activo)?.id || null;
-}
-
+// Desde v5 el rol sale del store de sesion, que ya lo entrega como id de navegacion
+// ('administrador'). La estructura del guard estaba armada desde v2 y no se toco.
 // Guard real. Lee la metadata que viene de navegacion.js, no una lista escrita a mano: por eso
 // agregar una pantalla protegida no requiere tocar este archivo.
 router.beforeEach(to =>{
@@ -77,11 +69,16 @@ router.beforeEach(to =>{
 	if(!sesion.autenticado) return {path: '/login', replace: true};
 
 	const roles_permitidos = to.meta.roles;
-	// Lista vacia = cualquier autenticado, incluso sin rol asignado.
-	if(!roles_permitidos || roles_permitidos.length === 0) return true;
+	// Misma regla de lectura que navegacion.js: [TODOS] abre la ruta a cualquier autenticado,
+	// tenga rol o no (es la marca que lleva Inicio), y la lista vacia no abre a nadie.
+	if(!roles_permitidos) return true;
+	if(roles_permitidos.includes(TODOS)) return true;
 
-	const rol_activo = obtener_rol_activo();
-	if(rol_activo && roles_permitidos.includes(rol_activo)) return true;
+	if(sesion.rol_activo && roles_permitidos.includes(sesion.rol_activo)) return true;
+
+	// Inicio es el refugio del guard: si el destino ya es Inicio, se deja pasar. Asi el guard
+	// nunca redirige una ruta a si misma, sea cual sea la configuracion.
+	if(to.path === '/app/inicio') return true;
 
 	// Autenticado pero sin permiso: vuelve a Inicio, que es lo unico que todos pueden ver. No se
 	// lo manda al login, porque su sesion es valida — lo que le falta es autorizacion.

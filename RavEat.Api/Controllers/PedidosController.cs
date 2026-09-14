@@ -9,7 +9,8 @@ using RavEat.Api.Domain.Enums;
 namespace RavEat.Api.Controllers;
 
 // Todos los roles operativos ven pedidos, pero no todos hacen lo mismo: crear y cobrar se restringe
-// endpoint por endpoint. Cocina mueve estados y no cobra; caja cobra y no crea.
+// endpoint por endpoint. Cocina y delivery mueven estados; el vendedor crea y no cobra; caja crea
+// y cobra.
 //
 // Se listan los cinco roles en vez de usar `[Authorize]` a secas. No es lo mismo: `[Authorize]`
 // solo exige estar **autenticado**, asi que un usuario recien creado —que todavia no tiene rol—

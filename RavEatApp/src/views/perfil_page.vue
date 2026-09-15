@@ -58,19 +58,19 @@
 					</ion-item>
 
 					<div
-						v-if="estado !== 'inicial'"
+						v-if="estado != 'inicial'"
 						class="raveat-diagnostico__resultado"
 						:class="estado"
 					>
-						<ion-spinner v-if="estado === 'probando'" name="dots" />
-						<ion-icon v-else :icon="estado === 'ok' ? icono_ok : icono_falla" />
+						<ion-spinner v-if="estado == 'probando'" name="dots" />
+						<ion-icon v-else :icon="estado == 'ok' ? icono_ok : icono_falla" />
 						<span>{{ mensaje }}</span>
 					</div>
 
 					<ion-button
 						expand="block"
 						fill="outline"
-						:disabled="estado === 'probando'"
+						:disabled="estado == 'probando'"
 						@click="probar"
 					>
 						Probar conexión
@@ -161,7 +161,7 @@ export default {
 		]),
 		inicial(){
 			var vm = this;
-			return (vm.sesion_store.usuario?.nombre || '?').trim().charAt(0).toUpperCase();
+			return ((vm.sesion_store.usuario && vm.sesion_store.usuario.nombre) || '?').trim().charAt(0).toUpperCase();
 		}
 	},
 	methods: {
@@ -171,7 +171,7 @@ export default {
 		// El toggle emite en cada render inicial: solo se alterna si el valor cambio de verdad.
 		cambiar_tema: function(evento){
 			var vm = this;
-			if(evento.detail.checked === vm.tema_oscuro) return;
+			if(evento.detail.checked == vm.tema_oscuro) return;
 			vm.alternar();
 		},
 		probar: async function(){

@@ -129,7 +129,7 @@ export default {
 		guardar: function(){
 			var vm = this;
 			vm.$emit('guardar', {
-				id: vm.cliente?.id || null,
+				id: (vm.cliente && vm.cliente.id) || null,
 				datos: {
 					nombre: vm.formulario.nombre,
 					telefono: vm.formulario.telefono,
@@ -138,8 +138,8 @@ export default {
 					direccion_referencia: vm.formulario.direccion_referencia,
 					// Las coordenadas se conservan tal cual estaban: este formulario no las edita,
 					// y mandarlas en null borraria la ubicacion del cliente sin querer.
-					direccion_latitud: vm.cliente?.direccion_latitud ?? null,
-					direccion_longitud: vm.cliente?.direccion_longitud ?? null
+					direccion_latitud: vm.cliente ? vm.cliente.direccion_latitud : null,
+					direccion_longitud: vm.cliente ? vm.cliente.direccion_longitud : null
 				}
 			});
 		}

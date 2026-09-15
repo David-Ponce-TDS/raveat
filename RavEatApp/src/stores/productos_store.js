@@ -37,7 +37,7 @@ export const use_productos_store = defineStore('productos', {
 			return state.catalogo_productos.length > 0;
 		},
 		catalogo_hay_mas(state){
-			return Boolean(state.catalogo_pagina?.hay_mas);
+			return Boolean(state.catalogo_pagina && state.catalogo_pagina.hay_mas);
 		}
 	},
 	actions: {
@@ -47,9 +47,9 @@ export const use_productos_store = defineStore('productos', {
 			vm.error = null;
 			try{
 				const respuesta = await obtener_resumen_productos();
-				vm.resumen = respuesta?.resumen || null;
-				vm.categorias = respuesta?.categorias || [];
-				vm.productos = respuesta?.productos || [];
+				vm.resumen = (respuesta && respuesta.resumen) || null;
+				vm.categorias = (respuesta && respuesta.categorias) || [];
+				vm.productos = (respuesta && respuesta.productos) || [];
 				return vm.productos;
 			}catch(error){
 				// El store se queda con el mensaje ya normalizado por ajax_service; la pantalla no
@@ -70,9 +70,9 @@ export const use_productos_store = defineStore('productos', {
 			if(filtros) vm.catalogo_filtros = {...vm.catalogo_filtros, ...filtros};
 			try{
 				const respuesta = await obtener_listado_productos({...vm.catalogo_filtros, pagina: 1});
-				vm.catalogo_resumen = respuesta?.resumen || null;
-				vm.catalogo_productos = respuesta?.productos || [];
-				vm.catalogo_pagina = respuesta?.pagina || null;
+				vm.catalogo_resumen = (respuesta && respuesta.resumen) || null;
+				vm.catalogo_productos = (respuesta && respuesta.productos) || [];
+				vm.catalogo_pagina = (respuesta && respuesta.pagina) || null;
 				return vm.catalogo_productos;
 			}catch(error){
 				vm.error = error.mensaje || 'No se pudo cargar el catálogo.';
@@ -88,10 +88,10 @@ export const use_productos_store = defineStore('productos', {
 			if(vm.catalogo_cargando || !vm.catalogo_hay_mas) return vm.catalogo_productos;
 			vm.catalogo_cargando = true;
 			try{
-				const respuesta = await obtener_listado_productos({...vm.catalogo_filtros, pagina: (vm.catalogo_pagina?.pagina || 1) + 1});
+				const respuesta = await obtener_listado_productos({...vm.catalogo_filtros, pagina: ((vm.catalogo_pagina && vm.catalogo_pagina.pagina) || 1) + 1});
 				const conocidos = vm.catalogo_productos.map(producto => producto.id);
-				vm.catalogo_productos = [...vm.catalogo_productos, ...(respuesta?.productos || []).filter(producto => !conocidos.includes(producto.id))];
-				vm.catalogo_pagina = respuesta?.pagina || null;
+				vm.catalogo_productos = [...vm.catalogo_productos, ...((respuesta && respuesta.productos) || []).filter(producto => !conocidos.includes(producto.id))];
+				vm.catalogo_pagina = (respuesta && respuesta.pagina) || null;
 				return vm.catalogo_productos;
 			}catch(error){
 				vm.error = error.mensaje || 'No se pudieron cargar más productos.';

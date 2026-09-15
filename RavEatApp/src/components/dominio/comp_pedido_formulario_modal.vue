@@ -53,7 +53,7 @@
 				</ion-list>
 
 				<div class="raveat-resumen">
-					<span>{{ cantidad_total }} {{ cantidad_total === 1 ? 'unidad' : 'unidades' }}</span>
+					<span>{{ cantidad_total }} {{ cantidad_total == 1 ? 'unidad' : 'unidades' }}</span>
 					<!-- Es una estimacion: el total que vale es el que calcula el servidor con los
 					     precios de la base. Se muestra para que el mostrador no trabaje a ciegas. -->
 					<span>Estimado: {{ formatear_importe(subtotal_estimado) }}</span>
@@ -61,7 +61,7 @@
 
 				<ion-note v-if="error" color="danger">{{ error }}</ion-note>
 
-				<ion-button expand="block" :disabled="guardando || cantidad_total === 0" @click="confirmar">
+				<ion-button expand="block" :disabled="guardando || cantidad_total == 0" @click="confirmar">
 					<ion-spinner v-if="guardando" name="crescent" />
 					<span v-else>Crear pedido</span>
 				</ion-button>
@@ -177,20 +177,21 @@ export default {
 	methods: {
 		cantidad_de: function(producto_id){
 			var vm = this;
-			return vm.items.find(item => item.producto_id === producto_id)?.cantidad || 0;
+			const item = vm.items.find(item => item.producto_id == producto_id);
+			return item ? item.cantidad : 0;
 		},
 		agregar: function(producto){
 			var vm = this;
-			const item = vm.items.find(actual => actual.producto_id === producto.id);
+			const item = vm.items.find(actual => actual.producto_id == producto.id);
 			if(item) item.cantidad += 1;
 			else vm.items.push({producto_id: producto.id, precio: producto.precio, cantidad: 1});
 		},
 		quitar: function(producto_id){
 			var vm = this;
-			const item = vm.items.find(actual => actual.producto_id === producto_id);
+			const item = vm.items.find(actual => actual.producto_id == producto_id);
 			if(!item) return;
 			item.cantidad -= 1;
-			if(item.cantidad <= 0) vm.items = vm.items.filter(actual => actual.producto_id !== producto_id);
+			if(item.cantidad <= 0) vm.items = vm.items.filter(actual => actual.producto_id != producto_id);
 		},
 		confirmar: function(){
 			var vm = this;

@@ -156,7 +156,7 @@ export function obtener_grupos_menu_rol(rol){
 	return grupos_menu
 		.map(grupo => ({
 			...grupo,
-			items: items.filter(item => item.grupo_menu === grupo.id)
+			items: items.filter(item => item.grupo_menu == grupo.id)
 		}))
 		.filter(grupo => grupo.items.length > 0)
 		.sort((grupo_a, grupo_b) => grupo_a.orden - grupo_b.orden);

@@ -31,7 +31,8 @@ export const use_sesion_store = defineStore('sesion', {
 		// ('ADMIN'): el guard, el menu y los tabs comparan contra navegacion.js, y la traduccion
 		// vive en un solo lugar.
 		rol_activo(state){
-			return obtener_rol_por_codigo(state.usuario?.rol_codigo)?.id || null;
+			const rol = obtener_rol_por_codigo(state.usuario ? state.usuario.rol_codigo : null);
+			return rol ? rol.id : null;
 		},
 		// Autenticado pero sin rol: entro y no puede hacer nada hasta que lo habiliten. Mira el
 		// codigo crudo a proposito: un rol que la app todavia no sabe traducir sigue siendo un rol.
@@ -39,7 +40,7 @@ export const use_sesion_store = defineStore('sesion', {
 			return Boolean(state.usuario) && !state.usuario.rol_codigo;
 		},
 		es_admin(){
-			return this.rol_activo === 'administrador';
+			return this.rol_activo == 'administrador';
 		}
 	},
 	actions: {
@@ -71,19 +72,19 @@ export const use_sesion_store = defineStore('sesion', {
 					return null;
 				}
 				const respuesta = await obtener_mi_usuario();
-				vm.usuario = respuesta?.usuario || null;
+				vm.usuario = (respuesta && respuesta.usuario) || null;
 				return vm.usuario;
 			}catch(error){
 				// Solo se borra cuando la API dijo que la sesion ya no vale: un 401 que ademas no se
 				// pudo renovar. Un error de red no prueba nada sobre el token, y borrarlo ahi obligaria
 				// a escribir la contrasena de nuevo por un problema de wifi.
-				const revocada = error?.estado_http === 401;
+				const revocada = (error && error.estado_http) == 401;
 				if(revocada) await borrar_sesion();
 				// El error se muestra si o si: la huella salio bien y el usuario se quedo afuera igual,
 				// asi que desde afuera parece que fallo la huella. Hay que decirle que fue la sesion.
 				vm.error = revocada
 					? 'La sesión guardada ya no vale. Entrá con tu email y contraseña.'
-					: error?.mensaje || 'No se pudo reanudar la sesión.';
+					: (error && error.mensaje) || 'No se pudo reanudar la sesión.';
 				vm.usuario = null;
 				return null;
 			}finally{
@@ -96,8 +97,8 @@ export const use_sesion_store = defineStore('sesion', {
 			vm.error = null;
 			try{
 				const respuesta = await iniciar_sesion(email, password);
-				const sesion = respuesta?.sesion || null;
-				if(!sesion?.token){
+				const sesion = (respuesta && respuesta.sesion) || null;
+				if(!(sesion && sesion.token)){
 					vm.error = 'No se pudo iniciar sesión.';
 					return false;
 				}

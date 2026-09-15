@@ -79,7 +79,7 @@ export default {
 	methods: {
 		es_item_activo: function(ruta){
 			var vm = this;
-			return vm.$route.path === ruta || vm.$route.path.startsWith(`${ruta}/`);
+			return vm.$route.path == ruta || vm.$route.path.startsWith(`${ruta}/`);
 		}
 	}
 };</script>

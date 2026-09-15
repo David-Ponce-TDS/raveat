@@ -8,7 +8,7 @@ import { BiometricAuth } from '@aparajita/capacitor-biometric-auth';
 export async function biometria_disponible(){
 	try{
 		const resultado = await BiometricAuth.checkBiometry();
-		return Boolean(resultado?.isAvailable);
+		return Boolean(resultado && resultado.isAvailable);
 	}catch{
 		// En el navegador el plugin no existe: no es un error, es que no hay biometria.
 		return false;
@@ -18,7 +18,7 @@ export async function biometria_disponible(){
 export async function nombre_biometria(){
 	try{
 		const resultado = await BiometricAuth.checkBiometry();
-		return resultado?.biometryType ? String(resultado.biometryType) : '';
+		return (resultado && resultado.biometryType) ? String(resultado.biometryType) : '';
 	}catch{
 		return '';
 	}

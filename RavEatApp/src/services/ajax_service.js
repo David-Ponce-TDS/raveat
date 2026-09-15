@@ -27,7 +27,7 @@ function construir_url(endpoint){
 // tenga que leer `mensaje`.
 function normalizar_error(xhr, text_status, error_thrown){
 	const respuesta = xhr.responseJSON || null;
-	if(text_status === 'timeout'){
+	if(text_status == 'timeout'){
 		return {
 			estado_http: xhr.status || 0,
 			codigo: 'tiempo_espera_agotado',
@@ -35,7 +35,7 @@ function normalizar_error(xhr, text_status, error_thrown){
 			respuesta
 		};
 	}
-	if(text_status === 'abort'){
+	if(text_status == 'abort'){
 		return {
 			estado_http: xhr.status || 0,
 			codigo: 'cancelado',
@@ -54,18 +54,18 @@ function normalizar_error(xhr, text_status, error_thrown){
 	}
 	// 403 no es 401: el token es valido, pero el rol no alcanza. Renovarlo no cambiaria nada, y
 	// mandar al login seria mentirle al usuario sobre lo que pasó.
-	if(xhr.status === 403){
+	if(xhr.status == 403){
 		return {
 			estado_http: 403,
-			codigo: respuesta?.codigo || 'sin_permiso',
-			mensaje: respuesta?.mensaje || 'Tu rol no tiene permiso para esta acción.',
+			codigo: (respuesta && respuesta.codigo) || 'sin_permiso',
+			mensaje: (respuesta && respuesta.mensaje) || 'Tu rol no tiene permiso para esta acción.',
 			respuesta
 		};
 	}
 	return {
 		estado_http: xhr.status,
-		codigo: respuesta?.codigo || text_status || 'error_ajax',
-		mensaje: respuesta?.mensaje || error_thrown || 'No se pudo completar la solicitud.',
+		codigo: (respuesta && respuesta.codigo) || text_status || 'error_ajax',
+		mensaje: (respuesta && respuesta.mensaje) || error_thrown || 'No se pudo completar la solicitud.',
 		respuesta
 	};
 }
@@ -90,8 +90,8 @@ function renovar_sesion(){
 					headers: {Accept: 'application/json'}
 				}).done(resolve).fail(() => reject(new Error('refresh_fallido')));
 			});
-			const sesion = respuesta?.sesion || null;
-			if(!sesion?.token) return false;
+			const sesion = (respuesta && respuesta.sesion) || null;
+			if(!(sesion && sesion.token)) return false;
 			await guardar_sesion(sesion.token, sesion.expira_en, sesion.refresh_token, sesion.refresh_expira_en);
 			return true;
 		}catch{
@@ -134,7 +134,7 @@ function ejecutar_request(configuracion, permitir_renovar){
 		renovar = true
 	} = configuracion;
 	const metodo_normalizado = metodo.toUpperCase();
-	const envia_json = datos !== null && !['GET', 'HEAD'].includes(metodo_normalizado);
+	const envia_json = datos != null && !['GET', 'HEAD'].includes(metodo_normalizado);
 	return new Promise((resolve, reject) =>{
 		$.ajax({
 			url: construir_url(endpoint),
@@ -151,9 +151,9 @@ function ejecutar_request(configuracion, permitir_renovar){
 		})
 			.done(respuesta => resolve(respuesta))
 			.fail((xhr, text_status, error_thrown) =>{
-				if(xhr.status === 401 && renovar){
+				if(xhr.status == 401 && renovar){
 					manejar_401(permitir_renovar, () => ejecutar_request(configuracion, false))
-						.then(resolve, error => reject(error?.estado_http ? error : normalizar_error(xhr, text_status, error_thrown)));
+						.then(resolve, error => reject((error && error.estado_http) ? error : normalizar_error(xhr, text_status, error_thrown)));
 					return;
 				}
 				reject(normalizar_error(xhr, text_status, error_thrown));

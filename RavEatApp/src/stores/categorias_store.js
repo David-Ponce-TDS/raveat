@@ -16,7 +16,7 @@ export const use_categorias_store = defineStore('categorias', {
 			vm.error = null;
 			try{
 				const respuesta = await obtener_categorias();
-				vm.categorias = respuesta?.categorias || [];
+				vm.categorias = (respuesta && respuesta.categorias) || [];
 				return vm.categorias;
 			}catch(error){
 				vm.error = error.mensaje || 'No se pudieron cargar las categorías.';

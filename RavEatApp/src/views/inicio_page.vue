@@ -22,7 +22,7 @@
 						:key="chip.id"
 						type="button"
 						class="raveat-chip"
-						:class="{ activo: String(chip.id) === String(categoria_activa) }"
+						:class="{ activo: String(chip.id) == String(categoria_activa) }"
 						@click="categoria_activa = chip.id"
 					>
 						{{ chip.nombre }}
@@ -87,14 +87,14 @@ export default {
 		},
 		productos_visibles(){
 			var vm = this;
-			if(vm.categoria_activa === 'todas') return vm.productos_store.productos;
-			return vm.productos_store.productos.filter(producto => String(producto.categoria_id) === String(vm.categoria_activa));
+			if(vm.categoria_activa == 'todas') return vm.productos_store.productos;
+			return vm.productos_store.productos.filter(producto => String(producto.categoria_id) == String(vm.categoria_activa));
 		},
 		grupos(){
 			var vm = this;
 			const grupos = [];
 			vm.productos_visibles.forEach(producto =>{
-				let grupo = grupos.find(item => item.id === producto.categoria_id);
+				let grupo = grupos.find(item => item.id == producto.categoria_id);
 				if(!grupo){
 					grupo = {id: producto.categoria_id, nombre: producto.categoria_nombre, productos: []};
 					grupos.push(grupo);

@@ -10,7 +10,7 @@ const rutas_app = navegacion.map(item => ({
 	name: item.id,
 	component: item.componente,
 	meta: {
-		abierta: item.abierta === true,
+		abierta: item.abierta == true,
 		roles: item.roles
 	}
 }));
@@ -83,7 +83,7 @@ router.beforeEach(to =>{
 
 	// Inicio es el refugio del guard: si el destino ya es Inicio, se deja pasar. Asi el guard
 	// nunca redirige una ruta a si misma, sea cual sea la configuracion.
-	if(to.path === '/app/inicio') return true;
+	if(to.path == '/app/inicio') return true;
 
 	// Autenticado pero sin permiso: vuelve a Inicio, que es lo unico que todos pueden ver. No se
 	// lo manda al login, porque su sesion es valida — lo que le falta es autorizacion.

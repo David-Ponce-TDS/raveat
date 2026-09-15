@@ -186,12 +186,12 @@ export default {
 		abrir_acciones: async function(usuario){
 			var vm = this;
 			const botones = vm.store.roles
-				.filter(rol => rol.id !== usuario.rol_id)
+				.filter(rol => rol.id != usuario.rol_id)
 				.map(rol => ({text: `Asignar ${rol.nombre}`, handler: () => vm.store.cambiar_rol(usuario.id, rol.id)}));
 			if(usuario.rol_id) botones.push({text: 'Quitar el rol', handler: () => vm.store.cambiar_rol(usuario.id, null)});
 			// El admin no puede darse de baja a sí mismo: el servidor también lo rechaza, pero
 			// ofrecer la opción y después negarla es peor que no ofrecerla.
-			if(usuario.id !== vm.sesion_store.usuario?.id){
+			if(usuario.id != (vm.sesion_store.usuario && vm.sesion_store.usuario.id)){
 				botones.push({text: 'Dar de baja', role: 'destructive', handler: () => vm.confirmar_baja(usuario)});
 			}
 			botones.push({text: 'Cerrar', role: 'cancel'});

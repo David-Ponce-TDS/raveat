@@ -23,10 +23,10 @@ export const use_clientes_store = defineStore('clientes', {
 			return state.clientes.length > 0;
 		},
 		hay_mas(state){
-			return Boolean(state.pagina?.hay_mas);
+			return Boolean(state.pagina && state.pagina.hay_mas);
 		},
 		total(state){
-			return state.pagina?.total || 0;
+			return (state.pagina && state.pagina.total) || 0;
 		}
 	},
 	actions: {
@@ -38,8 +38,8 @@ export const use_clientes_store = defineStore('clientes', {
 			if(filtros) vm.filtros = {...vm.filtros, ...filtros};
 			try{
 				const respuesta = await obtener_clientes({...vm.filtros, pagina: 1});
-				vm.clientes = respuesta?.clientes || [];
-				vm.pagina = respuesta?.pagina || null;
+				vm.clientes = (respuesta && respuesta.clientes) || [];
+				vm.pagina = (respuesta && respuesta.pagina) || null;
 				return vm.clientes;
 			}catch(error){
 				vm.error = error.mensaje || 'No se pudieron cargar los clientes.';
@@ -55,12 +55,12 @@ export const use_clientes_store = defineStore('clientes', {
 			if(vm.cargando || !vm.hay_mas) return vm.clientes;
 			vm.cargando = true;
 			try{
-				const respuesta = await obtener_clientes({...vm.filtros, pagina: (vm.pagina?.pagina || 1) + 1});
+				const respuesta = await obtener_clientes({...vm.filtros, pagina: ((vm.pagina && vm.pagina.pagina) || 1) + 1});
 				// Se filtran los ya conocidos por si entro un cliente nuevo entre dos pedidos: sin
 				// esto, un corrimiento de pagina repetiria una fila.
 				const conocidos = vm.clientes.map(cliente => cliente.id);
-				vm.clientes = [...vm.clientes, ...(respuesta?.clientes || []).filter(cliente => !conocidos.includes(cliente.id))];
-				vm.pagina = respuesta?.pagina || null;
+				vm.clientes = [...vm.clientes, ...((respuesta && respuesta.clientes) || []).filter(cliente => !conocidos.includes(cliente.id))];
+				vm.pagina = (respuesta && respuesta.pagina) || null;
 				return vm.clientes;
 			}catch(error){
 				vm.error = error.mensaje || 'No se pudieron cargar más clientes.';

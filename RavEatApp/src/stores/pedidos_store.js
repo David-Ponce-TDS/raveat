@@ -28,7 +28,7 @@ export const use_pedidos_store = defineStore('pedidos', {
 			return state.pedidos.length > 0;
 		},
 		hay_mas(state){
-			return Boolean(state.pagina?.hay_mas);
+			return Boolean(state.pagina && state.pagina.hay_mas);
 		}
 	},
 	actions: {
@@ -39,10 +39,10 @@ export const use_pedidos_store = defineStore('pedidos', {
 			if(filtros) vm.filtros = {...vm.filtros, ...filtros};
 			try{
 				const respuesta = await obtener_pedidos({...vm.filtros, pagina: 1});
-				vm.pedidos = respuesta?.pedidos || [];
-				vm.pagina = respuesta?.pagina || null;
-				vm.resumen = respuesta?.resumen || {};
-				vm.total = respuesta?.total || 0;
+				vm.pedidos = (respuesta && respuesta.pedidos) || [];
+				vm.pagina = (respuesta && respuesta.pagina) || null;
+				vm.resumen = (respuesta && respuesta.resumen) || {};
+				vm.total = (respuesta && respuesta.total) || 0;
 				return vm.pedidos;
 			}catch(error){
 				vm.error = error.mensaje || 'No se pudieron cargar los pedidos.';
@@ -58,10 +58,10 @@ export const use_pedidos_store = defineStore('pedidos', {
 			if(vm.cargando || !vm.hay_mas) return vm.pedidos;
 			vm.cargando = true;
 			try{
-				const respuesta = await obtener_pedidos({...vm.filtros, pagina: (vm.pagina?.pagina || 1) + 1});
+				const respuesta = await obtener_pedidos({...vm.filtros, pagina: ((vm.pagina && vm.pagina.pagina) || 1) + 1});
 				const conocidos = vm.pedidos.map(pedido => pedido.id);
-				vm.pedidos = [...vm.pedidos, ...(respuesta?.pedidos || []).filter(pedido => !conocidos.includes(pedido.id))];
-				vm.pagina = respuesta?.pagina || null;
+				vm.pedidos = [...vm.pedidos, ...((respuesta && respuesta.pedidos) || []).filter(pedido => !conocidos.includes(pedido.id))];
+				vm.pagina = (respuesta && respuesta.pagina) || null;
 				return vm.pedidos;
 			}catch(error){
 				vm.error = error.mensaje || 'No se pudieron cargar más pedidos.';
@@ -75,7 +75,7 @@ export const use_pedidos_store = defineStore('pedidos', {
 			var vm = this;
 			const actuales = vm.filtros.estados || [];
 			const nuevos = actuales.includes(estado)
-				? actuales.filter(item => item !== estado)
+				? actuales.filter(item => item != estado)
 				: [...actuales, estado];
 			return vm.cargar({estados: nuevos});
 		},
@@ -84,8 +84,8 @@ export const use_pedidos_store = defineStore('pedidos', {
 			vm.error = null;
 			try{
 				const respuesta = await obtener_pedido(id);
-				vm.detalle = respuesta?.pedido || null;
-				vm.detalle_items = respuesta?.items || [];
+				vm.detalle = (respuesta && respuesta.pedido) || null;
+				vm.detalle_items = (respuesta && respuesta.items) || [];
 				return vm.detalle;
 			}catch(error){
 				vm.error = error.mensaje || 'No se pudo cargar el pedido.';

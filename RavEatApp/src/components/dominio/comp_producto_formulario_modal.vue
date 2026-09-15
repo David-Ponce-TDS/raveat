@@ -125,9 +125,9 @@ export default {
 					categoria_id: vm.producto.categoria_id,
 					nombre: vm.producto.nombre || '',
 					descripcion: vm.producto.descripcion || '',
-					precio: vm.producto.precio ?? 0,
+					precio: vm.producto.precio || 0,
 					imagen_url: vm.producto.imagen_url || '',
-					disponible: vm.producto.disponible !== false
+					disponible: vm.producto.disponible != false
 				}
 				: vm.formulario_vacio();
 		}
@@ -146,7 +146,7 @@ export default {
 		guardar: function(){
 			var vm = this;
 			vm.$emit('guardar', {
-				id: vm.producto?.id || null,
+				id: (vm.producto && vm.producto.id) || null,
 				datos: {
 					categoria_id: vm.formulario.categoria_id,
 					nombre: vm.formulario.nombre,

@@ -52,7 +52,7 @@
 					</ion-label>
 					<div slot="end" class="raveat-pedido-estados">
 						<ion-badge :color="color_estado(pedido.estado)">{{ etiqueta(pedido.estado) }}</ion-badge>
-						<ion-badge :color="pedido.estado_pago === 'pagado' ? 'success' : 'medium'">{{ etiqueta(pedido.estado_pago) }}</ion-badge>
+						<ion-badge :color="pedido.estado_pago == 'pagado' ? 'success' : 'medium'">{{ etiqueta(pedido.estado_pago) }}</ion-badge>
 					</div>
 				</ion-item>
 			</comp-lista>
@@ -200,11 +200,11 @@ export default {
 			const botones = [];
 			const siguiente = SIGUIENTE_ESTADO[pedido.estado];
 			if(siguiente) botones.push({text: `Pasar a ${vm.etiqueta(siguiente)}`, handler: () => vm.store.cambiar_estado(pedido.id, siguiente)});
-			if(pedido.estado_pago === 'pendiente' && pedido.estado !== 'cancelado') {
+			if(pedido.estado_pago == 'pendiente' && pedido.estado != 'cancelado') {
 				botones.push({text: 'Cobrar en efectivo', handler: () => vm.store.registrar_pago(pedido.id, 'efectivo', 0)});
 				botones.push({text: 'Cobrar por transferencia', handler: () => vm.store.registrar_pago(pedido.id, 'transferencia', 0)});
 			}
-			if(pedido.estado !== 'cancelado' && pedido.estado !== 'cerrado') {
+			if(pedido.estado != 'cancelado' && pedido.estado != 'cerrado') {
 				botones.push({text: 'Cancelar pedido', role: 'destructive', handler: () => vm.store.cancelar(pedido.id)});
 			}
 			botones.push({text: 'Cerrar', role: 'cancel'});

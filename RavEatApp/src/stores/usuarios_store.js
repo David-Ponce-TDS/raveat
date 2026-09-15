@@ -23,10 +23,10 @@ export const use_usuarios_store = defineStore('usuarios', {
 			return state.usuarios.length > 0;
 		},
 		hay_mas(state){
-			return Boolean(state.pagina?.hay_mas);
+			return Boolean(state.pagina && state.pagina.hay_mas);
 		},
 		total(state){
-			return state.pagina?.total || 0;
+			return (state.pagina && state.pagina.total) || 0;
 		}
 	},
 	actions: {
@@ -37,9 +37,9 @@ export const use_usuarios_store = defineStore('usuarios', {
 			if(filtros) vm.filtros = {...vm.filtros, ...filtros};
 			try{
 				const respuesta = await obtener_usuarios({...vm.filtros, pagina: 1});
-				vm.usuarios = respuesta?.usuarios || [];
-				vm.roles = respuesta?.roles || [];
-				vm.pagina = respuesta?.pagina || null;
+				vm.usuarios = (respuesta && respuesta.usuarios) || [];
+				vm.roles = (respuesta && respuesta.roles) || [];
+				vm.pagina = (respuesta && respuesta.pagina) || null;
 				return vm.usuarios;
 			}catch(error){
 				vm.error = error.mensaje || 'No se pudieron cargar los usuarios.';
@@ -55,10 +55,10 @@ export const use_usuarios_store = defineStore('usuarios', {
 			if(vm.cargando || !vm.hay_mas) return vm.usuarios;
 			vm.cargando = true;
 			try{
-				const respuesta = await obtener_usuarios({...vm.filtros, pagina: (vm.pagina?.pagina || 1) + 1});
+				const respuesta = await obtener_usuarios({...vm.filtros, pagina: ((vm.pagina && vm.pagina.pagina) || 1) + 1});
 				const conocidos = vm.usuarios.map(usuario => usuario.id);
-				vm.usuarios = [...vm.usuarios, ...(respuesta?.usuarios || []).filter(usuario => !conocidos.includes(usuario.id))];
-				vm.pagina = respuesta?.pagina || null;
+				vm.usuarios = [...vm.usuarios, ...((respuesta && respuesta.usuarios) || []).filter(usuario => !conocidos.includes(usuario.id))];
+				vm.pagina = (respuesta && respuesta.pagina) || null;
 				return vm.usuarios;
 			}catch(error){
 				vm.error = error.mensaje || 'No se pudieron cargar más usuarios.';

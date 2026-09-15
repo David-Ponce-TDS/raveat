@@ -7,13 +7,13 @@
 			     NO aplica el filtro de disponibilidad — si se contara a sí mismo, al filtrar por
 			     "disponibles" el número de no disponibles daría siempre 0. -->
 			<div v-if="store.catalogo_resumen" class="raveat-chips">
-				<button type="button" class="raveat-chip" :class="{ activo: disponible === null }" @click="filtrar_disponible(null)">
+				<button type="button" class="raveat-chip" :class="{ activo: disponible == null }" @click="filtrar_disponible(null)">
 					Todos · {{ store.catalogo_resumen.total }}
 				</button>
-				<button type="button" class="raveat-chip" :class="{ activo: disponible === true }" @click="filtrar_disponible(true)">
+				<button type="button" class="raveat-chip" :class="{ activo: disponible == true }" @click="filtrar_disponible(true)">
 					Disponibles · {{ store.catalogo_resumen.disponibles }}
 				</button>
-				<button type="button" class="raveat-chip" :class="{ activo: disponible === false }" @click="filtrar_disponible(false)">
+				<button type="button" class="raveat-chip" :class="{ activo: disponible == false }" @click="filtrar_disponible(false)">
 					No disponibles · {{ store.catalogo_resumen.no_disponibles }}
 				</button>
 			</div>
@@ -130,7 +130,7 @@ export default {
 	computed: {
 		hay_filtros(){
 			var vm = this;
-			return Boolean(vm.busqueda) || vm.disponible !== null;
+			return Boolean(vm.busqueda) || vm.disponible != null;
 		},
 		total_catalogo(){
 			var vm = this;

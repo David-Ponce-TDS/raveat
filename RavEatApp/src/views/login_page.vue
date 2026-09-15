@@ -5,37 +5,40 @@
 				<!-- La portada vuelve a la vitrina: se puede mirar la carta sin entrar. -->
 				<comp-vidriera lema="Entrá con tu cuenta del local" @click="volver" />
 
-				<ion-list class="raveat-card">
-					<ion-item>
-						<ion-input
-							v-model="email"
-							type="email"
-							inputmode="email"
+				<form @submit.prevent="entrar">
+					<ion-list class="raveat-card">
+						<ion-item>
+							<ion-input
+								v-model="email"
+								type="email"
+								inputmode="email"
+								name="email"
 							autocomplete="username"
-							label="Email"
-							label-placement="stacked"
-							placeholder="vos@raveat.local"
-						/>
-					</ion-item>
-					<ion-item lines="none">
-						<ion-input
-							v-model="password"
-							type="password"
+								label="Email"
+								label-placement="stacked"
+								placeholder="vos@raveat.local"
+							/>
+						</ion-item>
+						<ion-item lines="none">
+							<ion-input
+								v-model="password"
+								type="password"
+								name="password"
 							autocomplete="current-password"
-							label="Contraseña"
-							label-placement="stacked"
-							placeholder="Tu contraseña"
-							@keyup.enter="entrar"
-						/>
-					</ion-item>
-				</ion-list>
+								label="Contraseña"
+								label-placement="stacked"
+								placeholder="Tu contraseña"
+							/>
+						</ion-item>
+					</ion-list>
 
-				<ion-note v-if="sesion_store.error" color="danger">{{ sesion_store.error }}</ion-note>
+					<ion-note v-if="sesion_store.error" color="danger">{{ sesion_store.error }}</ion-note>
 
-				<ion-button expand="block" :disabled="sesion_store.cargando" @click="entrar">
-					<ion-spinner v-if="sesion_store.cargando" name="crescent" />
-					<span v-else>Entrar</span>
-				</ion-button>
+					<ion-button expand="block" :disabled="sesion_store.cargando" type="submit">
+						<ion-spinner v-if="sesion_store.cargando" name="crescent" />
+						<span v-else>Entrar</span>
+					</ion-button>
+				</form>
 
 				<!-- Solo aparece si hay una sesión guardada Y el dispositivo tiene biometría. La
 					huella no reemplaza al login: desbloquea la sesión que ya existe. -->

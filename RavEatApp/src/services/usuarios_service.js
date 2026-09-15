@@ -15,9 +15,9 @@ export function crear_usuario(datos){
 }
 
 export function cambiar_rol_usuario(id, rol_id){
-	return ajax_request({endpoint: `/api/usuarios/${encodeURIComponent(id)}/rol`, metodo: 'PUT', datos: {rol_id}});
+	return ajax_request({endpoint: `/api/usuarios/${id}/rol`, metodo: 'PUT', datos: {rol_id}});
 }
 
 export function eliminar_usuario(id){
-	return ajax_request({endpoint: `/api/usuarios/${encodeURIComponent(id)}`, metodo: 'DELETE'});
+	return ajax_request({endpoint: `/api/usuarios/${id}`, metodo: 'DELETE'});
 }

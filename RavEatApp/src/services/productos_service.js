@@ -20,7 +20,7 @@ export function obtener_listado_productos(opciones = {}){
 }
 
 export function obtener_producto(id){
-	return ajax_request({endpoint: `/api/productos/${encodeURIComponent(id)}`, metodo: 'GET'});
+	return ajax_request({endpoint: `/api/productos/${id}`, metodo: 'GET'});
 }
 
 export function crear_producto(datos){
@@ -28,9 +28,9 @@ export function crear_producto(datos){
 }
 
 export function actualizar_producto(id, datos){
-	return ajax_request({endpoint: `/api/productos/${encodeURIComponent(id)}`, metodo: 'PUT', datos});
+	return ajax_request({endpoint: `/api/productos/${id}`, metodo: 'PUT', datos});
 }
 
 export function eliminar_producto(id){
-	return ajax_request({endpoint: `/api/productos/${encodeURIComponent(id)}`, metodo: 'DELETE'});
+	return ajax_request({endpoint: `/api/productos/${id}`, metodo: 'DELETE'});
 }

@@ -13,7 +13,7 @@ export function obtener_clientes(opciones = {}){
 }
 
 export function obtener_cliente(id){
-	return ajax_request({endpoint: `/api/clientes/${encodeURIComponent(id)}`, metodo: 'GET'});
+	return ajax_request({endpoint: `/api/clientes/${id}`, metodo: 'GET'});
 }
 
 export function crear_cliente(datos){
@@ -21,9 +21,9 @@ export function crear_cliente(datos){
 }
 
 export function actualizar_cliente(id, datos){
-	return ajax_request({endpoint: `/api/clientes/${encodeURIComponent(id)}`, metodo: 'PUT', datos});
+	return ajax_request({endpoint: `/api/clientes/${id}`, metodo: 'PUT', datos});
 }
 
 export function eliminar_cliente(id){
-	return ajax_request({endpoint: `/api/clientes/${encodeURIComponent(id)}`, metodo: 'DELETE'});
+	return ajax_request({endpoint: `/api/clientes/${id}`, metodo: 'DELETE'});
 }

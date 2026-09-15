@@ -16,7 +16,7 @@ export function obtener_pedidos(opciones = {}){
 }
 
 export function obtener_pedido(id){
-	return ajax_request({endpoint: `/api/pedidos/${encodeURIComponent(id)}`, metodo: 'GET'});
+	return ajax_request({endpoint: `/api/pedidos/${id}`, metodo: 'GET'});
 }
 
 // El cuerpo NO lleva precios: los pone el servidor leyendolos de la base. Si el precio viajara
@@ -26,13 +26,13 @@ export function crear_pedido(datos){
 }
 
 export function cambiar_estado_pedido(id, estado){
-	return ajax_request({endpoint: `/api/pedidos/${encodeURIComponent(id)}/estado`, metodo: 'PUT', datos: {estado}});
+	return ajax_request({endpoint: `/api/pedidos/${id}/estado`, metodo: 'PUT', datos: {estado}});
 }
 
 export function registrar_pago_pedido(id, medio_pago, propina_importe = 0){
-	return ajax_request({endpoint: `/api/pedidos/${encodeURIComponent(id)}/pago`, metodo: 'PUT', datos: {medio_pago, propina_importe}});
+	return ajax_request({endpoint: `/api/pedidos/${id}/pago`, metodo: 'PUT', datos: {medio_pago, propina_importe}});
 }
 
 export function cancelar_pedido(id){
-	return ajax_request({endpoint: `/api/pedidos/${encodeURIComponent(id)}`, metodo: 'DELETE'});
+	return ajax_request({endpoint: `/api/pedidos/${id}`, metodo: 'DELETE'});
 }

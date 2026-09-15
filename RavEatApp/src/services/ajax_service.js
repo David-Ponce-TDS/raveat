@@ -6,6 +6,7 @@ import {
 	notificar_sesion_expirada,
 	obtener_refresh_token
 } from '@/services/token_service';
+import { vibrar_error } from '@/services/vibracion_service';
 
 // El unico modulo de la app que habla con la API. Ninguna pagina ni componente llama a la red por
 // su cuenta: el camino es siempre pagina -> store o service -> ajax_service -> API. Concentrarlo
@@ -27,6 +28,8 @@ function construir_url(endpoint){
 // tenga que leer `mensaje`.
 function normalizar_error(xhr, text_status, error_thrown){
 	const respuesta = xhr.responseJSON || null;
+	// Todo error que llega a un store pasa por aca: vibrar en este punto vale para toda la app.
+	vibrar_error();
 	if(text_status == 'timeout'){
 		return {
 			estado_http: xhr.status || 0,

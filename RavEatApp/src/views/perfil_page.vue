@@ -27,17 +27,26 @@
 
 			<ion-card class="raveat-panel">
 				<ion-card-header>
-					<ion-card-subtitle>Apariencia</ion-card-subtitle>
-					<ion-card-title>Tema de la app</ion-card-title>
+					<ion-card-subtitle>Preferencias</ion-card-subtitle>
+					<ion-card-title>Tema y vibración</ion-card-title>
 				</ion-card-header>
 				<ion-card-content>
-					<ion-item :lines="'none'">
+					<ion-item>
 						<ion-icon slot="start" :icon="icono_tema" />
 						<ion-label>Modo oscuro</ion-label>
 						<ion-toggle
 							slot="end"
 							:checked="tema_oscuro"
 							@ion-change="cambiar_tema"
+						/>
+					</ion-item>
+					<ion-item :lines="'none'">
+						<ion-icon slot="start" :icon="icono_vibracion" />
+						<ion-label>Vibración</ion-label>
+						<ion-toggle
+							slot="end"
+							:checked="vibracion_activa"
+							@ion-change="cambiar_vibracion"
 						/>
 					</ion-item>
 				</ion-card-content>
@@ -109,13 +118,15 @@ import {
 	cloudOutline,
 	contrastOutline,
 	hourglassOutline,
-	logOutOutline
+	logOutOutline,
+	pulseOutline
 } from 'ionicons/icons';
 import { mapActions, mapState } from 'pinia';
 import comp_estado_vacio from '@/components/base/comp_estado_vacio.vue';
 import comp_page from '@/components/estructura/comp_page.vue';
 import { obtener_api_url } from '@/config/debug';
 import { consultar_health } from '@/services/health_service';
+import { vibrar_toque } from '@/services/vibracion_service';
 import { use_app_store } from '@/stores/app_store';
 import { use_sesion_store } from '@/stores/sesion_store';
 
@@ -151,13 +162,15 @@ export default {
 			icono_ok: checkmarkCircleOutline,
 			icono_salir: logOutOutline,
 			icono_tema: contrastOutline,
+			icono_vibracion: pulseOutline,
 			mensaje: '',
 			sesion_store: use_sesion_store()
 		};
 	},
 	computed: {
 		...mapState(use_app_store, [
-			'tema_oscuro'
+			'tema_oscuro',
+			'vibracion_activa'
 		]),
 		inicial(){
 			var vm = this;
@@ -166,13 +179,21 @@ export default {
 	},
 	methods: {
 		...mapActions(use_app_store, {
-			alternar: 'alternar_tema'
+			alternar: 'alternar_tema',
+			alternar_vibracion: 'alternar_vibracion'
 		}),
 		// El toggle emite en cada render inicial: solo se alterna si el valor cambio de verdad.
 		cambiar_tema: function(evento){
 			var vm = this;
 			if(evento.detail.checked == vm.tema_oscuro) return;
 			vm.alternar();
+		},
+		cambiar_vibracion: function(evento){
+			var vm = this;
+			if(evento.detail.checked == vm.vibracion_activa) return;
+			vm.alternar_vibracion();
+			// Al encenderla vibra una vez: es la forma de "ver" que funciona.
+			if(vm.vibracion_activa) vibrar_toque();
 		},
 		probar: async function(){
 			var vm = this;

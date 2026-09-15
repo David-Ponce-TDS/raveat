@@ -2,11 +2,16 @@ import { defineStore } from 'pinia';
 
 export const use_app_store = defineStore('app', {
 	state: () => ({
-		tema: 'oscuro'
+		tema: 'oscuro',
+		// Sin efecto visual al arrancar: se lee al crear el store, sin paso propio en main.js.
+		vibracion: localStorage.getItem('raveat_vibracion') != 'no'
 	}),
 	getters: {
 		tema_oscuro(state){
 			return state.tema == 'oscuro';
+		},
+		vibracion_activa(state){
+			return state.vibracion;
 		}
 	},
 	actions: {
@@ -22,6 +27,10 @@ export const use_app_store = defineStore('app', {
 		},
 		aplicar_tema_actual(){
 			document.documentElement.classList.toggle('ion-palette-dark', this.tema == 'oscuro');
+		},
+		alternar_vibracion(){
+			this.vibracion = !this.vibracion;
+			localStorage.setItem('raveat_vibracion', this.vibracion ? 'si' : 'no');
 		}
 	}
 });

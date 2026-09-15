@@ -76,7 +76,8 @@
 	IonIcon,
 	IonItem,
 	IonLabel,
-	actionSheetController
+	actionSheetController,
+	alertController
 } from '@ionic/vue';
 import { addOutline, receiptOutline } from 'ionicons/icons';
 import comp_buscador from '@/components/base/comp_buscador.vue';
@@ -86,6 +87,8 @@ import comp_esqueleto from '@/components/base/comp_esqueleto.vue';
 import comp_lista from '@/components/base/comp_lista.vue';
 import comp_page from '@/components/estructura/comp_page.vue';
 import comp_pedido_formulario_modal from '@/components/dominio/comp_pedido_formulario_modal.vue';
+import { compartir_archivo } from '@/services/compartir_service';
+import { descargar_comprobante_pedido } from '@/services/pedidos_service';
 import { formatear_importe } from '@/utils/formato_moneda';
 import { use_clientes_store } from '@/stores/clientes_store';
 import { use_pedidos_store } from '@/stores/pedidos_store';
@@ -204,6 +207,7 @@ export default {
 				botones.push({text: 'Cobrar en efectivo', handler: () => vm.store.registrar_pago(pedido.id, 'efectivo', 0)});
 				botones.push({text: 'Cobrar por transferencia', handler: () => vm.store.registrar_pago(pedido.id, 'transferencia', 0)});
 			}
+			botones.push({text: 'Comprobante', handler: () => vm.compartir_comprobante(pedido)});
 			if(pedido.estado != 'cancelado' && pedido.estado != 'cerrado') {
 				botones.push({text: 'Cancelar pedido', role: 'destructive', handler: () => vm.store.cancelar(pedido.id)});
 			}
@@ -214,6 +218,30 @@ export default {
 				buttons: botones
 			});
 			await hoja.present();
+		},
+		// El PDF llega como Blob y compartir_service elige el camino: dialogo del sistema o descarga.
+		compartir_comprobante: async function(pedido){
+			var vm = this;
+			try{
+				const blob = await descargar_comprobante_pedido(pedido.id);
+				const resultado = await compartir_archivo({
+					nombre_archivo: `${pedido.codigo}.pdf`,
+					blob,
+					titulo: `Comprobante ${pedido.codigo}`,
+					texto: `Comprobante del pedido ${pedido.codigo}`
+				});
+				if(resultado.mensaje) await vm.avisar(resultado.mensaje);
+			}catch(error){
+				await vm.avisar(error.mensaje || 'No se pudo descargar el comprobante.');
+			}
+		},
+		avisar: async function(mensaje){
+			const alerta = await alertController.create({
+				header: 'Pedidos',
+				message: mensaje,
+				buttons: [{text: 'OK', role: 'cancel'}]
+			});
+			await alerta.present();
 		},
 		formatear_importe
 	}

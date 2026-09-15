@@ -1,6 +1,10 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using QRCoder;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
 using RavEat.Api.Auth;
 using RavEat.Api.Data;
 using RavEat.Api.Domain.Entities;
@@ -26,6 +30,14 @@ public sealed class PedidosController(RavEatDbContext db) : ControllerBase {
     private const string RolesOperativos = $"{RolCodigos.Admin},{RolCodigos.Vendedor},{RolCodigos.Proceso},{RolCodigos.Caja},{RolCodigos.Delivery}";
     private const string RolesQueVenden = $"{RolCodigos.Admin},{RolCodigos.Vendedor},{RolCodigos.Caja}";
     private const string RolesQueCobran = $"{RolCodigos.Admin},{RolCodigos.Caja}";
+
+    // Los importes del comprobante salen en pesos ($): sin cultura explicita, :C usa la del
+    // servidor, y el mismo PDF diria "US$" o "€" segun donde corra la API.
+    private static readonly CultureInfo CulturaPesos = CultureInfo.GetCultureInfo("es-AR");
+
+    // Lo mismo para la hora: la base guarda UTC y el PDF dice la hora argentina. Sin horario de
+    // verano, el offset fijo -3 alcanza y no depende de los husos del servidor.
+    private static readonly TimeSpan HusoArgentina = TimeSpan.FromHours(-3);
 
     // Las transiciones validas de estado. Un pedido entregado no vuelve a preparacion, y uno
     // cancelado no revive. Tenerlas en un diccionario en vez de en una cadena de ifs deja la regla
@@ -230,17 +242,98 @@ public sealed class PedidosController(RavEatDbContext db) : ControllerBase {
         return Ok(new {cancelado = true});
     }
 
-    // El codigo lo genera el servidor y no el cliente: es lo que identifica al pedido en el
-    // mostrador y no puede depender de dos telefonos que no se hablan entre si.
-    // Los mensajes de error nombran el estado como lo serializa la API (snake_case), no como se
-    // llama el enum en C#: si no, la pantalla muestra 'EnPreparacion' donde el resto dice
-    // 'en_preparacion' y parecen dos cosas distintas.
-    private static string Etiqueta(EstadoPedido estado) =>
-        System.Text.Json.JsonNamingPolicy.SnakeCaseLower.ConvertName(estado.ToString());
+    // Primera respuesta de la API que no es JSON: un PDF binario, que el frontend baja como Blob.
+    [HttpGet("{id:long}/comprobante")]
+    public async Task<IActionResult> Comprobante(long id, CancellationToken cancellationToken) {
+        var pedido = await db.Pedidos.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if(pedido is null) return NotFound(new {codigo = "pedido_no_encontrado", mensaje = "El pedido no existe."});
+        var items = await db.PedidosItems.AsNoTracking()
+            .Where(x => x.PedidoId == pedido.Id)
+            .OrderBy(x => x.Id)
+            .Select(x => new ComprobanteItem(x.ProductoNombre, x.Cantidad, x.Subtotal))
+            .ToListAsync(cancellationToken);
+        var clienteNombre = pedido.ClienteId.HasValue
+            ? await db.Clientes.AsNoTracking().Where(x => x.Id == pedido.ClienteId.Value).Select(x => x.Nombre).FirstOrDefaultAsync(cancellationToken)
+            : null;
+        var usuarioNombre = await db.Usuarios.AsNoTracking().Where(x => x.Id == pedido.UsuarioCreadorId).Select(x => x.Nombre).FirstOrDefaultAsync(cancellationToken);
+        var pdf = GenerarComprobantePdf(pedido, items, clienteNombre, usuarioNombre ?? "Sin usuario");
+        return File(pdf, "application/pdf", $"{pedido.Codigo}.pdf");
+    }
 
+    // Los mensajes de error y el comprobante nombran los enums como los serializa la API
+    // (snake_case), no como se llaman en C#: si no, la pantalla muestra 'EnPreparacion' donde el
+    // resto dice 'en_preparacion' y parecen dos cosas distintas.
+    private static string Etiqueta<T>(T valor) where T : struct, Enum =>
+        System.Text.Json.JsonNamingPolicy.SnakeCaseLower.ConvertName(valor.ToString());
+
+    // El codigo lo genera el servidor: identifica al pedido en el mostrador (y en el QR), y no
+    // puede depender de dos telefonos que no se hablan entre si.
     private async Task<string> GenerarCodigoAsync(CancellationToken cancellationToken) {
         var ultimo = await db.Pedidos.MaxAsync(x => (long?)x.Id, cancellationToken) ?? 0;
         return $"PED-{ultimo + 1:D4}";
+    }
+
+    // A6, de mostrador, armado en memoria: nunca toca el disco y no hay nada que limpiar.
+    private static byte[] GenerarComprobantePdf(Pedido pedido, IReadOnlyCollection<ComprobanteItem> items, string? clienteNombre, string usuarioNombre) {
+        var totalConPropina = pedido.Total + pedido.PropinaImporte;
+        var documento = Document.Create(container => {
+            container.Page(page => {
+                page.Size(PageSizes.A6);
+                page.Margin(20);
+                page.DefaultTextStyle(estilo => estilo.FontSize(10));
+                page.Header().Column(column => {
+                    column.Item().Text("RavEat").FontSize(16).Bold();
+                    column.Item().Text($"Pedido {pedido.Codigo}").FontSize(11);
+                    column.Item().Text($"{pedido.CreadoEn.ToOffset(HusoArgentina):dd/MM/yyyy HH:mm}");
+                });
+                page.Content().PaddingVertical(10).Column(column => {
+                    if(!string.IsNullOrWhiteSpace(clienteNombre)) column.Item().Text($"Cliente: {clienteNombre}");
+                    column.Item().Text($"Atendido por: {usuarioNombre}");
+                    column.Item().PaddingTop(8).LineHorizontal(0.5f);
+                    foreach(var item in items) {
+                        column.Item().Row(row => {
+                            row.RelativeItem(3).Text($"{item.Cantidad} x {item.ProductoNombre}");
+                            row.RelativeItem(1).AlignRight().Text(item.Subtotal.ToString("C0", CulturaPesos));
+                        });
+                    }
+                    column.Item().PaddingTop(8).LineHorizontal(0.5f);
+                    column.Item().Row(row => {
+                        row.RelativeItem().Text("Subtotal");
+                        row.RelativeItem().AlignRight().Text(pedido.Subtotal.ToString("C0", CulturaPesos));
+                    });
+                    if(pedido.Descuento > 0) {
+                        column.Item().Row(row => {
+                            row.RelativeItem().Text("Descuento");
+                            row.RelativeItem().AlignRight().Text($"-{pedido.Descuento.ToString("C0", CulturaPesos)}");
+                        });
+                    }
+                    if(pedido.PropinaImporte > 0) {
+                        column.Item().Row(row => {
+                            row.RelativeItem().Text("Propina");
+                            row.RelativeItem().AlignRight().Text(pedido.PropinaImporte.ToString("C0", CulturaPesos));
+                        });
+                    }
+                    column.Item().Row(row => {
+                        row.RelativeItem().Text("Total").Bold();
+                        row.RelativeItem().AlignRight().Text(totalConPropina.ToString("C0", CulturaPesos)).Bold();
+                    });
+                    column.Item().PaddingTop(6).Text($"Pago: {Etiqueta(pedido.EstadoPago)}{(pedido.MedioPago.HasValue ? $" - {Etiqueta(pedido.MedioPago.Value)}" : string.Empty)}");
+                });
+                // El mismo QR de /qr, impreso: escanear el papel encuentra el pedido en la app.
+                page.Footer().AlignCenter().Column(column => {
+                    column.Item().AlignCenter().Width(70).Image(GenerarQrPedido(pedido.Codigo));
+                    column.Item().AlignCenter().Text(pedido.Codigo).FontSize(8);
+                    column.Item().AlignCenter().PaddingTop(4).Text("Gracias por su compra.");
+                });
+            });
+        });
+        return documento.GeneratePdf();
+    }
+
+    private static byte[] GenerarQrPedido(string codigo) {
+        using var generador = new QRCodeGenerator();
+        using var datos = generador.CreateQrCode(codigo, QRCodeGenerator.ECCLevel.M);
+        return new PngByteQRCode(datos).GetGraphic(8);
     }
 }
 
@@ -271,6 +364,7 @@ public sealed record PedidoItemResponse(
     string? Observaciones
 );
 
+public sealed record ComprobanteItem(string ProductoNombre, int Cantidad, decimal Subtotal);
 public sealed record CrearPedidoItemRequest(long ProductoId, int Cantidad, string? Observaciones);
 public sealed record CrearPedidoRequest(long? ClienteId, TipoPedido Tipo, decimal Descuento, string? Observaciones, List<CrearPedidoItemRequest> Items);
 public sealed record CambiarEstadoRequest(EstadoPedido Estado);

@@ -1,4 +1,4 @@
-import { ajax_request } from './ajax_service';
+import { ajax_binario, ajax_request } from './ajax_service';
 import { construir_query } from '@/utils/consulta';
 
 // Los estados viajan como CSV en snake_case ('en_preparacion,listo'), igual que los serializa la
@@ -35,4 +35,9 @@ export function registrar_pago_pedido(id, medio_pago, propina_importe = 0){
 
 export function cancelar_pedido(id){
 	return ajax_request({endpoint: `/api/pedidos/${id}`, metodo: 'DELETE'});
+}
+
+// El comprobante es un PDF binario: va por ajax_binario y llega como Blob.
+export function descargar_comprobante_pedido(id){
+	return ajax_binario({endpoint: `/api/pedidos/${id}/comprobante`, metodo: 'GET'});
 }

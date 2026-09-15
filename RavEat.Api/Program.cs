@@ -6,8 +6,13 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using QuestPDF.Infrastructure;
 using RavEat.Api.Auth;
 using RavEat.Api.Data;
+
+// QuestPDF es gratis para este uso, pero exige declarar la licencia: sin esta linea, el primer
+// comprobante falla.
+QuestPDF.Settings.License = LicenseType.Community;
 
 // El multipart lee los numeros con la cultura del servidor: invariante, "3500.5" nunca es 35005.
 CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;

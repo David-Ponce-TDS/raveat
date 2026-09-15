@@ -122,6 +122,44 @@ async function manejar_401(permitir_renovar, reintentar){
 	return reintentar();
 }
 
+// Descargas binarias (el comprobante en PDF): jQuery no maneja blobs, asi que va por
+// XMLHttpRequest, con el mismo token y la misma renovacion ante un 401 que ajax_request.
+export function ajax_binario(configuracion = {}){
+	return ejecutar_binario(configuracion, true);
+}
+
+function ejecutar_binario(configuracion, permitir_renovar){
+	const {
+		endpoint,
+		metodo = 'GET',
+		timeout = 30000,
+		headers = {}
+	} = configuracion;
+	return new Promise((resolve, reject) =>{
+		const xhr = new XMLHttpRequest();
+		xhr.open(metodo.toUpperCase(), construir_url(endpoint), true);
+		xhr.responseType = 'blob';
+		xhr.timeout = timeout;
+		const cabeceras = {...cabecera_autorizacion(), ...headers};
+		Object.keys(cabeceras).forEach(nombre => xhr.setRequestHeader(nombre, cabeceras[nombre]));
+		xhr.onload = function(){
+			if(xhr.status >= 200 && xhr.status < 300){
+				resolve(xhr.response);
+				return;
+			}
+			if(xhr.status == 401){
+				manejar_401(permitir_renovar, () => ejecutar_binario(configuracion, false))
+					.then(resolve, error => reject((error && error.estado_http) ? error : normalizar_error(xhr, 'error', 'No se pudo descargar el archivo.')));
+				return;
+			}
+			leer_error_binario(xhr).then(reject);
+		};
+		xhr.onerror = () => reject(normalizar_error(xhr, 'error', 'No se pudo descargar el archivo.'));
+		xhr.ontimeout = () => reject(normalizar_error(xhr, 'timeout', ''));
+		xhr.send();
+	});
+}
+
 export function ajax_request(configuracion = {}){
 	return ejecutar_request(configuracion, true);
 }
@@ -166,4 +204,17 @@ function ejecutar_request(configuracion, permitir_renovar){
 				reject(normalizar_error(xhr, text_status, error_thrown));
 			});
 	});
+}
+
+// Con responseType 'blob' el error tambien llega como Blob: si es JSON, se lee para mostrar su mensaje.
+async function leer_error_binario(xhr){
+	let respuesta = null;
+	if(/json/i.test(xhr.getResponseHeader('Content-Type') || '')){
+		try{
+			respuesta = JSON.parse(await xhr.response.text());
+		}catch{
+			respuesta = null;
+		}
+	}
+	return normalizar_error({status: xhr.status, responseJSON: respuesta}, 'error', 'No se pudo descargar el archivo.');
 }

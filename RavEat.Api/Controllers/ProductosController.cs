@@ -12,7 +12,7 @@ namespace RavEat.Api.Controllers;
 [ApiController]
 [Authorize(Roles = RolCodigos.Admin)]
 [Route("api/productos")]
-public sealed class ProductosController(RavEatDbContext db) : ControllerBase {
+public sealed class ProductosController(RavEatDbContext db, IWebHostEnvironment env) : ControllerBase {
     // La vitrina: la carta entera con sus categorias y los contadores del encabezado.
     // Devuelve todo de una sola vez, que alcanza para una carta de restaurante. El catalogo de
     // gestion, que si puede crecer sin limite, va por "listado" y esta paginado.
@@ -133,35 +133,42 @@ public sealed class ProductosController(RavEatDbContext db) : ControllerBase {
         return Ok(new {resumen, productos = items, pagina = paginaResponse});
     }
 
+    // Multipart y no JSON: un JSON no puede llevar un archivo. El tope corta lo desmedido con 413
+    // antes de leerlo; EsImagenValida explica con mensaje lo que si entro.
     [HttpPost]
-    public async Task<IActionResult> Crear(GuardarProductoRequest request, CancellationToken cancellationToken) {
+    [RequestSizeLimit(5_000_000)]
+    public async Task<IActionResult> Crear([FromForm] GuardarProductoRequest request, CancellationToken cancellationToken) {
         var error = await ValidarAsync(request, cancellationToken);
         if(error is not null) return BadRequest(error);
 
-        var nombre = request.Nombre.Trim();
+        var nombre = request.Nombre!.Trim();
         var duplicado = await db.Productos.AnyAsync(x => x.CategoriaId == request.CategoriaId && x.Nombre == nombre && x.Activo, cancellationToken);
         if(duplicado) return BadRequest(new {codigo = "producto_duplicado", mensaje = "Ya existe un producto con ese nombre en la categoría."});
 
         var producto = new Producto();
         Aplicar(producto, request);
+        producto.ImagenUrl = await GuardarImagenAsync(request.Imagen, cancellationToken);
         db.Productos.Add(producto);
         await db.SaveChangesAsync(cancellationToken);
         return Ok(new {producto = await ProyectarAsync(producto, cancellationToken)});
     }
 
     [HttpPut("{id:long}")]
-    public async Task<IActionResult> Actualizar(long id, GuardarProductoRequest request, CancellationToken cancellationToken) {
+    [RequestSizeLimit(5_000_000)]
+    public async Task<IActionResult> Actualizar(long id, [FromForm] GuardarProductoRequest request, CancellationToken cancellationToken) {
         var error = await ValidarAsync(request, cancellationToken);
         if(error is not null) return BadRequest(error);
 
         var producto = await db.Productos.FirstOrDefaultAsync(x => x.Id == id && x.Activo, cancellationToken);
         if(producto is null) return NotFound(new {codigo = "producto_no_encontrado", mensaje = "El producto no existe o fue dado de baja."});
 
-        var nombre = request.Nombre.Trim();
+        var nombre = request.Nombre!.Trim();
         var duplicado = await db.Productos.AnyAsync(x => x.CategoriaId == request.CategoriaId && x.Nombre == nombre && x.Activo && x.Id != id, cancellationToken);
         if(duplicado) return BadRequest(new {codigo = "producto_duplicado", mensaje = "Ya existe otro producto con ese nombre en la categoría."});
 
         Aplicar(producto, request);
+        // Editar sin adjuntar foto conserva la que estaba.
+        if(request.Imagen is not null) producto.ImagenUrl = await GuardarImagenAsync(request.Imagen, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
         return Ok(new {producto = await ProyectarAsync(producto, cancellationToken)});
     }
@@ -182,16 +189,38 @@ public sealed class ProductosController(RavEatDbContext db) : ControllerBase {
         if(request.Precio < 0) return new {codigo = "producto_precio_invalido", mensaje = "El precio no puede ser negativo."};
         var categoriaExiste = await db.Categorias.AnyAsync(x => x.Id == request.CategoriaId && x.Activo, cancellationToken);
         if(!categoriaExiste) return new {codigo = "categoria_no_encontrada", mensaje = "La categoría indicada no existe."};
+        if(request.Imagen is not null && !EsImagenValida(request.Imagen)) return new {codigo = "imagen_invalida", mensaje = "La imagen debe ser JPG, PNG o WEBP de hasta 5 MB."};
         return null;
     }
 
     private static void Aplicar(Producto producto, GuardarProductoRequest request) {
         producto.CategoriaId = request.CategoriaId;
-        producto.Nombre = request.Nombre.Trim();
+        producto.Nombre = request.Nombre!.Trim();
         producto.Descripcion = string.IsNullOrWhiteSpace(request.Descripcion) ? null : request.Descripcion.Trim();
         producto.Precio = request.Precio;
-        producto.ImagenUrl = string.IsNullOrWhiteSpace(request.ImagenUrl) ? null : request.ImagenUrl.Trim();
         producto.Disponible = request.Disponible;
+    }
+
+    // La ruta la decide el servidor, igual que los precios. El nombre es un GUID porque el original
+    // no es confiable: uno con "../" escribiria fuera de la carpeta, y dos "pizza.jpg" se pisarian.
+    private async Task<string?> GuardarImagenAsync(IFormFile? imagen, CancellationToken cancellationToken) {
+        if(imagen is null || imagen.Length == 0) return null;
+        var extension = Path.GetExtension(imagen.FileName).ToLowerInvariant();
+        var webRoot = env.WebRootPath ?? Path.Combine(env.ContentRootPath, "wwwroot");
+        var carpeta = Path.Combine(webRoot, "uploads", "productos");
+        Directory.CreateDirectory(carpeta);
+        var nombreArchivo = $"{Guid.NewGuid():N}{extension}";
+        var ruta = Path.Combine(carpeta, nombreArchivo);
+        await using var stream = System.IO.File.Create(ruta);
+        await imagen.CopyToAsync(stream, cancellationToken);
+        // Ruta relativa, sin host: el frontend la completa en utils/imagenes.js.
+        return $"/uploads/productos/{nombreArchivo}";
+    }
+
+    private static bool EsImagenValida(IFormFile imagen) {
+        var extension = Path.GetExtension(imagen.FileName).ToLowerInvariant();
+        var extensionesValidas = new[] {".jpg", ".jpeg", ".png", ".webp"};
+        return imagen.Length <= 5_000_000 && extensionesValidas.Contains(extension);
     }
 
     private async Task<ProductoResumenResponse> ProyectarAsync(Producto x, CancellationToken cancellationToken) {
@@ -213,11 +242,23 @@ public sealed record ProductoResumenResponse(
     string CategoriaNombre
 );
 
-public sealed record GuardarProductoRequest(
-    long CategoriaId,
-    string Nombre,
-    string? Descripcion,
-    decimal Precio,
-    string? ImagenUrl,
-    bool Disponible
-);
+// Clase y no record: [FromForm] con IFormFile necesita propiedades con set. Sin imagen_url a
+// proposito: si el cliente mandara la URL, podria apuntar la carta a cualquier imagen.
+
+// El multipart no pasa por la politica snake_case del JSON: sin Name, "categoria_id" llegaria en 0.
+// Va en todas para que la regla se lea de una.
+public sealed class GuardarProductoRequest {
+    [FromForm(Name = "categoria_id")]
+    public long CategoriaId { get; set; }
+    // Anulable a proposito: vacio llega a ValidarAsync y no al 400 generico del [Required] implicito.
+    [FromForm(Name = "nombre")]
+    public string? Nombre { get; set; }
+    [FromForm(Name = "descripcion")]
+    public string? Descripcion { get; set; }
+    [FromForm(Name = "precio")]
+    public decimal Precio { get; set; }
+    [FromForm(Name = "disponible")]
+    public bool Disponible { get; set; } = true;
+    [FromForm(Name = "imagen")]
+    public IFormFile? Imagen { get; set; }
+}

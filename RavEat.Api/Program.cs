@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Net;
@@ -7,6 +8,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using RavEat.Api.Auth;
 using RavEat.Api.Data;
+
+// El multipart lee los numeros con la cultura del servidor: invariante, "3500.5" nunca es 35005.
+CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
 
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("Default") ?? throw new InvalidOperationException("No se configuro ConnectionStrings:Default.");

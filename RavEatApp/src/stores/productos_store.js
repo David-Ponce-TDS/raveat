@@ -103,13 +103,13 @@ export const use_productos_store = defineStore('productos', {
 		// Al escribir se recargan las DOS listas: el catalogo porque es desde donde se edito, y la
 		// vitrina porque quedo vieja. Es literalmente la idea del modulo — la pantalla es una vista
 		// parcial y vieja de los datos, y despues de escribir hay que volver a preguntar.
-		guardar_producto: async function(id, datos){
+		guardar_producto: async function(id, datos, imagen = null){
 			var vm = this;
 			vm.guardando = true;
 			vm.error = null;
 			try{
-				if(id) await actualizar_producto(id, datos);
-				else await crear_producto(datos);
+				if(id) await actualizar_producto(id, datos, imagen);
+				else await crear_producto(datos, imagen);
 				await vm.cargar_catalogo();
 				await vm.cargar_productos();
 				return true;

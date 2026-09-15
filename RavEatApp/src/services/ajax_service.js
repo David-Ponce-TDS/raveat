@@ -136,15 +136,19 @@ function ejecutar_request(configuracion, permitir_renovar){
 		// Login y logout: su 401 es la respuesta de la API, no un token vencido.
 		renovar = true
 	} = configuracion;
+	// Un FormData (la foto del producto) no se serializa ni lleva Content-Type: el boundary del
+	// multipart lo arma el navegador, y ponerlo a mano rompe la subida.
+	const es_form_data = datos instanceof FormData;
 	const metodo_normalizado = metodo.toUpperCase();
-	const envia_json = datos != null && !['GET', 'HEAD'].includes(metodo_normalizado);
+	const envia_json = datos != null && !es_form_data && !['GET', 'HEAD'].includes(metodo_normalizado);
 	return new Promise((resolve, reject) =>{
 		$.ajax({
 			url: construir_url(endpoint),
 			method: metodo_normalizado,
 			data: envia_json ? JSON.stringify(datos) : datos,
 			dataType: 'json',
-			contentType: envia_json ? 'application/json; charset=utf-8' : undefined,
+			contentType: es_form_data ? false : envia_json ? 'application/json; charset=utf-8' : undefined,
+			processData: !es_form_data,
 			timeout,
 			headers: {
 				Accept: 'application/json',

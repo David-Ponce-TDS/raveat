@@ -178,7 +178,7 @@ export default {
 		},
 		guardar: async function(evento){
 			var vm = this;
-			const guardado = await vm.store.guardar_producto(evento.id, evento.datos);
+			const guardado = await vm.store.guardar_producto(evento.id, evento.datos, evento.imagen);
 			// El modal solo se cierra si el servidor acepto: si no, queda abierto mostrando el
 			// error y sin perder lo que el usuario habia escrito.
 			if(guardado) vm.cerrar_modal();

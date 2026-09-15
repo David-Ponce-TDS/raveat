@@ -293,3 +293,47 @@ ion-menu ion-item.seleccionado ion-icon {
 .raveat-diagnostico__resultado.probando {
     color: var(--raveat-muted);
 }
+
+/* --- foto del producto --------------------------------------------------- */
+
+.raveat-foto {
+    width: 100%;
+    padding: 8px 0;
+}
+
+.raveat-foto__previa {
+    display: block;
+    width: 96px;
+    height: 96px;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 1px solid var(--raveat-border);
+    background: var(--raveat-surface-strong);
+}
+
+.raveat-foto__previa--vacia {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--raveat-muted);
+    font-size: 30px;
+}
+
+.raveat-foto__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+/* El permiso denegado se muestra al lado del boton que lo pidio: es una respuesta, no un error. */
+.raveat-foto__mensaje {
+    margin: 6px 0 0;
+    color: var(--ion-color-danger);
+    font-size: 0.8rem;
+}
+
+/* El input de archivos es el camino web de la camara: lo abre un boton. */
+.raveat-foto__selector {
+    display: none;
+}

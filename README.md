@@ -4,11 +4,11 @@
 
 # RavEat
 
-### U5 · Autenticación, roles y biometría
+### U6 · Cámara, código QR y archivos
 
-*Login, roles y biometría: quién entra al sistema y qué puede hacer cada uno.*
+*Capacidades del dispositivo: permisos, fotografías, archivos y códigos QR.*
 
-`version-05` &nbsp;·&nbsp; Ionic Vue 3 &nbsp;·&nbsp; Capacitor 8 &nbsp;·&nbsp; ASP.NET Core (.NET 10) &nbsp;·&nbsp; EF Core 9 &nbsp;·&nbsp; MySQL 8
+`version-06` &nbsp;·&nbsp; Ionic Vue 3 &nbsp;·&nbsp; Capacitor 8 &nbsp;·&nbsp; ASP.NET Core (.NET 10) &nbsp;·&nbsp; EF Core 9 &nbsp;·&nbsp; MySQL 8
 
 </div>
 
@@ -22,7 +22,7 @@ Tres documentos, en este orden:
 |---|---|---|
 | 1 | [**Requisitos**](README.requisitos.md) | qué tiene que estar instalado, cómo saber qué te falta y cómo dejarlo listo |
 | 2 | [**Comandos**](README.comandos.md) | todo lo que se tipea para poner la app a andar, en orden, con su «si algo falla» |
-| 3 | [**La unidad**](README.unidad-05.md) | qué es esta versión, qué cambia desde la anterior y por qué está hecha así |
+| 3 | [**La unidad**](README.unidad-06.md) | qué es esta versión, qué cambia desde la anterior y por qué está hecha así |
 
 Los dos primeros te dejan **corriendo**; el tercero te deja **entendiendo**.
 

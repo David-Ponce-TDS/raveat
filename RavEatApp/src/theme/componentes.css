@@ -337,3 +337,15 @@ ion-menu ion-item.seleccionado ion-icon {
 .raveat-foto__selector {
     display: none;
 }
+
+/* --- acciones lado a lado ------------------------------------------------ */
+
+.raveat-acciones {
+    display: flex;
+    gap: 8px;
+}
+
+.raveat-acciones ion-button {
+    flex: 1;
+    margin: 0;
+}

@@ -260,6 +260,15 @@ public sealed class PedidosController(RavEatDbContext db) : ControllerBase {
         return File(pdf, "application/pdf", $"{pedido.Codigo}.pdf");
     }
 
+    // Un QR es texto en una imagen: este lleva el codigo del pedido, el mismo que va impreso en el
+    // comprobante. Escanearlo desde la app es buscar ese codigo.
+    [HttpGet("{id:long}/qr")]
+    public async Task<IActionResult> Qr(long id, CancellationToken cancellationToken) {
+        var codigo = await db.Pedidos.AsNoTracking().Where(x => x.Id == id).Select(x => x.Codigo).FirstOrDefaultAsync(cancellationToken);
+        if(codigo is null) return NotFound(new {codigo = "pedido_no_encontrado", mensaje = "El pedido no existe."});
+        return File(GenerarQrPedido(codigo), "image/png", $"{codigo}-qr.png");
+    }
+
     // Los mensajes de error y el comprobante nombran los enums como los serializa la API
     // (snake_case), no como se llaman en C#: si no, la pantalla muestra 'EnPreparacion' donde el
     // resto dice 'en_preparacion' y parecen dos cosas distintas.

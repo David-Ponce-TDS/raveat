@@ -19,10 +19,17 @@
 				</button>
 			</div>
 
-			<ion-button expand="block" fill="outline" size="small" @click="abrir_nuevo">
-				<ion-icon slot="start" :icon="icono_agregar" />
-				Nuevo pedido
-			</ion-button>
+			<div class="raveat-acciones">
+				<ion-button expand="block" fill="outline" size="small" @click="abrir_nuevo">
+					<ion-icon slot="start" :icon="icono_agregar" />
+					Nuevo pedido
+				</ion-button>
+				<!-- El QR del comprobante trae el código del pedido: escanearlo lo busca acá. -->
+				<ion-button expand="block" fill="outline" size="small" @click="escanear">
+					<ion-icon slot="start" :icon="icono_qr" />
+					Escanear
+				</ion-button>
+			</div>
 
 			<comp-esqueleto v-if="store.cargando && !store.hay_pedidos" />
 			<comp-estado-error
@@ -79,7 +86,7 @@
 	actionSheetController,
 	alertController
 } from '@ionic/vue';
-import { addOutline, receiptOutline } from 'ionicons/icons';
+import { addOutline, qrCodeOutline, receiptOutline } from 'ionicons/icons';
 import comp_buscador from '@/components/base/comp_buscador.vue';
 import comp_estado_error from '@/components/base/comp_estado_error.vue';
 import comp_estado_vacio from '@/components/base/comp_estado_vacio.vue';
@@ -89,6 +96,7 @@ import comp_page from '@/components/estructura/comp_page.vue';
 import comp_pedido_formulario_modal from '@/components/dominio/comp_pedido_formulario_modal.vue';
 import { compartir_archivo } from '@/services/compartir_service';
 import { descargar_comprobante_pedido } from '@/services/pedidos_service';
+import { escanear_qr } from '@/services/qr_service';
 import { formatear_importe } from '@/utils/formato_moneda';
 import { use_clientes_store } from '@/stores/clientes_store';
 import { use_pedidos_store } from '@/stores/pedidos_store';
@@ -147,6 +155,7 @@ export default {
 			],
 			icono: receiptOutline,
 			icono_agregar: addOutline,
+			icono_qr: qrCodeOutline,
 			modal_abierto: false,
 			productos_store: use_productos_store(),
 			store: use_pedidos_store()
@@ -234,6 +243,19 @@ export default {
 			}catch(error){
 				await vm.avisar(error.mensaje || 'No se pudo descargar el comprobante.');
 			}
+		},
+		// El QR trae el codigo del pedido: escanear es tipearlo en el buscador. Si hay uno solo,
+		// se abren sus acciones.
+		escanear: async function(){
+			var vm = this;
+			const resultado = await escanear_qr();
+			if(!resultado.ok){
+				if(resultado.mensaje) await vm.avisar(resultado.mensaje);
+				return;
+			}
+			vm.busqueda = resultado.contenido;
+			await vm.store.cargar({busqueda: resultado.contenido});
+			if(vm.store.pedidos.length == 1) vm.abrir_acciones(vm.store.pedidos[0]);
 		},
 		avisar: async function(mensaje){
 			const alerta = await alertController.create({

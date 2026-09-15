@@ -67,7 +67,8 @@ está en [`README.requisitos.md`](README.requisitos.md).
 
 | Pantalla | Qué hace ahora |
 |---|---|
-| **Login** | lo primero que se ve — email y contraseña, y el botón de huella si hay sesión guardada |
+| **Inicio** | la vitrina, abierta: se ve sin sesión. Mi cuenta lleva al login |
+| **Login** | email y contraseña, y el botón de huella si hay sesión guardada |
 | **Usuarios** | nueva, solo `ADMIN`: alta de usuarios y asignación de roles |
 | **Menú y tabs** | cada rol ve solo sus pantallas |
 | **Mi cuenta** | la sesión: quién sos, tu rol, cerrar sesión — y le explica al usuario sin rol que falta habilitarlo. Sigue el **Diagnóstico**: contra qué URL pega la app y si responde |
@@ -190,7 +191,7 @@ RavEat/
 ## ✅ Terminaste cuando
 
 - [ ] `database update` crea las tablas, la carta, los clientes, los cinco roles **y el administrador inicial**
-- [ ] La app abre en el **login**; con el administrador sembrado se ven los cinco tabs
+- [ ] La app abre en **Inicio** sin pedir sesión; entrando desde Mi cuenta con el administrador sembrado se ven los cinco tabs
 - [ ] `GET /api/productos/listado` **sin token devuelve 401**; con el token del admin, 200
 - [ ] El admin crea un usuario **sin rol**: ese usuario entra, ve solo Inicio y Mi cuenta, y Mi cuenta le explica que falta habilitarlo
 - [ ] Al asignarle el rol Vendedor, pasa a ver Clientes y Pedidos — y al intentar cobrar uno recibe 403: crear sí, cobrar no

@@ -47,8 +47,9 @@ export const navegacion = [
 		titulo: 'Inicio',
 		ruta: '/app/inicio',
 		icono: homeOutline,
-		// Cualquier autenticado, incluso sin rol: es lo que le deja ver la vitrina mientras
-		// espera que un admin lo habilite.
+		// La vitrina: se ve con sesion o sin ella, como la web del local. Todo lo demas de la app
+		// sigue cerrado. Sin sesion, Mi cuenta lleva al login.
+		abierta: true,
 		roles: [TODOS],
 		menu_roles: [TODOS],
 		tab_roles: [TODOS],

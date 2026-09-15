@@ -2,7 +2,8 @@
 	<ion-page>
 		<ion-content>
 			<div class="ion-padding raveat-page-stack raveat-login">
-				<comp-vidriera lema="Entrá con tu cuenta del local" />
+				<!-- La portada vuelve a la vitrina: se puede mirar la carta sin entrar. -->
+				<comp-vidriera lema="Entrá con tu cuenta del local" @click="volver" />
 
 				<ion-list class="raveat-card">
 					<ion-item>
@@ -37,7 +38,7 @@
 				</ion-button>
 
 				<!-- Solo aparece si hay una sesión guardada Y el dispositivo tiene biometría. La
-				     huella no reemplaza al login: desbloquea la sesión que ya existe. -->
+					huella no reemplaza al login: desbloquea la sesión que ya existe. -->
 				<ion-button v-if="puede_biometria" expand="block" fill="outline" :disabled="sesion_store.cargando" @click="entrar_con_biometria">
 					<ion-icon slot="start" :icon="icono_huella" />
 					Entrar con huella
@@ -97,6 +98,10 @@ export default {
 		vm.puede_biometria = hay_sesion_guardada && await biometria_disponible();
 	},
 	methods: {
+		volver: function(){
+			var vm = this;
+			vm.$router.replace('/app/inicio');
+		},
 		entrar: async function(){
 			var vm = this;
 			const entro = await vm.sesion_store.entrar(vm.email.trim(), vm.password);

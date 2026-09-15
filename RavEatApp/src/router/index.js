@@ -10,6 +10,7 @@ const rutas_app = navegacion.map(item => ({
 	name: item.id,
 	component: item.componente,
 	meta: {
+		abierta: item.abierta === true,
 		roles: item.roles
 	}
 }));
@@ -60,6 +61,10 @@ router.beforeEach(to =>{
 	// Mientras se restaura la sesion guardada no se puede decidir nada: rebotar al login aca haria
 	// que la app mande al login en cada arranque, incluso teniendo sesion valida.
 	if(sesion.restaurando) return true;
+
+	// Abierta = entra cualquiera, con sesion o sin ella. Es distinto de `publica`: esa manda al que
+	// ya entro de vuelta a la app.
+	if(to.meta.abierta) return true;
 
 	if(to.meta.publica){
 		// Si ya entro, el login no tiene nada que ofrecerle.

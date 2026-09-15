@@ -349,3 +349,22 @@ ion-menu ion-item.seleccionado ion-icon {
     flex: 1;
     margin: 0;
 }
+
+/* --- qr del pedido ------------------------------------------------------- */
+
+.raveat-qr {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 14px;
+    border: 1px solid var(--raveat-border);
+    border-radius: 16px;
+    background: #fff;
+}
+
+.raveat-qr img {
+    width: 160px;
+    height: 160px;
+    image-rendering: pixelated;
+}

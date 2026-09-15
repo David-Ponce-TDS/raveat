@@ -41,3 +41,8 @@ export function cancelar_pedido(id){
 export function descargar_comprobante_pedido(id){
 	return ajax_binario({endpoint: `/api/pedidos/${id}/comprobante`, metodo: 'GET'});
 }
+
+// El QR del pedido es una imagen PNG: tambien binario.
+export function descargar_qr_pedido(id){
+	return ajax_binario({endpoint: `/api/pedidos/${id}/qr`, metodo: 'GET'});
+}

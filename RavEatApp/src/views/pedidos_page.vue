@@ -4,8 +4,8 @@
 			<comp-buscador v-model="busqueda" placeholder="Buscar por código" @buscar="buscar" />
 
 			<!-- Los contadores por estado los calcula la API sobre el total filtrado, no sobre la
-			     página: son los botones con los que se elige el filtro, así que no pueden depender
-			     de él. Se pueden combinar: sin ninguno elegido, la API devuelve todos. -->
+				página: son los botones con los que se elige el filtro, así que no pueden depender
+				de él. Se pueden combinar: sin ninguno elegido, la API devuelve todos. -->
 			<div class="raveat-chips">
 				<button
 					v-for="estado in estados_disponibles"
@@ -51,7 +51,7 @@
 				:total="store.total"
 				@cargar_mas="store.cargar_mas()"
 			>
-				<ion-item v-for="pedido in store.pedidos" :key="pedido.id" button @click="abrir_acciones(pedido)">
+				<ion-item v-for="pedido in store.pedidos" :key="pedido.id" button @click="abrir_detalle(pedido)">
 					<ion-label>
 						<h3 class="raveat-item-title">{{ pedido.codigo }}</h3>
 						<p>{{ pedido.cliente_nombre || 'Mostrador' }} · {{ etiqueta(pedido.tipo) }}</p>
@@ -74,6 +74,19 @@
 			@cerrar="modal_abierto = false"
 			@crear="crear"
 		/>
+		<comp-pedido-detalle-modal
+			:abierto="detalle_abierto"
+			:pedido="store.detalle || pedido_actual"
+			:items="store.detalle_items"
+			:qr_url="qr_url"
+			:color="color_estado((store.detalle || pedido_actual || {}).estado)"
+			:guardando="store.guardando"
+			@cerrar="cerrar_detalle"
+			@cambiar_estado="cambiar_estado"
+			@cobrar="cobrar"
+			@comprobante="compartir_comprobante(pedido_actual)"
+			@cancelar="cancelar"
+		/>
 	</comp-page>
 </template>
 
@@ -83,7 +96,6 @@
 	IonIcon,
 	IonItem,
 	IonLabel,
-	actionSheetController,
 	alertController
 } from '@ionic/vue';
 import { addOutline, qrCodeOutline, receiptOutline } from 'ionicons/icons';
@@ -93,9 +105,10 @@ import comp_estado_vacio from '@/components/base/comp_estado_vacio.vue';
 import comp_esqueleto from '@/components/base/comp_esqueleto.vue';
 import comp_lista from '@/components/base/comp_lista.vue';
 import comp_page from '@/components/estructura/comp_page.vue';
+import comp_pedido_detalle_modal from '@/components/dominio/comp_pedido_detalle_modal.vue';
 import comp_pedido_formulario_modal from '@/components/dominio/comp_pedido_formulario_modal.vue';
 import { compartir_archivo } from '@/services/compartir_service';
-import { descargar_comprobante_pedido } from '@/services/pedidos_service';
+import { descargar_comprobante_pedido, descargar_qr_pedido } from '@/services/pedidos_service';
 import { escanear_qr } from '@/services/qr_service';
 import { formatear_importe } from '@/utils/formato_moneda';
 import { use_clientes_store } from '@/stores/clientes_store';
@@ -114,16 +127,6 @@ const COLOR_ESTADO = {
 	cancelado: 'danger'
 };
 
-// El siguiente estado posible, para ofrecer una sola acción evidente. El servidor tiene la tabla
-// completa de transiciones y es el que decide: esto es un atajo de la interfaz, no la regla.
-const SIGUIENTE_ESTADO = {
-	borrador: 'confirmado',
-	confirmado: 'en_preparacion',
-	en_preparacion: 'listo',
-	listo: 'entregado',
-	entregado: 'cerrado'
-};
-
 export default {
 	name: 'pedidos_page',
 	components: {
@@ -133,6 +136,7 @@ export default {
 		CompEsqueleto: comp_esqueleto,
 		CompLista: comp_lista,
 		CompPage: comp_page,
+		CompPedidoDetalleModal: comp_pedido_detalle_modal,
 		CompPedidoFormularioModal: comp_pedido_formulario_modal,
 		IonBadge,
 		IonButton,
@@ -156,8 +160,11 @@ export default {
 			icono: receiptOutline,
 			icono_agregar: addOutline,
 			icono_qr: qrCodeOutline,
+			detalle_abierto: false,
 			modal_abierto: false,
+			pedido_actual: null,
 			productos_store: use_productos_store(),
+			qr_url: '',
 			store: use_pedidos_store()
 		};
 	},
@@ -207,26 +214,41 @@ export default {
 			const creado = await vm.store.crear(datos);
 			if(creado) vm.modal_abierto = false;
 		},
-		abrir_acciones: async function(pedido){
+		// El detalle del pedido en un modal: datos, items, QR y todas las acciones. El QR es una
+		// imagen que genera la API; se baja como Blob y se muestra como URL de objeto.
+		abrir_detalle: async function(pedido){
 			var vm = this;
-			const botones = [];
-			const siguiente = SIGUIENTE_ESTADO[pedido.estado];
-			if(siguiente) botones.push({text: `Pasar a ${vm.etiqueta(siguiente)}`, handler: () => vm.store.cambiar_estado(pedido.id, siguiente)});
-			if(pedido.estado_pago == 'pendiente' && pedido.estado != 'cancelado') {
-				botones.push({text: 'Cobrar en efectivo', handler: () => vm.store.registrar_pago(pedido.id, 'efectivo', 0)});
-				botones.push({text: 'Cobrar por transferencia', handler: () => vm.store.registrar_pago(pedido.id, 'transferencia', 0)});
+			vm.pedido_actual = pedido;
+			vm.qr_url = '';
+			vm.detalle_abierto = true;
+			await vm.store.cargar_detalle(pedido.id);
+			try{
+				const blob = await descargar_qr_pedido(pedido.id);
+				vm.qr_url = URL.createObjectURL(blob);
+			}catch(error){
+				await vm.avisar(error.mensaje || 'No se pudo cargar el QR.');
 			}
-			botones.push({text: 'Comprobante', handler: () => vm.compartir_comprobante(pedido)});
-			if(pedido.estado != 'cancelado' && pedido.estado != 'cerrado') {
-				botones.push({text: 'Cancelar pedido', role: 'destructive', handler: () => vm.store.cancelar(pedido.id)});
-			}
-			botones.push({text: 'Cerrar', role: 'cancel'});
-
-			const hoja = await actionSheetController.create({
-				header: `${pedido.codigo} · ${vm.formatear_importe(pedido.total)}`,
-				buttons: botones
-			});
-			await hoja.present();
+		},
+		cerrar_detalle: function(){
+			var vm = this;
+			vm.detalle_abierto = false;
+			if(vm.qr_url) URL.revokeObjectURL(vm.qr_url);
+			vm.qr_url = '';
+			vm.pedido_actual = null;
+			vm.store.limpiar_detalle();
+		},
+		// Las acciones las resuelve el store, que recarga la lista. Si salio bien, el modal se cierra.
+		cambiar_estado: async function(estado){
+			var vm = this;
+			if(await vm.store.cambiar_estado(vm.pedido_actual.id, estado)) vm.cerrar_detalle();
+		},
+		cobrar: async function(medio_pago){
+			var vm = this;
+			if(await vm.store.registrar_pago(vm.pedido_actual.id, medio_pago, 0)) vm.cerrar_detalle();
+		},
+		cancelar: async function(){
+			var vm = this;
+			if(await vm.store.cancelar(vm.pedido_actual.id)) vm.cerrar_detalle();
 		},
 		// El PDF llega como Blob y compartir_service elige el camino: dialogo del sistema o descarga.
 		compartir_comprobante: async function(pedido){
@@ -255,7 +277,7 @@ export default {
 			}
 			vm.busqueda = resultado.contenido;
 			await vm.store.cargar({busqueda: resultado.contenido});
-			if(vm.store.pedidos.length == 1) vm.abrir_acciones(vm.store.pedidos[0]);
+			if(vm.store.pedidos.length == 1) vm.abrir_detalle(vm.store.pedidos[0]);
 		},
 		avisar: async function(mensaje){
 			const alerta = await alertController.create({

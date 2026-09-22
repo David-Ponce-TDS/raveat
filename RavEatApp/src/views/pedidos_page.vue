@@ -108,6 +108,7 @@ import comp_page from '@/components/estructura/comp_page.vue';
 import comp_pedido_detalle_modal from '@/components/dominio/comp_pedido_detalle_modal.vue';
 import comp_pedido_formulario_modal from '@/components/dominio/comp_pedido_formulario_modal.vue';
 import { compartir_archivo } from '@/services/compartir_service';
+import { notificar_evento_local } from '@/services/notificaciones_nativas_service';
 import { descargar_comprobante_pedido, descargar_qr_pedido } from '@/services/pedidos_service';
 import { escanear_qr } from '@/services/qr_service';
 import { formatear_importe } from '@/utils/formato_moneda';
@@ -212,7 +213,12 @@ export default {
 		crear: async function(datos){
 			var vm = this;
 			const creado = await vm.store.crear(datos);
-			if(creado) vm.modal_abierto = false;
+			if(creado){
+				vm.modal_abierto = false;
+				// Notificacion LOCAL: la programa la propia app como respuesta a lo que el usuario
+				// acaba de hacer. No viaja por internet, y es la mas barata de las tres.
+				notificar_evento_local('Pedido creado', `${creado.codigo} · ${formatear_importe(creado.total)}`);
+			}
 		},
 		// El detalle del pedido en un modal: datos, items, QR y todas las acciones. El QR es una
 		// imagen que genera la API; se baja como Blob y se muestra como URL de objeto.

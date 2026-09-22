@@ -1,10 +1,10 @@
-# Comandos · versión 6
+# Comandos · versión 7
 
 Todo lo que se tipea para poner esta versión a andar, en orden. Los comandos son para
 **PowerShell en Windows** y se ejecutan **desde la raíz del repositorio**, salvo que se indique
 otra cosa.
 
-Qué es esta versión y por qué está hecha así: [`README.unidad-06.md`](README.unidad-06.md).
+Qué es esta versión y por qué está hecha así: [`README.unidad-07.md`](README.unidad-07.md).
 
 ## 1 · Instalar
 
@@ -16,37 +16,32 @@ Set-Location ..
 dotnet tool restore
 ```
 
-`npm install` trae también los cinco plugins nuevos de esta versión; `dotnet build` restaura
-QuestPDF y QRCoder. Están declarados en `package.json` y en el `.csproj`: no se instalan aparte.
+`npm install` trae también los tres plugins nuevos. Están declarados en `package.json`: no se
+instalan aparte. La API no suma paquetes en esta versión.
 
 | Paquete | Para qué |
 |---|---|
-| `@capacitor/haptics` | vibración |
-| `@capacitor/camera` | cámara y galería |
-| `@capacitor/filesystem` · `@capacitor/share` | escribir el PDF y compartirlo |
-| `@capacitor-mlkit/barcode-scanning` | escanear el QR |
-| `QuestPDF` · `QRCoder` (API) | generar el PDF y el QR |
+| `@capacitor/geolocation` | capturar las coordenadas del cliente |
+| `@capacitor/local-notifications` | la notificación local, la que dispara la propia app |
+| `@capacitor/push-notifications` | registrarse en FCM y recibir el push |
 
 Para saber si ya están, desde `RavEatApp`: cada plugin tiene que aparecer con su versión.
 
 ```powershell
-npm ls @capacitor/haptics @capacitor/camera @capacitor/filesystem @capacitor/share @capacitor-mlkit/barcode-scanning
+npm ls @capacitor/geolocation @capacitor/local-notifications @capacitor/push-notifications
 ```
 
 En un proyecto propio se suman así — el `cap sync` registra la parte Android de cada plugin:
 
 ```powershell
 Set-Location .\RavEatApp
-npm install @capacitor/haptics @capacitor/camera @capacitor/filesystem @capacitor/share @capacitor-mlkit/barcode-scanning
+npm install @capacitor/geolocation @capacitor/local-notifications @capacitor/push-notifications
 npm run build
 npx cap sync android
-Set-Location ..\RavEat.Api
-dotnet add package QuestPDF
-dotnet add package QRCoder
 ```
 
-El permiso `CAMERA` y el `<provider>` de la cámara no los agrega ningún comando: van a mano en
-`AndroidManifest.xml` (ver [Datos del proyecto Android](#datos-del-proyecto-android)).
+Los dos permisos de ubicación no los agrega ningún comando: van a mano en `AndroidManifest.xml`
+(ver [Datos del proyecto Android](#datos-del-proyecto-android)).
 
 ## 2 · Crear la base y el usuario
 
@@ -78,8 +73,9 @@ dotnet tool run dotnet-ef -- database update
 Set-Location ..
 ```
 
-Las migraciones crean las tablas y cargan los datos de prueba: la carta, los clientes, los cinco
-roles y el administrador inicial. Esta versión no suma migraciones.
+Esta versión **suma una migración**, `Reparto`: crea las tablas `entregas` y `notificaciones`. Las
+anteriores siguen cargando los datos de prueba: la carta, los clientes, los cinco roles y el
+administrador inicial.
 
 > **Si venís de otra versión, la base hay que reconstruirla** (`database drop --force` y de nuevo
 > `update`): cada rama tiene su propia cadena de migraciones y no es acumulativa entre ramas.
@@ -98,11 +94,34 @@ Editá `.env` y poné la IP de tu máquina en la red local (`ipconfig`):
 VITE_API_URL_DEBUG=http://TU_IP_LAN:5080
 ```
 
-En el teléfono, `localhost` es el propio teléfono, y la cámara y el escáner se prueban ahí. Para
-trabajar solo en el navegador: `VITE_DEBUG_ACTIVADO=false`, y la app usa `VITE_API_URL`
-(`http://localhost:5080`).
+Para el push, además, la bandera — sin ella la app ni siquiera intenta registrarse en FCM:
 
-## 5 · Correr
+```
+VITE_PUSH_NOTIFICATIONS_ENABLED=true
+```
+
+En el teléfono, `localhost` es el propio teléfono. Para trabajar solo en el navegador:
+`VITE_DEBUG_ACTIVADO=false`, y la app usa `VITE_API_URL` (`http://localhost:5080`).
+
+## 5 · El archivo de Firebase
+
+Solo para el push. Se baja de la consola de Firebase con el paquete `app.raveat` y va acá:
+
+```
+RavEatApp/android/app/google-services.json
+```
+
+**No se versiona**: `.gitignore` lo corta, porque es la credencial de tu proyecto. Comprobar que
+está en su lugar:
+
+```powershell
+if (Test-Path .\RavEatApp\android\app\google-services.json) { 'ok' } else { 'FALTA' }
+```
+
+El `build.gradle` aplica el plugin de Google **solo si el archivo existe**: sin él la app compila
+igual y funciona todo menos el push. El build no puede depender de un secreto.
+
+## 6 · Correr
 
 Dos terminales:
 
@@ -133,37 +152,35 @@ token: primero se entra, y el token va en el encabezado `Authorization`.
 Invoke-RestMethod http://localhost:5080/health
 $sesion = Invoke-RestMethod -Method Post "http://localhost:5080/api/sesion/login" -ContentType "application/json" -Body '{"email":"admin@raveat.local","password":"RavEat123!"}'
 $auth = @{ Authorization = "Bearer $($sesion.sesion.token)" }
-Invoke-RestMethod "http://localhost:5080/api/clientes?tamano=2" -Headers $auth | ConvertTo-Json -Depth 4
+Invoke-RestMethod "http://localhost:5080/api/notificaciones" -Headers $auth | ConvertTo-Json -Depth 4
+Invoke-RestMethod "http://localhost:5080/api/entregas" -Headers $auth | ConvertTo-Json -Depth 4
 ```
 
-La foto viaja por **multipart**, no como JSON. Desde PowerShell lo más directo es `curl.exe` (el
-ejecutable, no el alias), con una foto de la carta:
+**La bandeja va a venir vacía, y no es un error.** Es la regla del módulo funcionando: ninguna
+notificación se escribe para el que ejecutó la acción. Para verla con algo adentro hacen falta dos
+usuarios — uno crea el pedido, el otro le cambia el estado:
 
 ```powershell
-curl.exe -X POST http://localhost:5080/api/productos -H "Authorization: Bearer $($sesion.sesion.token)" -F "categoria_id=1" -F "nombre=Prueba multipart" -F "precio=1000" -F "disponible=true" -F "imagen=@RavEat.Api/wwwroot/seed/productos/flan.jpg"
+$otro = Invoke-RestMethod -Method Post "http://localhost:5080/api/sesion/login" -ContentType "application/json" -Body '{"email":"OTRO_USUARIO","password":"SU_CLAVE"}'
+$auth2 = @{ Authorization = "Bearer $($otro.sesion.token)" }
+Invoke-RestMethod -Method Put "http://localhost:5080/api/pedidos/1/estado" -Headers $auth2 -ContentType "application/json" -Body '{"estado":"confirmado"}'
+Invoke-RestMethod "http://localhost:5080/api/notificaciones" -Headers $auth | ConvertTo-Json -Depth 4
 ```
 
-El comprobante y el QR son binarios: se guardan a un archivo. El `1` es el id de un pedido creado
-desde la app.
+Ahora el `resumen.no_leidas` del **primero** dejó de ser cero. Ese número es el de la campanita: sale
+del resumen del servidor sobre la bandeja completa, nunca de contar las filas que bajaron.
+
+La entrega no se crea por su propio endpoint: **nace con el pedido** de tipo `entregas`. Un pedido
+de ese tipo sin cliente con dirección se rechaza antes de existir:
 
 ```powershell
-Invoke-WebRequest http://localhost:5080/api/pedidos/1/comprobante -Headers $auth -OutFile pedido.pdf -UseBasicParsing
-Invoke-WebRequest http://localhost:5080/api/pedidos/1/qr -Headers $auth -OutFile pedido-qr.png -UseBasicParsing
+try { Invoke-RestMethod -Method Post "http://localhost:5080/api/pedidos" -Headers $auth -ContentType "application/json" -Body '{"tipo":"entregas","items":[{"producto_id":1,"cantidad":1}]}' } catch { (New-Object IO.StreamReader($_.Exception.Response.GetResponseStream())).ReadToEnd() }
 ```
 
-Si el PDF abre y el QR se deja leer por cualquier lector, el backend está entero: lo que falle
-después es del teléfono (permiso, plugin o manifiesto).
+Responde `entrega_sin_cliente`. Con un cliente que sí tiene dirección, el mismo `POST` devuelve el
+pedido y `GET /api/entregas` ya la muestra en `pendiente`.
 
-Los rechazos de la API también son una prueba. `Invoke-RestMethod` tira la excepción en rojo con
-un 400 y esconde el cuerpo; se lee así:
-
-```powershell
-try { Invoke-RestMethod -Method Post "http://localhost:5080/api/clientes" -Headers $auth -ContentType "application/json" -Body '{"nombre":"","telefono":""}' } catch { (New-Object IO.StreamReader($_.Exception.Response.GetResponseStream())).ReadToEnd() }
-```
-
-Responde `cliente_nombre_requerido`.
-
-## 6 · Compilar
+## 7 · Compilar
 
 ```powershell
 Set-Location .\RavEatApp
@@ -177,7 +194,7 @@ dotnet build .\RavEat.Api\RavEat.Api.csproj
 **`cap sync` copia lo que hay en `dist/`, no lo que hay en `src/`** — sin un `build` previo, el
 APK lleva el código viejo. Es el olvido más común.
 
-## 7 · Llevarlo al teléfono
+## 8 · Llevarlo al teléfono
 
 ```powershell
 Set-Location .\RavEatApp
@@ -189,8 +206,8 @@ Set-Location .\android
 .\gradlew assembleDebug     # solo generar el APK
 ```
 
-Salidas en `android/app/build/outputs/`. Cámara, escáner, compartir y huella **se prueban acá**:
-en el navegador no existen.
+Salidas en `android/app/build/outputs/`. La notificación local, el push y el diálogo del permiso de
+ubicación **se prueban acá**: en el navegador, el push no existe y la local no sale de la pestaña.
 
 Para volver a ver el diálogo del permiso desde cero —por ejemplo, después de un «no volver a
 preguntar»—, se desinstala y se instala de nuevo:
@@ -201,7 +218,25 @@ Set-Location .\RavEatApp\android
 .\gradlew installDebug
 ```
 
-## 8 · Migraciones
+## 9 · Mandar un push
+
+El envío **no sale de nuestra API**: se hace desde la consola de Firebase, y esa es la lección. Se
+necesita el APK instalado, con `google-services.json` adentro y el permiso de notificaciones
+concedido.
+
+1. Abrir la app una vez: al arrancar se registra en FCM.
+2. En la consola de Firebase: **Messaging → Nueva campaña → Notificaciones**.
+3. Escribir título y texto, elegir la app `app.raveat` y enviar.
+4. **Cerrar la app** antes de que llegue: el push es el único de los tres que llega con la app
+   cerrada.
+
+El token de registro queda en el log del dispositivo, por si hace falta apuntarle a uno solo:
+
+```powershell
+adb logcat -s Capacitor/Console | Select-String "Push token registrado"
+```
+
+## 10 · Migraciones
 
 ```powershell
 Set-Location .\RavEat.Api
@@ -229,25 +264,30 @@ dotnet tool run dotnet-ef -- database update
 
 | Síntoma | Causa probable | Qué hacer |
 |---|---|---|
-| La cámara no abre y aparece un mensaje de permiso | El permiso quedó denegado | Ajustes del teléfono, o reinstalar (Sección 7) |
-| El diálogo del permiso no vuelve a aparecer | «No volver a preguntar»: el sistema ya no pregunta | Es lo esperado: la app manda a los ajustes |
-| La app se cae al sacar la foto | Falta el `<provider>` de `FileProvider` | Está en `AndroidManifest.xml`: no recortarlo |
-| La subida de la foto da **400** | Se le puso `Content-Type` a mano al `FormData` | `contentType: false` y `processData: false` |
-| «La categoría indicada no existe» con una elegida | El multipart no aplica `snake_case`: `categoria_id` llega en 0 | `[FromForm(Name = "categoria_id")]` en la propiedad |
-| El primer escaneo dice que se descarga el lector | ML Kit baja el lector aparte la primera vez | Esperar unos segundos y reintentar |
-| El escáner no anda en el navegador | El lector solo existe en el APK | Tipear el código en el buscador de Pedidos |
-| El primer comprobante falla con un texto de licencia | QuestPDF exige declarar la licencia | La línea de `Program.cs`: no borrarla |
-| Las fotos subidas no están en otra máquina | `wwwroot/uploads/` está en `.gitignore` | Es a propósito: son datos, no código |
+| La campanita siempre en cero | Estás solo: no se notifica al que ejecuta la acción | Dos usuarios, uno crea y el otro cambia el estado (Sección 6) |
+| La bandeja trae notificaciones de otro | No puede pasar: la consulta filtra por el token | Si pasa, hay un `usuario_id` viajando por query donde no debe |
+| El contador no coincide con las filas en pantalla | Está bien: el contador es de la bandeja completa | Es el `resumen` del servidor, no la página |
+| El push no llega | Falta `google-services.json`, la bandera del `.env` o el permiso | Secciones 4 y 5, y reinstalar el APK |
+| El push no llega **con la app abierta** | Es lo esperado en Android: en primer plano no se muestra solo | Cerrar la app y volver a enviar |
+| La app compila pero nunca se registra en FCM | El `.json` se lee al **compilar**: se agregó después del build | `npm run build` + `npx cap sync android` + `installDebug` |
+| «Sin permiso de ubicación» y no vuelve a preguntar | «No volver a preguntar»: el sistema ya no muestra el diálogo | Es lo esperado: la app manda a los ajustes |
+| Las coordenadas quedan vacías y el cliente se guarda igual | Es lo esperado: sin coordenadas el mapa busca por la dirección | Nada |
+| `getCurrentPosition` tarda y termina en error | GPS apagado, o bajo techo sin señal | Prender la ubicación del teléfono; la aproximada alcanza |
+| «Un pedido de entrega necesita un cliente» | El pedido de tipo `entregas` nació sin cliente | Elegir cliente, y que tenga dirección cargada |
+| «El cliente no tiene dirección cargada» | El cliente existe pero la dirección está vacía | Editarlo y cargar la dirección |
+| La entrega no aparece después de crear el pedido | El pedido no era de tipo `entregas` | La entrega nace **solo** con ese tipo |
+| «Solo se puede tomar la entrega para uno mismo» | Un delivery quiso asignársela a otro | Los que venden asignan; delivery solo toma |
+| «La entrega la mueve el repartidor asignado» | Otro delivery quiso moverla | La mueve el suyo, o admin y los que venden |
+| La notificación local no aparece en el navegador | El plugin solo existe en el APK | Probarla en el teléfono |
 | «No se pudo conectar con la API» | La API no está levantada, o la URL apunta a otro lado | Probar `/health`; con sesión, **Mi cuenta → Diagnóstico** |
 | Todo devuelve **401** | Sin sesión: los endpoints exigen token | Entrar con el administrador sembrado |
-| El botón de huella no aparece | No hay biometría en el dispositivo, o no hay sesión guardada | Entrar primero con email y contraseña |
 | En el navegador anda y en el teléfono no | `VITE_API_URL_DEBUG` apunta a `localhost` | Poner la IP LAN de la PC (`ipconfig`) |
 | Cambié la IP del `.env` y el APK sigue con la vieja | La URL queda **grabada dentro del bundle** | `npm run build` + `npx cap sync android` de nuevo |
 | `dotnet build` falla con MSB3026/3027 | La API corriendo tiene tomados sus `.dll` | Pararla (`Ctrl+C`) y recompilar |
 | `Access denied for user ...` | Falta el secreto: `appsettings.json` dice `Password=CAMBIAR` | Sección 2 |
-| El 400 sale en rojo y sin cuerpo | `Invoke-RestMethod` esconde el body | Leerlo con el `StreamReader` de la Sección 5 |
+| El 400 sale en rojo y sin cuerpo | `Invoke-RestMethod` esconde el body | Leerlo con el `StreamReader` de la Sección 6 |
 | Error de CORS **con la API levantada** | Dos API pelearon el puerto 5080 | `Get-NetTCPConnection -LocalPort 5080 -State Listen`, cerrar todas y levantar una |
-| Toqué `src/` y el teléfono muestra lo viejo | Falta `npm run build` antes de `cap sync` | Sección 6 |
+| Toqué `src/` y el teléfono muestra lo viejo | Falta `npm run build` antes de `cap sync` | Sección 7 |
 
 ## Datos del proyecto Android
 
@@ -265,15 +305,17 @@ dotnet tool run dotnet-ef -- database update
 |---|---|
 | `CAMERA` | permiso **peligroso**: se declara y además se pide en tiempo de ejecución |
 | `READ_EXTERNAL_STORAGE` (hasta Android 12) | la galería; desde Android 13 el selector no pide permiso |
+| `ACCESS_COARSE_LOCATION` · `ACCESS_FINE_LOCATION` | las dos precisiones: desde Android 12 el usuario puede dar solo la aproximada |
 | `<provider>` de `FileProvider` + `res/xml/file_paths.xml` | la cámara entrega la foto a la webview por ahí |
 
-`VIBRATE` y el permiso de biometría los declaran sus plugins por fusión de manifiestos: no se tocan
-a mano.
+`VIBRATE`, `POST_NOTIFICATIONS` y el permiso de biometría los declaran sus plugins por fusión de
+manifiestos: no se tocan a mano.
 
 ### Firma
 
 Sigue alcanzando el `debug.keystore` automático de Android Studio. Si generás un keystore propio,
-la regla es una sola: **el keystore y sus contraseñas nunca se versionan.**
+la regla es una sola: **el keystore y sus contraseñas nunca se versionan.** Lo mismo vale para
+`google-services.json`.
 
 ### Íconos y splash · bajo demanda
 

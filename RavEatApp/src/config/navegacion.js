@@ -1,4 +1,5 @@
 import {
+	bicycleOutline,
 	homeOutline,
 	peopleOutline,
 	peopleCircleOutline,
@@ -47,9 +48,8 @@ export const navegacion = [
 		titulo: 'Inicio',
 		ruta: '/app/inicio',
 		icono: homeOutline,
-		// La vitrina: se ve con sesion o sin ella, como la web del local. Todo lo demas de la app
-		// sigue cerrado. Sin sesion, Mi cuenta lleva al login.
-		abierta: true,
+		// Cualquier autenticado, incluso sin rol: es lo que le deja ver la vitrina mientras
+		// espera que un admin lo habilite.
 		roles: [TODOS],
 		menu_roles: [TODOS],
 		tab_roles: [TODOS],
@@ -62,11 +62,9 @@ export const navegacion = [
 		titulo: 'Productos',
 		ruta: '/app/productos',
 		icono: pricetagsOutline,
-		// El catalogo lo administra solo el ADMIN, igual que en la API: el vendedor lo consulta
-		// desde la vitrina de Inicio.
-		roles: ['administrador'],
-		menu_roles: ['administrador'],
-		tab_roles: ['administrador'],
+		roles: ['administrador', 'vendedor'],
+		menu_roles: ['administrador', 'vendedor'],
+		tab_roles: ['administrador', 'vendedor'],
 		grupo_menu: 'operacion',
 		orden: 20,
 		componente: () => import('@/views/productos_page.vue')
@@ -94,6 +92,20 @@ export const navegacion = [
 		grupo_menu: 'operacion',
 		orden: 40,
 		componente: () => import('@/views/pedidos_page.vue')
+	},
+	{
+		id: 'entregas',
+		titulo: 'Entregas',
+		ruta: '/app/entregas',
+		icono: bicycleOutline,
+		roles: ['administrador', 'vendedor', 'caja', 'delivery'],
+		menu_roles: ['administrador', 'vendedor', 'caja', 'delivery'],
+		// En tabs solo para delivery: es SU pantalla de todo el dia. Admin y vendedor ya tienen
+		// los cinco tabs llenos, y para ellos las entregas son consulta, no rutina.
+		tab_roles: ['delivery'],
+		grupo_menu: 'operacion',
+		orden: 50,
+		componente: () => import('@/views/entregas_page.vue')
 	},
 	{
 		id: 'perfil',

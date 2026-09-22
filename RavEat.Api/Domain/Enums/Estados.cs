@@ -31,3 +31,13 @@ public enum MedioPago {
     Transferencia,
     Tarjeta
 }
+
+// El ciclo de vida de una entrega, separado del estado del pedido: el pedido puede estar Listo
+// y la entrega todavia Pendiente de asignar. Menos estados que un delivery real a proposito.
+public enum EstadoEntrega {
+    Pendiente,
+    Asignada,
+    EnCamino,
+    Entregada,
+    Cancelada
+}

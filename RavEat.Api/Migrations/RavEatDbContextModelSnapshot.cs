@@ -130,6 +130,84 @@ namespace RavEat.Api.Migrations
                     b.ToTable("clientes", (string)null);
                 });
 
+            modelBuilder.Entity("RavEat.Api.Domain.Entities.Entrega", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTimeOffset>("ActualizadoEn")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("actualizado_en");
+
+                    b.Property<DateTimeOffset?>("AsignadaEn")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("asignada_en");
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("creado_en");
+
+                    b.Property<decimal?>("DireccionLatitud")
+                        .HasPrecision(10, 7)
+                        .HasColumnType("decimal(10,7)")
+                        .HasColumnName("direccion_latitud");
+
+                    b.Property<string>("DireccionLinea")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasColumnName("direccion_linea");
+
+                    b.Property<decimal?>("DireccionLongitud")
+                        .HasPrecision(10, 7)
+                        .HasColumnType("decimal(10,7)")
+                        .HasColumnName("direccion_longitud");
+
+                    b.Property<string>("DireccionReferencia")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)")
+                        .HasColumnName("direccion_referencia");
+
+                    b.Property<DateTimeOffset?>("EntregadaEn")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("entregada_en");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)")
+                        .HasColumnName("estado");
+
+                    b.Property<string>("Observaciones")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)")
+                        .HasColumnName("observaciones");
+
+                    b.Property<long>("PedidoId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("pedido_id");
+
+                    b.Property<long?>("RepartidorId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("repartidor_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_entregas");
+
+                    b.HasIndex("PedidoId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_entregas_pedido_id");
+
+                    b.HasIndex("RepartidorId", "Estado")
+                        .HasDatabaseName("ix_entregas_repartidor_id_estado");
+
+                    b.ToTable("entregas", (string)null);
+                });
+
             modelBuilder.Entity("RavEat.Api.Domain.Entities.Pedido", b =>
                 {
                     b.Property<long>("Id")
@@ -507,6 +585,22 @@ namespace RavEat.Api.Migrations
                         .HasDatabaseName("ix_usuarios_rol_id");
 
                     b.ToTable("usuarios", (string)null);
+                });
+
+            modelBuilder.Entity("RavEat.Api.Domain.Entities.Entrega", b =>
+                {
+                    b.HasOne("RavEat.Api.Domain.Entities.Pedido", null)
+                        .WithMany()
+                        .HasForeignKey("PedidoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_entregas_pedidos_pedido_id");
+
+                    b.HasOne("RavEat.Api.Domain.Entities.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("RepartidorId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_entregas_usuarios_repartidor_id");
                 });
 
             modelBuilder.Entity("RavEat.Api.Domain.Entities.Pedido", b =>

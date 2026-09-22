@@ -57,3 +57,9 @@ public sealed class PedidoItemConfiguration : IEntityTypeConfiguration<PedidoIte
     // Restrict contra el producto: un producto usado en un pedido no se puede borrar.
     public void Configure(EntityTypeBuilder<PedidoItem> b){ ConfigurationExtensions.Base(b, "pedidos_items"); b.Property(x => x.ProductoNombre).HasMaxLength(160).IsRequired(); b.Property(x => x.PrecioUnitario).HasPrecision(12, 2); b.Property(x => x.Subtotal).HasPrecision(12, 2); b.Property(x => x.Observaciones).HasMaxLength(500); b.HasIndex(x => x.PedidoId); b.HasOne<Pedido>().WithMany().HasForeignKey(x => x.PedidoId).OnDelete(DeleteBehavior.Cascade); b.HasOne<Producto>().WithMany().HasForeignKey(x => x.ProductoId).OnDelete(DeleteBehavior.Restrict); }
 }
+
+public sealed class EntregaConfiguration : IEntityTypeConfiguration<Entrega> {
+    // Una entrega por pedido (indice unico): el pedido es el centro y la entrega, su apendice.
+    // SetNull en el repartidor: dar de baja al repartidor no borra la entrega, la deja sin asignar.
+    public void Configure(EntityTypeBuilder<Entrega> b){ ConfigurationExtensions.Base(b, "entregas"); b.Property(x => x.DireccionLinea).HasMaxLength(255).IsRequired(); b.Property(x => x.DireccionReferencia).HasMaxLength(500); b.Property(x => x.DireccionLatitud).HasPrecision(10, 7); b.Property(x => x.DireccionLongitud).HasPrecision(10, 7); b.Property(x => x.Estado).EnumTexto(); b.Property(x => x.Observaciones).HasMaxLength(1000); b.HasIndex(x => x.PedidoId).IsUnique(); b.HasIndex(x => new {x.RepartidorId, x.Estado}); b.HasOne<Pedido>().WithMany().HasForeignKey(x => x.PedidoId).OnDelete(DeleteBehavior.Cascade); b.HasOne<Usuario>().WithMany().HasForeignKey(x => x.RepartidorId).OnDelete(DeleteBehavior.SetNull); }
+}

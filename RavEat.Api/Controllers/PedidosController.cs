@@ -13,8 +13,7 @@ using RavEat.Api.Domain.Enums;
 namespace RavEat.Api.Controllers;
 
 // Todos los roles operativos ven pedidos, pero no todos hacen lo mismo: crear y cobrar se restringe
-// endpoint por endpoint. Cocina y delivery mueven estados; el vendedor crea y no cobra; caja crea
-// y cobra.
+// endpoint por endpoint. Cocina mueve estados y no cobra; caja cobra y no crea.
 //
 // Se listan los cinco roles en vez de usar `[Authorize]` a secas. No es lo mismo: `[Authorize]`
 // solo exige estar **autenticado**, asi que un usuario recien creado —que todavia no tiene rol—
@@ -133,9 +132,16 @@ public sealed class PedidosController(RavEatDbContext db) : ControllerBase {
     public async Task<IActionResult> Crear(CrearPedidoRequest request, CancellationToken cancellationToken) {
         if(request.Items is null || request.Items.Count == 0) return BadRequest(new {codigo = "pedido_sin_items", mensaje = "El pedido necesita al menos un producto."});
         if(request.Items.Any(x => x.Cantidad <= 0)) return BadRequest(new {codigo = "cantidad_invalida", mensaje = "Las cantidades tienen que ser mayores a cero."});
+        Cliente? cliente = null;
         if(request.ClienteId.HasValue) {
-            var clienteExiste = await db.Clientes.AnyAsync(x => x.Id == request.ClienteId.Value && x.Activo, cancellationToken);
-            if(!clienteExiste) return BadRequest(new {codigo = "cliente_no_encontrado", mensaje = "El cliente indicado no existe."});
+            cliente = await db.Clientes.AsNoTracking().FirstOrDefaultAsync(x => x.Id == request.ClienteId.Value && x.Activo, cancellationToken);
+            if(cliente is null) return BadRequest(new {codigo = "cliente_no_encontrado", mensaje = "El cliente indicado no existe."});
+        }
+        // Un pedido de entrega necesita a quien y a donde ANTES de existir: sin cliente con
+        // direccion, el repartidor sale a la calle con una bolsa y ninguna esquina.
+        if(request.Tipo == TipoPedido.Entregas) {
+            if(cliente is null) return BadRequest(new {codigo = "entrega_sin_cliente", mensaje = "Un pedido de entrega necesita un cliente."});
+            if(string.IsNullOrWhiteSpace(cliente.DireccionLinea)) return BadRequest(new {codigo = "cliente_sin_direccion", mensaje = "El cliente no tiene dirección cargada."});
         }
 
         // Los precios NO llegan del cliente: se leen de la base. Si el frontend mandara el precio,
@@ -179,6 +185,18 @@ public sealed class PedidosController(RavEatDbContext db) : ControllerBase {
                 Cantidad = item.Cantidad,
                 Subtotal = subtotalItem,
                 Observaciones = string.IsNullOrWhiteSpace(item.Observaciones) ? null : item.Observaciones.Trim()
+            });
+        }
+
+        // La entrega nace con el pedido y COPIA la direccion del cliente, igual que el item copia
+        // el precio: si el cliente se muda manana, esta entrega sigue diciendo a donde fue.
+        if(request.Tipo == TipoPedido.Entregas && cliente is not null) {
+            db.Entregas.Add(new Entrega {
+                PedidoId = pedido.Id,
+                DireccionLinea = cliente.DireccionLinea!.Trim(),
+                DireccionReferencia = cliente.DireccionReferencia,
+                DireccionLatitud = cliente.DireccionLatitud,
+                DireccionLongitud = cliente.DireccionLongitud
             });
         }
 

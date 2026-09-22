@@ -12,6 +12,7 @@ public sealed class RavEatDbContext(DbContextOptions<RavEatDbContext> options) :
     public DbSet<Cliente> Clientes => Set<Cliente>();
     public DbSet<Pedido> Pedidos => Set<Pedido>();
     public DbSet<PedidoItem> PedidosItems => Set<PedidoItem>();
+    public DbSet<Entrega> Entregas => Set<Entrega>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder){
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(RavEatDbContext).Assembly);

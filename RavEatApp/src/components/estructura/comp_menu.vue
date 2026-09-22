@@ -69,10 +69,11 @@ export default {
 		};
 	},
 	computed: {
-		// El menu muestra solo lo que el rol de la sesion puede abrir. Sin rol quedan Inicio y
-		// Mi cuenta, que es exactamente lo que puede hacer un usuario sin habilitar.
 		grupos_menu(){
 			var vm = this;
+			// El rol sale de la sesion: es un computed, asi que el menu se rearma solo cuando
+			// cambia el usuario. Pasarle null —como quedo hasta v5— mostraba nada mas las
+			// pantallas de [TODOS], y un administrador veia un menu de dos items.
 			return obtener_grupos_menu_rol(vm.sesion_store.rol_activo);
 		}
 	},

@@ -209,9 +209,11 @@ export default {
 			}
 		},
 		// La hora la manda la API, no el telefono: si difieren, lo que se ve es el reloj del server.
+		// `hour12: false` no es un adorno: sin eso el WebView de Android devuelve "10:40:28" para
+		// las 22:40 —doce horas de diferencia aparentes contra el reloj del telefono.
 		formatear_hora: function(utc){
 			if(!utc) return '';
-			return new Date(utc).toLocaleTimeString('es-AR');
+			return new Date(utc).toLocaleTimeString('es-AR', {hour12: false});
 		},
 		salir: async function(){
 			var vm = this;

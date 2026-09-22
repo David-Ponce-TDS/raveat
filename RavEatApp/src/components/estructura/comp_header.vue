@@ -67,7 +67,8 @@ export default {
 	},
 	mounted(){
 		var vm = this;
-		// El header se monta con cada pantalla: el contador se refresca al navegar, sin timers.
+		// La primera carga, la de la pantalla que se abre. El refresco al navegar lo hace el
+		// router: Ionic cachea las paginas y este mounted no vuelve a correr al regresar a una.
 		if(vm.puede_ver_bandeja) vm.notificaciones_store.cargar();
 	},
 	methods: {

@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { navegacion, TODOS } from '@/config/navegacion';
 import main_layout from '@/layouts/main_layout.vue';
+import { use_notificaciones_store } from '@/stores/notificaciones_store';
 import { use_sesion_store } from '@/stores/sesion_store';
 
 // Las rutas ya no se escriben: se derivan de la configuracion. Agregar una pantalla es
@@ -10,7 +11,6 @@ const rutas_app = navegacion.map(item => ({
 	name: item.id,
 	component: item.componente,
 	meta: {
-		abierta: item.abierta == true,
 		roles: item.roles
 	}
 }));
@@ -51,8 +51,19 @@ const router = createRouter({
 	routes
 });
 
-// Desde v5 el rol sale del store de sesion, que ya lo entrega como id de navegacion
-// ('administrador'). La estructura del guard estaba armada desde v2 y no se toco.
+// Desde v5 el rol sale del store de sesion. Es el unico cambio que hizo falta: la estructura del
+// guard estaba armada desde v2 y no se toco.
+// La API habla en codigos (`ADMIN`) y la navegacion en ids (`administrador`); la traduccion la
+// hace `sesion_store` con `roles.js`, en el borde con el servidor. Aca ya llega el id, igual que
+// al menu y a los tabs: una sola forma del rol para toda la app.
+function obtener_rol_activo(){
+	const sesion = use_sesion_store();
+	return sesion.rol_activo;
+}
+
+// El refugio del guard: la pantalla que ve el que no puede ver otra cosa.
+const RUTA_INICIO = '/app/inicio';
+
 // Guard real. Lee la metadata que viene de navegacion.js, no una lista escrita a mano: por eso
 // agregar una pantalla protegida no requiere tocar este archivo.
 router.beforeEach(to =>{
@@ -62,10 +73,6 @@ router.beforeEach(to =>{
 	// que la app mande al login en cada arranque, incluso teniendo sesion valida.
 	if(sesion.restaurando) return true;
 
-	// Abierta = entra cualquiera, con sesion o sin ella. Es distinto de `publica`: esa manda al que
-	// ya entro de vuelta a la app.
-	if(to.meta.abierta) return true;
-
 	if(to.meta.publica){
 		// Si ya entro, el login no tiene nada que ofrecerle.
 		return sesion.autenticado ? {path: '/app/inicio', replace: true} : true;
@@ -74,22 +81,33 @@ router.beforeEach(to =>{
 	if(!sesion.autenticado) return {path: '/login', replace: true};
 
 	const roles_permitidos = to.meta.roles;
-	// Misma regla de lectura que navegacion.js: [TODOS] abre la ruta a cualquier autenticado,
-	// tenga rol o no (es la marca que lleva Inicio), y la lista vacia no abre a nadie.
+	// Lista vacia = NADIE. La marca [TODOS] es la que abre a cualquier autenticado, tenga rol o
+	// no: es la que lleva Inicio. Sin este chequeo el guard rechazaba Inicio y lo redirigia a
+	// Inicio — un bucle que dejaba la app clavada en el login sin ningun error a la vista.
 	if(!roles_permitidos) return true;
 	if(roles_permitidos.includes(TODOS)) return true;
 
-	if(sesion.rol_activo && roles_permitidos.includes(sesion.rol_activo)) return true;
-
-	// Inicio es el refugio del guard: si el destino ya es Inicio, se deja pasar. Asi el guard
-	// nunca redirige una ruta a si misma, sea cual sea la configuracion.
-	if(to.path == '/app/inicio') return true;
+	const rol_activo = obtener_rol_activo();
+	if(rol_activo && roles_permitidos.includes(rol_activo)) return true;
 
 	// Autenticado pero sin permiso: vuelve a Inicio, que es lo unico que todos pueden ver. No se
 	// lo manda al login, porque su sesion es valida — lo que le falta es autorizacion.
+	// El destino se compara antes de redirigir: mandar una ruta a si misma es el bucle de arriba,
+	// y el guard tiene que ser incapaz de armarlo aunque la configuracion cambie.
+	if(to.path == RUTA_INICIO) return true;
 	return {
-		path: '/app/inicio',
+		path: RUTA_INICIO,
 		replace: true
 	};
+});
+
+// La campanita se refresca en cada navegacion, sin timers. Antes cargaba el header al montarse,
+// pero Ionic CACHEA las paginas del outlet: al volver a una ya visitada el header no se vuelve a
+// montar y el contador quedaba viejo. El afterEach corre siempre, este la pagina cacheada o no.
+// Sin rol no hay campanita ni bandeja que pedir.
+router.afterEach(() =>{
+	const sesion = use_sesion_store();
+	if(!sesion.autenticado || !sesion.rol_activo) return;
+	use_notificaciones_store().cargar();
 });
 export default router;

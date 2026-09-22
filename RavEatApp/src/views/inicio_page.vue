@@ -3,7 +3,9 @@
 		<div class="ion-padding raveat-page-stack">
 			<comp-vidriera lema="Nuestra carta, servida por la API" />
 
-			<comp-esqueleto v-if="productos_store.cargando" />
+			<!-- La vitrina muestra tarjetas: el esqueleto tambien. Con la variante de lista, al
+			     llegar los datos la pantalla cambiaba de forma de golpe. -->
+			<comp-esqueleto v-if="productos_store.cargando && !productos_store.hay_productos" :filas="6" variante="tarjetas" />
 			<comp-estado-error
 				v-else-if="productos_store.error"
 				:mensaje="productos_store.error"

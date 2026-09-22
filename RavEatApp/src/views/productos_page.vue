@@ -44,16 +44,10 @@
 				@cargar_mas="store.cargar_mas_catalogo()"
 			>
 				<ion-item-sliding v-for="producto in store.catalogo_productos" :key="producto.id">
-					<ion-item button @click="abrir_edicion(producto)">
-						<ion-label>
-							<h3 class="raveat-item-title">{{ producto.nombre }}</h3>
-							<p>{{ producto.categoria_nombre }}</p>
-							<p v-if="producto.descripcion" class="raveat-item-meta">{{ producto.descripcion }}</p>
-						</ion-label>
-						<ion-badge slot="end" :color="producto.disponible ? 'success' : 'medium'">
-							{{ formatear_importe(producto.precio) }}
-						</ion-badge>
-					</ion-item>
+					<!-- La fila es un componente de dominio, no markup suelto: es el mismo producto
+					     que dibuja la vitrina, con otra cara. Tenerlo repetido en la pantalla dejaba
+					     la lista sin la miniatura que el componente ya sabia resolver. -->
+					<comp-producto-lista-item button :producto="producto" @click="abrir_edicion(producto)" />
 					<ion-item-options side="end">
 						<ion-item-option color="danger" @click="confirmar_baja(producto)">Baja</ion-item-option>
 					</ion-item-options>
@@ -74,14 +68,11 @@
 </template>
 
 <script>import {
-	IonBadge,
 	IonButton,
 	IonIcon,
-	IonItem,
 	IonItemOption,
 	IonItemOptions,
 	IonItemSliding,
-	IonLabel,
 	alertController
 } from '@ionic/vue';
 import { addOutline, pricetagsOutline } from 'ionicons/icons';
@@ -92,7 +83,7 @@ import comp_esqueleto from '@/components/base/comp_esqueleto.vue';
 import comp_lista from '@/components/base/comp_lista.vue';
 import comp_page from '@/components/estructura/comp_page.vue';
 import comp_producto_formulario_modal from '@/components/dominio/comp_producto_formulario_modal.vue';
-import { formatear_importe } from '@/utils/formato_moneda';
+import comp_producto_lista_item from '@/components/dominio/comp_producto_lista_item.vue';
 import { use_productos_store } from '@/stores/productos_store';
 
 // El catalogo de gestion: paginado, filtrable y con ABM. La vitrina de Inicio muestra los mismos
@@ -107,14 +98,12 @@ export default {
 		CompLista: comp_lista,
 		CompPage: comp_page,
 		CompProductoFormularioModal: comp_producto_formulario_modal,
-		IonBadge,
+		CompProductoListaItem: comp_producto_lista_item,
 		IonButton,
 		IonIcon,
-		IonItem,
 		IonItemOption,
 		IonItemOptions,
-		IonItemSliding,
-		IonLabel
+		IonItemSliding
 	},
 	data(){
 		return {
@@ -194,7 +183,6 @@ export default {
 				]
 			});
 			await alerta.present();
-		},
-		formatear_importe
+		}
 	}
 };</script>

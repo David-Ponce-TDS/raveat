@@ -131,6 +131,9 @@ export default {
 		},
 		es_delivery(){
 			var vm = this;
+			// El rol se compara en el idioma de la app (`delivery`), que es lo que devuelve el
+			// store: mientras publicaba el codigo de la API (`DELIVERY`) esto daba siempre falso
+			// y el repartidor no veia ni sus entregas ni el boton de tomarlas.
 			return vm.sesion_store.rol_activo == 'delivery';
 		},
 		es_admin(){

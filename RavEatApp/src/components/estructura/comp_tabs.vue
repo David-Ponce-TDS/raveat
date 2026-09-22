@@ -35,9 +35,10 @@ export default {
 		};
 	},
 	computed: {
-		// Los tabs siguen al rol de la sesion: la misma lista que el menu, recortada al maximo.
 		items_tabs(){
 			var vm = this;
+			// El mismo rol que usa el menu, recortado al maximo de tabs. Con null solo quedaban
+			// las pantallas de [TODOS]: la barra mostraba Inicio y Mi cuenta para cualquiera.
 			return obtener_tabs_rol(vm.sesion_store.rol_activo);
 		}
 	}

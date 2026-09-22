@@ -350,21 +350,16 @@ ion-menu ion-item.seleccionado ion-icon {
     margin: 0;
 }
 
-/* --- qr del pedido ------------------------------------------------------- */
+/* --- ubicacion del cliente ----------------------------------------------- */
 
-.raveat-qr {
+.raveat-ubicacion__acciones {
     display: flex;
-    flex-direction: column;
-    align-items: center;
+    flex-wrap: wrap;
     gap: 6px;
-    padding: 14px;
-    border: 1px solid var(--raveat-border);
-    border-radius: 16px;
-    background: #fff;
+    padding-bottom: 8px;
 }
 
-.raveat-qr img {
-    width: 160px;
-    height: 160px;
-    image-rendering: pixelated;
+/* Mismo criterio que la foto: el permiso denegado se muestra donde se pidio. */
+.raveat-ubicacion__mensaje {
+    color: var(--ion-color-danger);
 }

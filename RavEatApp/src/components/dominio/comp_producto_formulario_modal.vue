@@ -208,7 +208,8 @@ export default {
 		},
 		elegir_archivo: function(evento){
 			var vm = this;
-			const archivo = (evento.target.files && evento.target.files[0]) || null;
+			const elegidos = evento.target.files;
+			const archivo = elegidos && elegidos.length > 0 ? elegidos[0] : null;
 			// Limpiar el input deja volver a elegir el mismo archivo.
 			evento.target.value = '';
 			if(archivo) vm.establecer_imagen(archivo);

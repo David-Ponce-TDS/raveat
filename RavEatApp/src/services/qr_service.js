@@ -32,7 +32,8 @@ export async function escanear_qr(){
 			};
 		}
 		const resultado = await BarcodeScanner.scan({formats: [BarcodeFormat.QrCode]});
-		const contenido = (resultado && resultado.barcodes && resultado.barcodes[0] && resultado.barcodes[0].rawValue) || '';
+		const leidos = (resultado && resultado.barcodes) || [];
+		const contenido = leidos.length > 0 ? leidos[0].rawValue || '' : '';
 		if(!contenido){
 			return {
 				ok: false,

@@ -38,7 +38,7 @@ function armar_form_data(datos, imagen){
 	const formulario = new FormData();
 	Object.keys(datos).forEach(campo =>{
 		const valor = datos[campo];
-		if(valor != null && valor != undefined) formulario.append(campo, valor);
+		if(valor != null) formulario.append(campo, valor);
 	});
 	if(imagen) formulario.append('imagen', imagen);
 	return formulario;

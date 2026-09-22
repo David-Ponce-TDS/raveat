@@ -37,4 +37,8 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <!-- Galeria en Android 12 o anterior; desde Android 13 el selector no pide permiso. -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <!-- Las dos precisiones: Android 12+ deja dar la aproximada, y para una direccion de entrega
+         alcanza. POST_NOTIFICATIONS no se declara aca: lo aporta el plugin al fusionar. -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 </manifest>

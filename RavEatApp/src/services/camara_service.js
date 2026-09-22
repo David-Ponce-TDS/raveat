@@ -58,9 +58,9 @@ export async function tomar_foto(origen = 'camara'){
 async function asegurar_permiso(origen){
 	const alias = alias_permiso[origen] || 'camera';
 	const estado = await Camera.checkPermissions();
-	if(permiso_concedido(estado && estado[alias])) return {ok: true, archivo: null, mensaje: null};
+	if(estado && permiso_concedido(estado[alias])) return {ok: true, archivo: null, mensaje: null};
 	const pedido = await Camera.requestPermissions({permissions: [alias]});
-	if(permiso_concedido(pedido && pedido[alias])) return {ok: true, archivo: null, mensaje: null};
+	if(pedido && permiso_concedido(pedido[alias])) return {ok: true, archivo: null, mensaje: null};
 	return {
 		ok: false,
 		archivo: null,

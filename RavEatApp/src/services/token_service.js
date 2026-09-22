@@ -16,7 +16,7 @@ let token_en_memoria = null;
 let al_expirar_sesion = null;
 
 async function guardar(clave, valor){
-	if(valor == null || valor == undefined){
+	if(valor == null){
 		await SecureStorage.remove(clave);
 		return;
 	}

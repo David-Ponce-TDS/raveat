@@ -8,8 +8,9 @@ export function construir_query(parametros = {}){
 	Object.keys(parametros).forEach(clave =>{
 		const valor = parametros[clave];
 		// null, undefined y '' significan "sin filtro" y no viajan. El false SI viaja: es el
-		// filtro "no disponibles", que es distinto de no filtrar.
-		if(valor == null || valor == undefined || valor == '') return;
+		// filtro "no disponibles", que es distinto de no filtrar. Por eso el vacio se compara con
+		// === y no con ==: `false == ''` da verdadero y se llevaria puesto ese filtro.
+		if(valor == null || valor === '') return;
 		query.set(clave, valor);
 	});
 	const texto = query.toString();

@@ -363,3 +363,33 @@ ion-menu ion-item.seleccionado ion-icon {
 .raveat-ubicacion__mensaje {
     color: var(--ion-color-danger);
 }
+
+/* --- campanita del header ------------------------------------------------ */
+
+/* El badge se apoya sobre el icono, asi que el boton tiene que dejar salir lo que desborda. */
+.raveat-campanita {
+    position: relative;
+    overflow: visible;
+}
+
+.raveat-campanita__badge {
+    position: absolute;
+    top: 2px;
+    right: 0;
+    min-width: 16px;
+    padding: 1px 4px;
+    border-radius: 999px;
+    background: var(--ion-color-danger);
+    color: #fff;
+    font-size: 0.62rem;
+    font-weight: 700;
+    line-height: 1.4;
+    text-align: center;
+}
+
+/* --- bandeja de notificaciones ------------------------------------------- */
+
+/* Leida no se oculta ni se borra: se apaga. La fila sigue estando y se puede releer. */
+.raveat-notificacion--leida {
+    opacity: 0.6;
+}

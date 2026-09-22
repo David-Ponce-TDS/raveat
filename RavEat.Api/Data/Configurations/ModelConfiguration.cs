@@ -63,3 +63,9 @@ public sealed class EntregaConfiguration : IEntityTypeConfiguration<Entrega> {
     // SetNull en el repartidor: dar de baja al repartidor no borra la entrega, la deja sin asignar.
     public void Configure(EntityTypeBuilder<Entrega> b){ ConfigurationExtensions.Base(b, "entregas"); b.Property(x => x.DireccionLinea).HasMaxLength(255).IsRequired(); b.Property(x => x.DireccionReferencia).HasMaxLength(500); b.Property(x => x.DireccionLatitud).HasPrecision(10, 7); b.Property(x => x.DireccionLongitud).HasPrecision(10, 7); b.Property(x => x.Estado).EnumTexto(); b.Property(x => x.Observaciones).HasMaxLength(1000); b.HasIndex(x => x.PedidoId).IsUnique(); b.HasIndex(x => new {x.RepartidorId, x.Estado}); b.HasOne<Pedido>().WithMany().HasForeignKey(x => x.PedidoId).OnDelete(DeleteBehavior.Cascade); b.HasOne<Usuario>().WithMany().HasForeignKey(x => x.RepartidorId).OnDelete(DeleteBehavior.SetNull); }
 }
+
+public sealed class NotificacionConfiguration : IEntityTypeConfiguration<Notificacion> {
+    // El indice por (usuario, leida_en) sirve a las dos consultas de la bandeja: listar las del
+    // usuario y contar las no leidas. Cascade: la bandeja no sobrevive al usuario.
+    public void Configure(EntityTypeBuilder<Notificacion> b){ ConfigurationExtensions.Base(b, "notificaciones"); b.Property(x => x.Titulo).HasMaxLength(160).IsRequired(); b.Property(x => x.Mensaje).HasMaxLength(500).IsRequired(); b.Property(x => x.Tipo).EnumTexto(); b.HasIndex(x => new {x.UsuarioId, x.LeidaEn}); b.HasOne<Usuario>().WithMany().HasForeignKey(x => x.UsuarioId).OnDelete(DeleteBehavior.Cascade); }
+}

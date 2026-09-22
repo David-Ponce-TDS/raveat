@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -223,6 +223,7 @@ public sealed class PedidosController(RavEatDbContext db) : ControllerBase {
         pedido.Estado = request.Estado;
         if(request.Estado == EstadoPedido.Confirmado) pedido.ConfirmadoEn = DateTimeOffset.UtcNow;
         if(request.Estado == EstadoPedido.Cerrado) pedido.CerradoEn = DateTimeOffset.UtcNow;
+        await NotificarCreadorAsync(pedido, $"lo pasó a '{Etiqueta(request.Estado)}'.", cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
         return Ok(new {estado = pedido.Estado});
     }
@@ -240,6 +241,7 @@ public sealed class PedidosController(RavEatDbContext db) : ControllerBase {
         pedido.MedioPago = request.MedioPago;
         pedido.PropinaImporte = request.PropinaImporte;
         pedido.PagadoEn = DateTimeOffset.UtcNow;
+        await NotificarCreadorAsync(pedido, $"registró el pago ({Etiqueta(request.MedioPago)}).", cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
         return Ok(new {estado_pago = pedido.EstadoPago, total = pedido.Total, propina_importe = pedido.PropinaImporte});
     }
@@ -256,6 +258,7 @@ public sealed class PedidosController(RavEatDbContext db) : ControllerBase {
         }
         pedido.Estado = EstadoPedido.Cancelado;
         if(pedido.EstadoPago == EstadoPago.Pendiente) pedido.EstadoPago = EstadoPago.Anulado;
+        await NotificarCreadorAsync(pedido, "canceló el pedido.", cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
         return Ok(new {cancelado = true});
     }
@@ -298,6 +301,25 @@ public sealed class PedidosController(RavEatDbContext db) : ControllerBase {
     private async Task<string> GenerarCodigoAsync(CancellationToken cancellationToken) {
         var ultimo = await db.Pedidos.MaxAsync(x => (long?)x.Id, cancellationToken) ?? 0;
         return $"PED-{ultimo + 1:D4}";
+    }
+
+    // La bandeja se escribe dirigida al interesado —el creador del pedido— y solo si no es el
+    // mismo que ejecuta: avisarle a alguien lo que acaba de hacer es ruido. Va en el mismo
+    // SaveChanges que la accion: o pasan las dos cosas, o ninguna.
+    //
+    // El mensaje empieza por el nombre del que ejecuto ("Ana lo pasó a 'Listo'."): sin eso, el
+    // aviso decia que algo cambio pero no a quien preguntarle. El nombre se lee de la base y no
+    // del token, que solo lleva id, email y rol — y se lee despues del corte de arriba, para no
+    // pagar la consulta cuando no hay aviso que escribir.
+    private async Task NotificarCreadorAsync(Pedido pedido, string queHizo, CancellationToken cancellationToken) {
+        if(pedido.UsuarioCreadorId == User.UsuarioId()) return;
+        var quien = await db.Usuarios.AsNoTracking().Where(x => x.Id == User.UsuarioId()).Select(x => x.Nombre).FirstAsync(cancellationToken);
+        db.Notificaciones.Add(new Notificacion {
+            UsuarioId = pedido.UsuarioCreadorId,
+            Titulo = $"Pedido {pedido.Codigo}",
+            Mensaje = $"{quien} {queHizo}",
+            Tipo = TipoNotificacion.Pedido
+        });
     }
 
     // A6, de mostrador, armado en memoria: nunca toca el disco y no hay nada que limpiar.

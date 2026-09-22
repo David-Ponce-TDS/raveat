@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RavEat.Api.Auth;
@@ -113,6 +113,17 @@ public sealed class EntregasController(RavEatDbContext db) : ControllerBase {
         entrega.RepartidorId = repartidorId;
         entrega.Estado = EstadoEntrega.Asignada;
         entrega.AsignadaEn = DateTimeOffset.UtcNow;
+        // Se avisa al repartidor solo si lo asigno otro: tomarla uno mismo no necesita aviso.
+        if(esParaOtro) {
+            var codigoPedido = await db.Pedidos.AsNoTracking().Where(x => x.Id == entrega.PedidoId).Select(x => x.Codigo).FirstAsync(cancellationToken);
+            db.Notificaciones.Add(new Notificacion {
+                UsuarioId = repartidorId,
+                Titulo = $"Entrega del pedido {codigoPedido}",
+                // Con nombre y apellido: "te asignaron" no dice a quien preguntarle por la direccion.
+                Mensaje = $"{await NombreDeQuienEjecuta(cancellationToken)} te asignó la entrega a {entrega.DireccionLinea}.",
+                Tipo = TipoNotificacion.Entrega
+            });
+        }
         await db.SaveChangesAsync(cancellationToken);
         return Ok(new {estado = entrega.Estado, repartidor_id = entrega.RepartidorId});
     }
@@ -136,9 +147,27 @@ public sealed class EntregasController(RavEatDbContext db) : ControllerBase {
         entrega.Estado = request.Estado;
         if(request.Estado == EstadoEntrega.Entregada) entrega.EntregadaEn = DateTimeOffset.UtcNow;
 
+        // Al entregar o cancelar se avisa al creador del pedido, que es quien responde ante el
+        // cliente. Mismo criterio que en pedidos: no se le avisa al que ejecuta.
+        if(request.Estado is EstadoEntrega.Entregada or EstadoEntrega.Cancelada) {
+            var pedido = await db.Pedidos.AsNoTracking().Where(x => x.Id == entrega.PedidoId).Select(x => new {x.Codigo, x.UsuarioCreadorId}).FirstAsync(cancellationToken);
+            if(pedido.UsuarioCreadorId != User.UsuarioId()) {
+                var quien = await NombreDeQuienEjecuta(cancellationToken);
+                db.Notificaciones.Add(new Notificacion {
+                    UsuarioId = pedido.UsuarioCreadorId,
+                    Titulo = $"Entrega del pedido {pedido.Codigo}",
+                    Mensaje = request.Estado == EstadoEntrega.Entregada ? $"{quien} entregó el pedido." : $"{quien} canceló la entrega.",
+                    Tipo = TipoNotificacion.Entrega
+                });
+            }
+        }
         await db.SaveChangesAsync(cancellationToken);
         return Ok(new {estado = entrega.Estado});
     }
+
+    // El nombre del que ejecuta sale de la base: el token lleva id, email y rol, no el nombre.
+    private Task<string> NombreDeQuienEjecuta(CancellationToken cancellationToken) =>
+        db.Usuarios.AsNoTracking().Where(x => x.Id == User.UsuarioId()).Select(x => x.Nombre).FirstAsync(cancellationToken);
 
     private static string Etiqueta(EstadoEntrega estado) =>
         System.Text.Json.JsonNamingPolicy.SnakeCaseLower.ConvertName(estado.ToString());

@@ -41,3 +41,10 @@ public enum EstadoEntrega {
     Entregada,
     Cancelada
 }
+
+// El tipo colorea la bandeja y permite filtrar; no cambia el comportamiento.
+public enum TipoNotificacion {
+    Informacion,
+    Pedido,
+    Entrega
+}

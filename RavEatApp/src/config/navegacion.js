@@ -1,6 +1,7 @@
 import {
 	bicycleOutline,
 	homeOutline,
+	notificationsOutline,
 	peopleOutline,
 	peopleCircleOutline,
 	personCircleOutline,
@@ -106,6 +107,19 @@ export const navegacion = [
 		grupo_menu: 'operacion',
 		orden: 50,
 		componente: () => import('@/views/entregas_page.vue')
+	},
+	{
+		id: 'notificaciones',
+		titulo: 'Notificaciones',
+		ruta: '/app/notificaciones',
+		icono: notificationsOutline,
+		roles: ['administrador', 'vendedor', 'proceso', 'caja', 'delivery'],
+		menu_roles: ['administrador', 'vendedor', 'proceso', 'caja', 'delivery'],
+		// Sin tab: el acceso natural es la campanita del header, que ademas cuenta las no leidas.
+		tab_roles: [],
+		grupo_menu: 'operacion',
+		orden: 60,
+		componente: () => import('@/views/notificaciones_page.vue')
 	},
 	{
 		id: 'perfil',

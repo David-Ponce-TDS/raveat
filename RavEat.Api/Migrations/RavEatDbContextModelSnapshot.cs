@@ -208,6 +208,58 @@ namespace RavEat.Api.Migrations
                     b.ToTable("entregas", (string)null);
                 });
 
+            modelBuilder.Entity("RavEat.Api.Domain.Entities.Notificacion", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTimeOffset>("ActualizadoEn")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("actualizado_en");
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("creado_en");
+
+                    b.Property<DateTimeOffset?>("LeidaEn")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("leida_en");
+
+                    b.Property<string>("Mensaje")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)")
+                        .HasColumnName("mensaje");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)")
+                        .HasColumnName("tipo");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("varchar(160)")
+                        .HasColumnName("titulo");
+
+                    b.Property<long>("UsuarioId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("usuario_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_notificaciones");
+
+                    b.HasIndex("UsuarioId", "LeidaEn")
+                        .HasDatabaseName("ix_notificaciones_usuario_id_leida_en");
+
+                    b.ToTable("notificaciones", (string)null);
+                });
+
             modelBuilder.Entity("RavEat.Api.Domain.Entities.Pedido", b =>
                 {
                     b.Property<long>("Id")
@@ -601,6 +653,16 @@ namespace RavEat.Api.Migrations
                         .HasForeignKey("RepartidorId")
                         .OnDelete(DeleteBehavior.SetNull)
                         .HasConstraintName("fk_entregas_usuarios_repartidor_id");
+                });
+
+            modelBuilder.Entity("RavEat.Api.Domain.Entities.Notificacion", b =>
+                {
+                    b.HasOne("RavEat.Api.Domain.Entities.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_notificaciones_usuarios_usuario_id");
                 });
 
             modelBuilder.Entity("RavEat.Api.Domain.Entities.Pedido", b =>

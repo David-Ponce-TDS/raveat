@@ -117,6 +117,7 @@ import comp_estado_vacio from '@/components/base/comp_estado_vacio.vue';
 import comp_esqueleto from '@/components/base/comp_esqueleto.vue';
 import comp_lista from '@/components/base/comp_lista.vue';
 import comp_page from '@/components/estructura/comp_page.vue';
+import { avisar_exito } from '@/services/avisos_service';
 import { use_sesion_store } from '@/stores/sesion_store';
 import { use_usuarios_store } from '@/stores/usuarios_store';
 
@@ -181,14 +182,21 @@ export default {
 		guardar: async function(){
 			var vm = this;
 			const creado = await vm.store.crear({...vm.formulario});
-			if(creado) vm.modal_abierto = false;
+			if(creado){
+				vm.modal_abierto = false;
+				avisar_exito('Usuario creado.');
+			}
 		},
 		abrir_acciones: async function(usuario){
 			var vm = this;
 			const botones = vm.store.roles
 				.filter(rol => rol.id != usuario.rol_id)
-				.map(rol => ({text: `Asignar ${rol.nombre}`, handler: () => vm.store.cambiar_rol(usuario.id, rol.id)}));
-			if(usuario.rol_id) botones.push({text: 'Quitar el rol', handler: () => vm.store.cambiar_rol(usuario.id, null)});
+				.map(rol => ({text: `Asignar ${rol.nombre}`, handler: async () =>{
+					if(await vm.store.cambiar_rol(usuario.id, rol.id)) avisar_exito(`${usuario.nombre} ahora es ${rol.nombre}.`);
+				}}));
+			if(usuario.rol_id) botones.push({text: 'Quitar el rol', handler: async () =>{
+				if(await vm.store.cambiar_rol(usuario.id, null)) avisar_exito(`${usuario.nombre} quedó sin rol.`);
+			}});
 			// El admin no puede darse de baja a sí mismo: el servidor también lo rechaza, pero
 			// ofrecer la opción y después negarla es peor que no ofrecerla.
 			if(usuario.id != (vm.sesion_store.usuario && vm.sesion_store.usuario.id)){
@@ -206,7 +214,9 @@ export default {
 				message: `¿Dar de baja a ${usuario.nombre}? Se cierran sus sesiones abiertas.`,
 				buttons: [
 					{text: 'Cancelar', role: 'cancel'},
-					{text: 'Dar de baja', role: 'destructive', handler: () => vm.store.eliminar(usuario.id)}
+					{text: 'Dar de baja', role: 'destructive', handler: async () =>{
+						if(await vm.store.eliminar(usuario.id)) avisar_exito(`${usuario.nombre} dado de baja.`);
+					}}
 				]
 			});
 			await alerta.present();

@@ -73,6 +73,7 @@ import comp_estado_vacio from '@/components/base/comp_estado_vacio.vue';
 import comp_esqueleto from '@/components/base/comp_esqueleto.vue';
 import comp_lista from '@/components/base/comp_lista.vue';
 import comp_page from '@/components/estructura/comp_page.vue';
+import { avisar_exito } from '@/services/avisos_service';
 import { url_mapa } from '@/services/geolocalizacion_service';
 import { formatear_importe } from '@/utils/formato_moneda';
 import { use_entregas_store } from '@/stores/entregas_store';
@@ -170,11 +171,15 @@ export default {
 			// Tomarla es de delivery (y admin): el servidor valida el rol del asignado, esto solo
 			// evita ofrecer lo que va a ser rechazado.
 			if(entrega.estado == 'pendiente' && (vm.es_delivery || vm.es_admin)){
-				botones.push({text: 'Tomar esta entrega', handler: () => vm.store.asignar(entrega.id)});
+				botones.push({text: 'Tomar esta entrega', handler: async () =>{
+					if(await vm.store.asignar(entrega.id)) avisar_exito(`Tomaste la entrega de ${entrega.pedido_codigo}.`);
+				}});
 			}
 			const siguiente = SIGUIENTE_ESTADO[entrega.estado];
 			if(siguiente){
-				botones.push({text: `Marcar ${vm.etiqueta(siguiente).toLowerCase()}`, handler: () => vm.store.cambiar_estado(entrega.id, siguiente)});
+				botones.push({text: `Marcar ${vm.etiqueta(siguiente).toLowerCase()}`, handler: async () =>{
+					if(await vm.store.cambiar_estado(entrega.id, siguiente)) avisar_exito(`${entrega.pedido_codigo}: ${vm.etiqueta(siguiente).toLowerCase()}.`);
+				}});
 			}
 
 			// El mapa es externo: abrir la app de mapas del telefono con las coordenadas que la
@@ -202,7 +207,9 @@ export default {
 				message: `¿Cancelar la entrega de ${entrega.pedido_codigo}? El pedido no se cancela solo.`,
 				buttons: [
 					{text: 'No', role: 'cancel'},
-					{text: 'Cancelar entrega', role: 'destructive', handler: () => vm.store.cambiar_estado(entrega.id, 'cancelada')}
+					{text: 'Cancelar entrega', role: 'destructive', handler: async () =>{
+						if(await vm.store.cambiar_estado(entrega.id, 'cancelada')) avisar_exito(`Entrega de ${entrega.pedido_codigo} cancelada.`);
+					}}
 				]
 			});
 			await alerta.present();

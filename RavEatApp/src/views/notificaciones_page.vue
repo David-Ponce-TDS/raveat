@@ -7,7 +7,7 @@
 				fill="outline"
 				size="small"
 				:disabled="store.cargando"
-				@click="store.marcar_leida()"
+				@click="marcar_todas"
 			>
 				<ion-icon slot="start" :icon="icono_leidas" />
 				Marcar todas como leídas ({{ store.no_leidas }})
@@ -72,6 +72,7 @@ import comp_estado_vacio from '@/components/base/comp_estado_vacio.vue';
 import comp_esqueleto from '@/components/base/comp_esqueleto.vue';
 import comp_lista from '@/components/base/comp_lista.vue';
 import comp_page from '@/components/estructura/comp_page.vue';
+import { avisar_exito } from '@/services/avisos_service';
 import { use_notificaciones_store } from '@/stores/notificaciones_store';
 
 const ICONO_TIPO = {
@@ -109,6 +110,13 @@ export default {
 		cargar: function(){
 			var vm = this;
 			return vm.store.cargar();
+		},
+		// El aviso confirma lo que el contador ya muestra: sin el, tocar el boton y ver desaparecer
+		// el numero se parece demasiado a que la pantalla se rompio.
+		marcar_todas: async function(){
+			var vm = this;
+			const cuantas = vm.store.no_leidas;
+			if(await vm.store.marcar_leida()) avisar_exito(cuantas == 1 ? 'Aviso marcado como leído.' : `${cuantas} avisos marcados como leídos.`);
 		},
 		marcar: function(notificacion){
 			var vm = this;

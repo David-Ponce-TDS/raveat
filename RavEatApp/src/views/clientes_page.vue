@@ -76,6 +76,7 @@ import comp_estado_vacio from '@/components/base/comp_estado_vacio.vue';
 import comp_esqueleto from '@/components/base/comp_esqueleto.vue';
 import comp_lista from '@/components/base/comp_lista.vue';
 import comp_page from '@/components/estructura/comp_page.vue';
+import { avisar_exito } from '@/services/avisos_service';
 import { use_clientes_store } from '@/stores/clientes_store';
 
 export default {
@@ -144,7 +145,10 @@ export default {
 			const guardado = await vm.clientes_store.guardar(evento.id, evento.datos);
 			// El modal solo se cierra si el servidor acepto: si no, queda abierto mostrando el
 			// error y sin perder lo que el usuario habia escrito.
-			if(guardado) vm.cerrar_modal();
+			if(guardado){
+				vm.cerrar_modal();
+				avisar_exito(evento.id ? 'Cliente actualizado.' : 'Cliente creado.');
+			}
 		},
 		confirmar_baja: async function(cliente){
 			var vm = this;
@@ -153,7 +157,9 @@ export default {
 				message: `¿Dar de baja a ${cliente.nombre}?`,
 				buttons: [
 					{text: 'Cancelar', role: 'cancel'},
-					{text: 'Dar de baja', role: 'destructive', handler: () => vm.clientes_store.eliminar(cliente.id)}
+					{text: 'Dar de baja', role: 'destructive', handler: async () =>{
+						if(await vm.clientes_store.eliminar(cliente.id)) avisar_exito(`${cliente.nombre} dado de baja.`);
+					}}
 				]
 			});
 			await alerta.present();

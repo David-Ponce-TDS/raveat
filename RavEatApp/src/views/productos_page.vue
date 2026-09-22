@@ -84,6 +84,7 @@ import comp_lista from '@/components/base/comp_lista.vue';
 import comp_page from '@/components/estructura/comp_page.vue';
 import comp_producto_formulario_modal from '@/components/dominio/comp_producto_formulario_modal.vue';
 import comp_producto_lista_item from '@/components/dominio/comp_producto_lista_item.vue';
+import { avisar_exito } from '@/services/avisos_service';
 import { use_productos_store } from '@/stores/productos_store';
 
 // El catalogo de gestion: paginado, filtrable y con ABM. La vitrina de Inicio muestra los mismos
@@ -170,7 +171,10 @@ export default {
 			const guardado = await vm.store.guardar_producto(evento.id, evento.datos, evento.imagen);
 			// El modal solo se cierra si el servidor acepto: si no, queda abierto mostrando el
 			// error y sin perder lo que el usuario habia escrito.
-			if(guardado) vm.cerrar_modal();
+			if(guardado){
+				vm.cerrar_modal();
+				avisar_exito(evento.id ? 'Producto actualizado.' : 'Producto creado.');
+			}
 		},
 		confirmar_baja: async function(producto){
 			var vm = this;
@@ -179,7 +183,9 @@ export default {
 				message: `¿Dar de baja "${producto.nombre}"? Los pedidos que ya lo incluyen no se modifican.`,
 				buttons: [
 					{text: 'Cancelar', role: 'cancel'},
-					{text: 'Dar de baja', role: 'destructive', handler: () => vm.store.eliminar_producto_catalogo(producto.id)}
+					{text: 'Dar de baja', role: 'destructive', handler: async () =>{
+						if(await vm.store.eliminar_producto_catalogo(producto.id)) avisar_exito(`"${producto.nombre}" dado de baja.`);
+					}}
 				]
 			});
 			await alerta.present();

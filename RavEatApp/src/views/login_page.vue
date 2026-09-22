@@ -2,9 +2,17 @@
 	<ion-page>
 		<ion-content>
 			<div class="ion-padding raveat-page-stack raveat-login">
-				<!-- La portada vuelve a la vitrina: se puede mirar la carta sin entrar. -->
-				<comp-vidriera lema="Entrá con tu cuenta del local" @click="volver" />
+				<!-- El logo vuelve a la vitrina: el que llego hasta aca sin querer entrar tiene
+				     que poder volver a mirar la carta sin cerrar la app. -->
+				<comp-vidriera
+					lema="Entrá con tu cuenta del local"
+					ruta="/vitrina"
+					ruta_etiqueta="Volver a la vitrina"
+				/>
 
+				<!-- Un form de verdad y no dos inputs sueltos: asi el navegador y el teléfono
+				     ofrecen guardar la contraseña y la completan la proxima vez. La app nunca la
+				     guarda — eso es trabajo del gestor de contraseñas. -->
 				<form @submit.prevent="entrar">
 					<ion-list class="raveat-card">
 						<ion-item>
@@ -12,8 +20,8 @@
 								v-model="email"
 								type="email"
 								inputmode="email"
+								autocomplete="username"
 								name="email"
-							autocomplete="username"
 								label="Email"
 								label-placement="stacked"
 								placeholder="vos@raveat.local"
@@ -23,8 +31,8 @@
 							<ion-input
 								v-model="password"
 								type="password"
+								autocomplete="current-password"
 								name="password"
-							autocomplete="current-password"
 								label="Contraseña"
 								label-placement="stacked"
 								placeholder="Tu contraseña"
@@ -34,15 +42,15 @@
 
 					<ion-note v-if="sesion_store.error" color="danger">{{ sesion_store.error }}</ion-note>
 
-					<ion-button expand="block" :disabled="sesion_store.cargando" type="submit">
+					<ion-button type="submit" expand="block" :disabled="sesion_store.cargando">
 						<ion-spinner v-if="sesion_store.cargando" name="crescent" />
 						<span v-else>Entrar</span>
 					</ion-button>
 				</form>
 
 				<!-- Solo aparece si hay una sesión guardada Y el dispositivo tiene biometría. La
-					huella no reemplaza al login: desbloquea la sesión que ya existe. -->
-				<ion-button v-if="puede_biometria" expand="block" fill="outline" :disabled="sesion_store.cargando" @click="entrar_con_biometria">
+				     huella no reemplaza al login: desbloquea la sesión que ya existe. -->
+				<ion-button v-if="puede_biometria" expand="block" fill="outline" @click="entrar_con_biometria">
 					<ion-icon slot="start" :icon="icono_huella" />
 					Entrar con huella
 				</ion-button>
@@ -101,10 +109,6 @@ export default {
 		vm.puede_biometria = hay_sesion_guardada && await biometria_disponible();
 	},
 	methods: {
-		volver: function(){
-			var vm = this;
-			vm.$router.replace('/app/inicio');
-		},
 		entrar: async function(){
 			var vm = this;
 			const entro = await vm.sesion_store.entrar(vm.email.trim(), vm.password);
@@ -117,14 +121,7 @@ export default {
 			// porque cancelar la huella es una decision del usuario, no una falla.
 			if(!confirmado) return;
 			const usuario = await vm.sesion_store.iniciar();
-			if(usuario){
-				vm.$router.replace('/app/inicio');
-				return;
-			}
-			// La huella dijo que si y la sesion guardada no sirvio igual. El store ya puso el motivo
-			// en `error`; aca solo se vuelve a preguntar si quedo algo que desbloquear, porque si la
-			// API la revoco el token se borro y el boton no tiene mas sentido.
-			vm.puede_biometria = Boolean(await restaurar_sesion());
+			if(usuario) vm.$router.replace('/app/inicio');
 		}
 	}
 };</script>

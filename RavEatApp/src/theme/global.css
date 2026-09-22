@@ -15,8 +15,12 @@
     --raveat-border: rgba(255, 255, 255, 0.08);
 }
 
+/* La columna se fija en minmax(0, 1fr) y no se deja en auto: una columna auto se agranda hasta
+   el contenido mas ancho —una fila de chips que no envuelve alcanza— y con ella se van a la
+   derecha TODAS las secciones de la pantalla, fuera del telefono. */
 .raveat-page-stack {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 14px;
 }
 
@@ -40,7 +44,9 @@
 
 /* Gradiente azul en la misma gama que el primario #3880ff de Ionic. Es la pieza que le
    da identidad a la pantalla de inicio y se mantiene igual en todas las versiones. */
+/* Relativo por la esquina: el acceso al login se ancla a este bloque. */
 .raveat-vidriera {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -59,6 +65,29 @@
     margin: 0 auto 8px;
     /* El logo es line-art negro sobre transparente: sobre el gradiente va siempre en blanco. */
     filter: invert(1);
+}
+
+.raveat-vidriera__esquina {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+}
+
+.raveat-vidriera__login {
+    --color: #ffffff;
+    --padding-start: 8px;
+    --padding-end: 8px;
+    /* Sobre el gradiente azul el icono solo se pierde: el circulo translucido lo despega. */
+    --background-hover: rgba(255, 255, 255, 0.18);
+    --border-radius: 50%;
+    margin: 0;
+    font-size: 20px;
+}
+
+.raveat-vidriera__enlace {
+    display: block;
+    /* El enlace no se disfraza de enlace: el logo ya se ve como logo. */
+    text-decoration: none;
 }
 
 .raveat-vidriera__lema {

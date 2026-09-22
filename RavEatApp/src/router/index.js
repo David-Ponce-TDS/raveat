@@ -17,8 +17,19 @@ const rutas_app = navegacion.map(item => ({
 
 const routes = [
 	{
+		// La puerta de la app es la vitrina publica, no el login: el que llega sin cuenta tiene
+		// que ver la carta. Si ya entro, el guard lo manda a /app/inicio.
 		path: '/',
-		redirect: '/app/inicio'
+		redirect: '/vitrina'
+	},
+	{
+		// Fuera de /app igual que el login: sin sesion no hay menu ni tabs que dibujar.
+		path: '/vitrina',
+		name: 'vitrina',
+		component: () => import('@/views/vitrina_page.vue'),
+		meta: {
+			publica: true
+		}
 	},
 	{
 		// El login queda FUERA de /app a proposito: no tiene menu ni tabs, porque todavia no se
@@ -42,8 +53,10 @@ const routes = [
 		]
 	},
 	{
+		// Una ruta que no existe cae en la vitrina, y desde ahi el guard decide: al de adentro lo
+		// manda a /app/inicio y al anonimo lo deja ver la carta, en vez de rebotarlo al login.
 		path: '/:pathMatch(.*)*',
-		redirect: '/app/inicio'
+		redirect: '/vitrina'
 	}
 ];
 const router = createRouter({
@@ -74,7 +87,8 @@ router.beforeEach(to =>{
 	if(sesion.restaurando) return true;
 
 	if(to.meta.publica){
-		// Si ya entro, el login no tiene nada que ofrecerle.
+		// Las publicas son las de afuera: la vitrina y el login. Al que ya entro no le sirven —
+		// tiene la vitrina de adentro, con menu y tabs.
 		return sesion.autenticado ? {path: '/app/inicio', replace: true} : true;
 	}
 

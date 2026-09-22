@@ -5,6 +5,7 @@ import {
 	crear_pedido,
 	obtener_pedido,
 	obtener_pedidos,
+	obtener_qr_pedido,
 	registrar_pago_pedido
 } from '@/services/pedidos_service';
 
@@ -21,7 +22,10 @@ export const use_pedidos_store = defineStore('pedidos', {
 		guardando: false,
 		error: null,
 		detalle: null,
-		detalle_items: []
+		detalle_items: [],
+		// URL temporal del PNG del QR, creada con createObjectURL. Es del navegador, no del
+		// servidor: hay que devolverla al cerrar la ficha o el Blob queda en memoria.
+		detalle_qr: ''
 	}),
 	getters: {
 		hay_pedidos(state){
@@ -94,10 +98,31 @@ export const use_pedidos_store = defineStore('pedidos', {
 				return null;
 			}
 		},
+		cargar_qr: async function(id){
+			var vm = this;
+			vm.soltar_qr();
+			try{
+				const blob = await obtener_qr_pedido(id);
+				vm.detalle_qr = window.URL.createObjectURL(blob);
+				return vm.detalle_qr;
+			}catch(error){
+				// El QR es un extra de la ficha: que falle no puede romper el resto del detalle,
+				// asi que no toca vm.error. Queda el spinner y el pedido se lee igual.
+				vm.detalle_qr = '';
+				return '';
+			}
+		},
 		limpiar_detalle: function(){
 			var vm = this;
 			vm.detalle = null;
 			vm.detalle_items = [];
+			vm.soltar_qr();
+		},
+		soltar_qr: function(){
+			var vm = this;
+			if(!vm.detalle_qr) return;
+			window.URL.revokeObjectURL(vm.detalle_qr);
+			vm.detalle_qr = '';
 		},
 		crear: async function(datos){
 			var vm = this;

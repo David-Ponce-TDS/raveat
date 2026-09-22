@@ -73,9 +73,11 @@ dotnet tool run dotnet-ef -- database update
 Set-Location ..
 ```
 
-Esta versión **suma una migración**, `Reparto`: crea las tablas `entregas` y `notificaciones`. Las
-anteriores siguen cargando los datos de prueba: la carta, los clientes, los cinco roles y el
-administrador inicial.
+Esta versión **suma tres migraciones**: `Reparto` y `Bandeja`, que crean las tablas `entregas` y
+`notificaciones`, y `PedidosDePrueba`, que siembra **seis pedidos con sus ítems y sus entregas** —
+uno de mostrador, uno para retirar, dos de entrega esperando repartidor, uno ya entregado y uno
+cancelado — para que las pantallas de reparto y el mapa no arranquen vacías. Las anteriores siguen
+cargando la carta, los clientes, los cinco roles y el administrador inicial.
 
 > **Si venís de otra versión, la base hay que reconstruirla** (`database drop --force` y de nuevo
 > `update`): cada rama tiene su propia cadena de migraciones y no es acumulativa entre ramas.
@@ -94,11 +96,16 @@ Editá `.env` y poné la IP de tu máquina en la red local (`ipconfig`):
 VITE_API_URL_DEBUG=http://TU_IP_LAN:5080
 ```
 
-Para el push, además, la bandera — sin ella la app ni siquiera intenta registrarse en FCM:
+El push viene **prendido** desde `.env.example`: la app intenta registrarse en FCM al arrancar. Para
+apagarlo —trabajar sin Firebase, por ejemplo— se pone la bandera en `false`:
 
 ```
-VITE_PUSH_NOTIFICATIONS_ENABLED=true
+VITE_PUSH_NOTIFICATIONS_ENABLED=false
 ```
+
+> **El `.env` se lee cuando arranca Vite**, no en caliente: si lo tocás con el servidor levantado,
+> hay que cortarlo y volver a levantarlo. En el APK es peor —el valor queda **compilado adentro**—,
+> así que después de cambiar el `.env` hay que reinstalar la app.
 
 En el teléfono, `localhost` es el propio teléfono. Para trabajar solo en el navegador:
 `VITE_DEBUG_ACTIVADO=false`, y la app usa `VITE_API_URL` (`http://localhost:5080`).
@@ -141,8 +148,10 @@ npm run dev
 | Health | `http://localhost:5080/health` |
 | App (Vite) | `http://localhost:5173` |
 
-**Empezá siempre por `/health`.** La app abre en el login: se entra con el administrador que sembró
-la migración. Con la sesión iniciada, **Mi cuenta → Diagnóstico** muestra contra qué URL pega la
+**Empezá siempre por `/health`.** La app abre en la **vitrina pública** (`/vitrina`): la carta se ve
+sin cuenta, porque los endpoints que la alimentan están marcados `[AllowAnonymous]`. Con el icono de
+la esquina del logo se pasa al login, y el logo del login vuelve a la vitrina; se entra con el administrador que
+sembró la migración. Con la sesión iniciada, **Mi cuenta → Diagnóstico** muestra contra qué URL pega la
 app y si responde.
 
 Cada bloque se prueba por consola antes de tocar la pantalla, en **otra** terminal. Casi todo pide
@@ -245,8 +254,10 @@ dotnet tool run dotnet-ef -- database update
 dotnet tool run dotnet-ef -- database drop --force
 ```
 
-El `--` no es decorativo: sin él, `dotnet tool run` se come los argumentos. También podés aplicar
-las migraciones al arrancar, con `dotnet run -- --migrate`.
+El `--` no es decorativo: sin él, `dotnet tool run` se come los argumentos. Estos comandos son para
+inspeccionar y para **reconstruir la base desde cero** (`database drop --force` y después `update`):
+la API ya **aplica las migraciones sola cada vez que arranca**, así que no hace falta acordarse de
+ninguna bandera para levantarla al día.
 
 Para crear una migración propia, el ciclo es **compilar, generar, revisar, aplicar** — `dotnet-ef`
 lee el ensamblado **compilado**, así que sin `dotnet build` antes del `add` la migración sale vacía

@@ -393,3 +393,28 @@ ion-menu ion-item.seleccionado ion-icon {
 .raveat-notificacion--leida {
     opacity: 0.6;
 }
+
+/* --- destino de la entrega --------------------------------------------- */
+
+/* El bloque que muestra a dónde va la entrega dentro del formulario de pedido. Con el destino
+   incompleto el borde se pone en advertencia: es el paso que falta para poder crear el pedido. */
+.raveat-destino {
+    display: grid;
+    gap: 6px;
+    padding: 12px;
+    border: 1px solid var(--raveat-border);
+    border-radius: 16px;
+    background: var(--raveat-surface);
+}
+
+.raveat-destino.incompleto {
+    border-color: var(--ion-color-warning, #ffc409);
+}
+
+.raveat-destino__mensaje,
+.raveat-destino__falta {
+    margin: 0;
+    color: var(--ion-color-danger, #eb445a);
+    font-size: 12px;
+}
+

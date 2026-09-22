@@ -1,206 +1,179 @@
 <template>
-	<ion-modal :is-open="abierto" @didDismiss="$emit('cerrar')">
-		<ion-header>
-			<ion-toolbar>
-				<ion-title>{{ pedido ? pedido.codigo : 'Pedido' }}</ion-title>
-				<ion-buttons slot="end">
-					<ion-button @click="$emit('cerrar')">Cerrar</ion-button>
-				</ion-buttons>
-			</ion-toolbar>
-		</ion-header>
-		<ion-content>
-			<div v-if="pedido" class="ion-padding raveat-page-stack">
-				<ion-list class="raveat-card">
-					<ion-item>
-						<ion-label>
-							<p class="raveat-item-meta">Cliente</p>
-							<h3 class="raveat-item-title">{{ pedido.cliente_nombre || 'Mostrador' }}</h3>
-						</ion-label>
-						<ion-badge slot="end" :color="color">{{ etiqueta(pedido.estado) }}</ion-badge>
-					</ion-item>
-					<ion-item>
-						<ion-label>
-							<p class="raveat-item-meta">Tipo</p>
-							<h3 class="raveat-item-title">{{ etiqueta(pedido.tipo) }}</h3>
-						</ion-label>
-					</ion-item>
-					<ion-item :lines="pedido.observaciones ? 'full' : 'none'">
-						<ion-label>
-							<p class="raveat-item-meta">Pago</p>
-							<h3 class="raveat-item-title">{{ etiqueta(pedido.estado_pago) }}{{ pedido.medio_pago ? ` · ${etiqueta(pedido.medio_pago)}` : '' }}</h3>
-						</ion-label>
-					</ion-item>
-					<ion-item v-if="pedido.observaciones" lines="none">
-						<ion-label class="ion-text-wrap">
-							<p class="raveat-item-meta">Observaciones</p>
-							<h3 class="raveat-item-title">{{ pedido.observaciones }}</h3>
-						</ion-label>
-					</ion-item>
-				</ion-list>
-
-				<h2 class="raveat-seccion-titulo">Productos</h2>
-				<ion-list class="raveat-card">
-					<ion-item v-for="item in items" :key="item.id">
-						<ion-label>
-							<h3 class="raveat-item-title">{{ item.cantidad }} × {{ item.producto_nombre }}</h3>
-							<p v-if="item.observaciones" class="raveat-item-meta">{{ item.observaciones }}</p>
-						</ion-label>
-						<ion-note slot="end">{{ formatear_importe(item.subtotal) }}</ion-note>
-					</ion-item>
-				</ion-list>
-
-				<div class="raveat-resumen">
-					<span>Subtotal: {{ formatear_importe(pedido.subtotal) }}</span>
-					<span v-if="pedido.descuento > 0">Descuento: -{{ formatear_importe(pedido.descuento) }}</span>
-					<span v-if="pedido.propina_importe > 0">Propina: {{ formatear_importe(pedido.propina_importe) }}</span>
-					<strong>Total: {{ formatear_importe(pedido.total + pedido.propina_importe) }}</strong>
+	<comp-modal-detalle
+		:abierto="abierto"
+		:mostrar_actualizar="true"
+		:titulo="pedido ? pedido.codigo : 'Pedido'"
+		@actualizar="$emit('actualizar')"
+		@cerrar="$emit('cerrar')"
+	>
+		<comp-esqueleto v-if="!pedido" :filas="4" />
+		<template v-else>
+			<comp-detalle-seccion titulo="Pedido" :subtitulo="etiqueta(pedido.tipo)">
+				<div class="raveat-detalle-badges">
+					<ion-badge :color="color_estado(pedido.estado)">{{ etiqueta(pedido.estado) }}</ion-badge>
+					<ion-badge :color="pedido.estado_pago == 'pagado' ? 'success' : 'medium'">{{ etiqueta(pedido.estado_pago) }}</ion-badge>
 				</div>
-
-				<h2 class="raveat-seccion-titulo">Código QR</h2>
-				<!-- El mismo QR que va impreso en el comprobante: escanearlo desde otro telefono abre
-					este pedido. Lo genera la API; aca solo se muestra. -->
-				<div class="raveat-qr">
-					<img v-if="qr_url" :src="qr_url" :alt="`QR del pedido ${pedido.codigo}`" />
-					<ion-spinner v-else name="dots" />
-					<p class="raveat-item-meta">{{ pedido.codigo }}</p>
+				<div class="raveat-detalle-datos">
+					<comp-detalle-dato label="Cliente" :valor="pedido.cliente_nombre || 'Mostrador'" />
+					<comp-detalle-dato label="Creado" :valor="fecha_creado" />
+					<comp-detalle-dato v-if="pedido.observaciones" label="Observaciones" :valor="pedido.observaciones" />
 				</div>
+			</comp-detalle-seccion>
 
-				<ion-button v-if="siguiente" expand="block" :disabled="guardando" @click="$emit('cambiar_estado', siguiente)">
+			<comp-detalle-seccion titulo="Importes">
+				<div class="raveat-detalle-datos">
+					<comp-detalle-dato label="Subtotal" :valor="formatear_importe(pedido.subtotal)" />
+					<comp-detalle-dato v-if="pedido.descuento" label="Descuento" :valor="'- ' + formatear_importe(pedido.descuento)" />
+					<comp-detalle-dato v-if="pedido.propina_importe" label="Propina" :valor="formatear_importe(pedido.propina_importe)" />
+					<comp-detalle-dato label="Total" :valor="formatear_importe(pedido.total)" />
+					<comp-detalle-dato v-if="pedido.medio_pago" label="Medio de pago" :valor="etiqueta(pedido.medio_pago)" />
+				</div>
+			</comp-detalle-seccion>
+
+			<comp-detalle-seccion titulo="Ítems" :subtitulo="`${items.length} en el pedido`">
+				<ul class="raveat-detalle-items">
+					<li v-for="item in items" :key="item.id">
+						<div>
+							<strong>{{ item.cantidad }} × {{ item.producto_nombre }}</strong>
+							<p v-if="item.observaciones">{{ item.observaciones }}</p>
+							<p class="raveat-item-meta">{{ formatear_importe(item.precio_unitario) }} c/u</p>
+						</div>
+						<span>{{ formatear_importe(item.subtotal) }}</span>
+					</li>
+				</ul>
+			</comp-detalle-seccion>
+
+			<!-- El QR lleva el codigo del pedido, el mismo que imprime el comprobante: escanearlo
+			     desde la pantalla de pedidos lo encuentra. Llega como Blob y no como <img src> a
+			     la API, porque el endpoint pide token y una imagen no lo manda. -->
+			<comp-detalle-seccion titulo="QR" subtitulo="Escanealo para encontrar este pedido">
+				<div class="raveat-detalle-qr">
+					<img v-if="qr" :src="qr" :alt="`QR del pedido ${pedido.codigo}`" />
+					<ion-spinner v-else name="crescent" />
+				</div>
+			</comp-detalle-seccion>
+
+			<ion-note v-if="error" color="danger">{{ error }}</ion-note>
+
+			<div class="raveat-detalle-acciones">
+				<ion-button v-if="siguiente" expand="block" :disabled="guardando" @click="$emit('estado', siguiente)">
 					Pasar a {{ etiqueta(siguiente) }}
 				</ion-button>
-				<div v-if="puede_cobrar" class="raveat-acciones">
-					<ion-button expand="block" fill="outline" :disabled="guardando" @click="$emit('cobrar', 'efectivo')">
-						<ion-icon slot="start" :icon="icono_efectivo" />
-						Efectivo
-					</ion-button>
-					<ion-button expand="block" fill="outline" :disabled="guardando" @click="$emit('cobrar', 'transferencia')">
-						<ion-icon slot="start" :icon="icono_transferencia" />
-						Transferencia
-					</ion-button>
-				</div>
+				<ion-button v-if="puede_cobrar" expand="block" fill="outline" :disabled="guardando" @click="$emit('cobrar', 'efectivo')">
+					Cobrar en efectivo
+				</ion-button>
+				<ion-button v-if="puede_cobrar" expand="block" fill="outline" :disabled="guardando" @click="$emit('cobrar', 'transferencia')">
+					Cobrar por transferencia
+				</ion-button>
 				<ion-button expand="block" fill="outline" :disabled="guardando" @click="$emit('comprobante')">
-					<ion-icon slot="start" :icon="icono_compartir" />
+					<ion-icon slot="start" :icon="icono_comprobante" />
 					Comprobante
 				</ion-button>
 				<ion-button v-if="puede_cancelar" expand="block" fill="clear" color="danger" :disabled="guardando" @click="$emit('cancelar')">
 					Cancelar pedido
 				</ion-button>
 			</div>
-		</ion-content>
-	</ion-modal>
+		</template>
+	</comp-modal-detalle>
 </template>
 
 <script>import {
 	IonBadge,
 	IonButton,
-	IonButtons,
-	IonContent,
-	IonHeader,
 	IonIcon,
-	IonItem,
-	IonLabel,
-	IonList,
-	IonModal,
 	IonNote,
-	IonSpinner,
-	IonTitle,
-	IonToolbar
+	IonSpinner
 } from '@ionic/vue';
-import { cashOutline, shareOutline, swapHorizontalOutline } from 'ionicons/icons';
+import { documentTextOutline } from 'ionicons/icons';
+import comp_detalle_dato from '@/components/base/comp_detalle_dato.vue';
+import comp_detalle_seccion from '@/components/base/comp_detalle_seccion.vue';
+import comp_esqueleto from '@/components/base/comp_esqueleto.vue';
+import comp_modal_detalle from '@/components/base/comp_modal_detalle.vue';
+import { color_estado, etiqueta, siguiente_estado } from '@/utils/pedidos_presentacion';
 import { formatear_importe } from '@/utils/formato_moneda';
 
-// El siguiente estado posible, para ofrecer una sola accion evidente. El servidor tiene la tabla
-// completa de transiciones y es el que decide: esto es un atajo de la interfaz, no la regla.
-const SIGUIENTE_ESTADO = {
-	borrador: 'confirmado',
-	confirmado: 'en_preparacion',
-	en_preparacion: 'listo',
-	listo: 'entregado',
-	entregado: 'cerrado'
-};
-
-// El detalle de un pedido con todo lo que se puede hacer con el: cambiar de estado, cobrar,
-// compartir el comprobante, cancelar. El modal no llama a la API: emite y la pagina resuelve
-// con el store, que es el que sabe recargar la lista.
+// La ficha del pedido: lo que antes era una hoja de acciones sin datos. Muestra el pedido entero
+// —estado, importes, items y su QR— y ofrece las mismas acciones, pero al lado de la informacion
+// con la que se deciden.
+// No habla con la API ni con el store: recibe el pedido y emite lo que hay que hacer. La pantalla
+// orquesta, la ficha dibuja.
 export default {
 	name: 'comp_pedido_detalle_modal',
 	components: {
+		CompDetalleDato: comp_detalle_dato,
+		CompDetalleSeccion: comp_detalle_seccion,
+		CompEsqueleto: comp_esqueleto,
+		CompModalDetalle: comp_modal_detalle,
 		IonBadge,
 		IonButton,
-		IonButtons,
-		IonContent,
-		IonHeader,
 		IonIcon,
-		IonItem,
-		IonLabel,
-		IonList,
-		IonModal,
 		IonNote,
-		IonSpinner,
-		IonTitle,
-		IonToolbar
+		IonSpinner
 	},
 	emits: [
-		'cambiar_estado',
+		'actualizar',
 		'cancelar',
 		'cerrar',
 		'cobrar',
-		'comprobante'
+		'comprobante',
+		'estado'
 	],
 	props: {
 		abierto: {
 			type: Boolean,
 			default: false
 		},
-		pedido: {
-			type: Object,
-			default: null
+		error: {
+			type: String,
+			default: ''
+		},
+		guardando: {
+			type: Boolean,
+			default: false
 		},
 		items: {
 			type: Array,
 			default: () => []
 		},
-		// La imagen del QR ya descargada, como URL de objeto. La pide la pagina junto con el detalle.
-		qr_url: {
+		pedido: {
+			type: Object,
+			default: null
+		},
+		qr: {
 			type: String,
 			default: ''
-		},
-		color: {
-			type: String,
-			default: 'medium'
-		},
-		guardando: {
-			type: Boolean,
-			default: false
 		}
 	},
 	data(){
 		return {
-			icono_compartir: shareOutline,
-			icono_efectivo: cashOutline,
-			icono_transferencia: swapHorizontalOutline
+			icono_comprobante: documentTextOutline
 		};
 	},
 	computed: {
-		siguiente(){
+		fecha_creado(){
 			var vm = this;
-			return vm.pedido ? SIGUIENTE_ESTADO[vm.pedido.estado] || null : null;
-		},
-		puede_cobrar(){
-			var vm = this;
-			return Boolean(vm.pedido) && vm.pedido.estado_pago == 'pendiente' && vm.pedido.estado != 'cancelado';
+			if(!vm.pedido || !vm.pedido.creado_en) return '';
+			return new Date(vm.pedido.creado_en).toLocaleString('es-AR');
 		},
 		puede_cancelar(){
 			var vm = this;
-			return Boolean(vm.pedido) && vm.pedido.estado != 'cancelado' && vm.pedido.estado != 'cerrado';
+			if(!vm.pedido) return false;
+			return vm.pedido.estado != 'cancelado' && vm.pedido.estado != 'cerrado';
+		},
+		puede_cobrar(){
+			var vm = this;
+			if(!vm.pedido) return false;
+			return vm.pedido.estado_pago == 'pendiente' && vm.pedido.estado != 'cancelado';
+		},
+		siguiente(){
+			var vm = this;
+			if(!vm.pedido) return '';
+			return siguiente_estado(vm.pedido.estado);
 		}
 	},
 	methods: {
-		// Los valores viajan en snake_case porque asi los serializa la API.
-		etiqueta: function(valor){
-			if(!valor) return '';
-			return valor.replace(/_/g, ' ').replace(/^./, letra => letra.toUpperCase());
-		},
+		color_estado,
+		etiqueta,
 		formatear_importe
 	}
 };</script>

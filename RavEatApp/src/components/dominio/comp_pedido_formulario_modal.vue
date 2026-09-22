@@ -31,6 +31,35 @@
 					</ion-item>
 				</ion-list>
 
+				<!-- La direccion que la entrega va a copiar al nacer. Un cliente sin direccion no
+				     puede recibir una entrega: decirlo aca, y dejar completarla aca, evita que el
+				     servidor rechace el pedido cuando ya esta armado y que haya que ir a Clientes
+				     perdiendo lo cargado. Lo que se escribe queda guardado en la ficha del cliente. -->
+				<div v-if="pide_destino" class="raveat-destino" :class="{ incompleto: !entrega_lista }">
+					<template v-if="cliente_tiene_direccion">
+						<strong>Entregar en</strong>
+						<span>{{ cliente_seleccionado.direccion_linea }}</span>
+						<span v-if="cliente_seleccionado.direccion_referencia" class="raveat-item-meta">{{ cliente_seleccionado.direccion_referencia }}</span>
+						<span class="raveat-item-meta">{{ cliente_con_punto ? coordenadas_cliente : 'Sin punto: el repartidor sale con la dirección escrita y lo anota al llegar.' }}</span>
+					</template>
+					<template v-else>
+						<strong>{{ cliente_seleccionado.nombre }} no tiene dirección cargada.</strong>
+						<span class="raveat-item-meta">Completala acá y queda guardada en su ficha.</span>
+						<ion-list class="raveat-card">
+							<ion-item>
+								<ion-input v-model="direccion_nueva.direccion_linea" label="Dirección" label-placement="stacked" placeholder="Calle y número" />
+							</ion-item>
+							<ion-item lines="none">
+								<ion-input v-model="direccion_nueva.direccion_referencia" label="Referencia" label-placement="stacked" placeholder="Timbre, piso, entre calles" />
+							</ion-item>
+						</ion-list>
+						<ion-button size="small" :disabled="!hay_direccion_nueva || guardando_cliente" @click="guardar_direccion_del_cliente">
+							<ion-spinner v-if="guardando_cliente" slot="start" name="crescent" />
+							Guardar en su ficha
+						</ion-button>
+					</template>
+				</div>
+
 				<h2 class="raveat-seccion-titulo">Productos</h2>
 				<!-- Solo los disponibles: pedir uno agotado lo rechaza el servidor igual, pero
 				     ofrecerlo y despues negarlo es peor experiencia que no ofrecerlo. -->
@@ -61,7 +90,11 @@
 
 				<ion-note v-if="error" color="danger">{{ error }}</ion-note>
 
-				<ion-button expand="block" :disabled="guardando || cantidad_total == 0" @click="confirmar">
+				<!-- El servidor rechaza el pedido de entrega sin cliente o sin direccion. La pantalla
+				     no repite la regla: bloquea el boton y dice que falta, que es lo unico que el
+				     servidor no puede hacer a tiempo. -->
+				<p v-if="falta_destino" class="raveat-destino__falta">{{ falta_destino }}</p>
+				<ion-button expand="block" :disabled="guardando || cantidad_total == 0 || !entrega_lista" @click="confirmar">
 					<ion-spinner v-if="guardando" name="crescent" />
 					<span v-else>Crear pedido</span>
 				</ion-button>
@@ -89,6 +122,7 @@
 	IonToolbar
 } from '@ionic/vue';
 import { addOutline, removeOutline } from 'ionicons/icons';
+import { formatear_coordenadas } from '@/services/geolocalizacion_service';
 import { formatear_importe } from '@/utils/formato_moneda';
 
 // El carrito vive en el `data()` de este modal y no en un store: nace y muere con el formulario,
@@ -116,7 +150,8 @@ export default {
 	},
 	emits: [
 		'cerrar',
-		'crear'
+		'crear',
+		'guardar_cliente'
 	],
 	props: {
 		abierto: {
@@ -135,6 +170,10 @@ export default {
 			type: Boolean,
 			default: false
 		},
+		guardando_cliente: {
+			type: Boolean,
+			default: false
+		},
 		productos: {
 			type: Array,
 			default: () => []
@@ -143,6 +182,7 @@ export default {
 	data(){
 		return {
 			cliente_id: null,
+			direccion_nueva: {direccion_linea: '', direccion_referencia: ''},
 			icono_mas: addOutline,
 			icono_menos: removeOutline,
 			items: [],
@@ -151,6 +191,49 @@ export default {
 		};
 	},
 	computed: {
+		cliente_seleccionado(){
+			var vm = this;
+			if(!vm.cliente_id) return null;
+			return vm.clientes.find(cliente => cliente.id == vm.cliente_id) || null;
+		},
+		cliente_tiene_direccion(){
+			var vm = this;
+			if(!vm.cliente_seleccionado) return false;
+			return Boolean((vm.cliente_seleccionado.direccion_linea || '').trim());
+		},
+		cliente_con_punto(){
+			var vm = this;
+			if(!vm.cliente_seleccionado) return false;
+			return vm.cliente_seleccionado.direccion_latitud != null && vm.cliente_seleccionado.direccion_longitud != null;
+		},
+		coordenadas_cliente(){
+			var vm = this;
+			if(!vm.cliente_con_punto) return '';
+			return formatear_coordenadas(vm.cliente_seleccionado.direccion_latitud, vm.cliente_seleccionado.direccion_longitud);
+		},
+		hay_direccion_nueva(){
+			var vm = this;
+			return Boolean((vm.direccion_nueva.direccion_linea || '').trim());
+		},
+		// El bloque del destino aparece recien cuando hay a quien entregarle: antes no hay nada que
+		// mostrar y ocupa media pantalla.
+		pide_destino(){
+			var vm = this;
+			return vm.tipo == 'entregas' && Boolean(vm.cliente_seleccionado);
+		},
+		// El punto es deseable, la direccion es obligatoria: sin direccion el servidor rechaza.
+		entrega_lista(){
+			var vm = this;
+			if(vm.tipo != 'entregas') return true;
+			return vm.cliente_tiene_direccion;
+		},
+		falta_destino(){
+			var vm = this;
+			if(vm.tipo != 'entregas') return '';
+			if(!vm.cliente_seleccionado) return 'Una entrega necesita un cliente: elegilo arriba.';
+			if(!vm.cliente_tiene_direccion) return 'Falta la dirección del cliente para poder entregarle.';
+			return '';
+		},
 		productos_disponibles(){
 			var vm = this;
 			return vm.productos.filter(producto => producto.disponible);
@@ -172,9 +255,29 @@ export default {
 			vm.tipo = 'presencial';
 			vm.observaciones = '';
 			vm.items = [];
+			vm.direccion_nueva = {direccion_linea: '', direccion_referencia: ''};
 		}
 	},
 	methods: {
+		// La ficha del cliente se guarda por el camino de siempre: el modal avisa y la pantalla
+		// llama al store. Un componente no habla con la API.
+		guardar_direccion_del_cliente: function(){
+			var vm = this;
+			// El punto no se toca: lo anota el repartidor cuando llega a la puerta. Acá, en el
+			// mostrador, "mi ubicación" sería la del local.
+			vm.$emit('guardar_cliente', {
+				id: vm.cliente_seleccionado.id,
+				datos: {
+					nombre: vm.cliente_seleccionado.nombre,
+					telefono: vm.cliente_seleccionado.telefono,
+					email: vm.cliente_seleccionado.email,
+					direccion_linea: vm.direccion_nueva.direccion_linea.trim(),
+					direccion_referencia: vm.direccion_nueva.direccion_referencia.trim(),
+					direccion_latitud: null,
+					direccion_longitud: null
+				}
+			});
+		},
 		cantidad_de: function(producto_id){
 			var vm = this;
 			const item = vm.items.find(item => item.producto_id == producto_id);

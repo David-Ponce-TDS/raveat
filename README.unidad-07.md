@@ -69,7 +69,7 @@ de Firebase** para el push — gratis, y solo para el push. Ver
 | **Notificaciones** | nueva: la bandeja del usuario, con el contador en la campanita del header |
 | **Entregas** | nueva: las entregas por estado, tomarlas, asignarlas y moverlas |
 | **Clientes** | el formulario captura coordenadas con el GPS — «usar mi ubicación» |
-| **Pedidos** | el pedido de tipo *entregas* crea su entrega al confirmarse |
+| **Pedidos** | el pedido de tipo *entregas* crea su entrega al confirmarse; tocar un pedido abre su **ficha**: estado, importes, ítems, su QR y las acciones |
 
 ---
 
@@ -91,6 +91,10 @@ Firebase**, no desde la API: el envío programático (tokens por usuario, colas)
 
 ## 📬 La bandeja se escribe para el interesado
 
+El aviso **empieza por el nombre del que ejecutó** («Ana lo pasó a *Listo*»): sin eso dice que algo
+cambió pero no a quién preguntarle. El nombre se lee de la base, no del token — el token lleva id,
+email y rol, nada más.
+
 La tentación es notificar todo a todos — o peor, al que hizo la acción, que ya lo sabe porque la
 hizo. La regla que ordena el módulo: **cada evento tiene UN interesado** (el creador del pedido, el
 repartidor asignado) y la notificación se escribe **en el mismo `SaveChanges` que la acción** — o
@@ -103,14 +107,35 @@ descargadas mentiría apenas haya más de una página.
 
 ---
 
-## 📍 Las coordenadas se capturan, no se tipean
+## 📍 Las coordenadas se anotan en la puerta
 
-Nadie sabe su latitud. El formulario captura la posición **estando ahí** o no guarda nada — y sin
-coordenadas, el mapa busca por la dirección escrita, que es exactamente lo que hace una persona.
-Diseñar ese respaldo vale más que el GPS: **el permiso puede decir que no, y la app sigue.**
+Nadie sabe su latitud. Y **«usar mi ubicación actual» sirve para la casa de uno, no para la de
+otro**: el vendedor que carga un cliente desde el mostrador guardaría la ubicación del local.
+
+Por eso, en esta versión, el punto lo anota **quien está ahí**: el botón lo ven solo **delivery y
+administrador**, y dice «Estoy en la puerta del cliente». Para los demás el campo existe pero se
+llena solo cuando alguien llega.
+
+Elegir el punto **señalándolo en un mapa** —el caso de todos los días— es el tema de la **versión
+10**: acá la ubicación es un campo más, con su permiso y su respaldo.
+
+Sin punto no se rompe nada: el mapa busca por la dirección escrita, que es exactamente lo que hace
+una persona. **El permiso puede decir que no, y la app sigue.**
 
 El mapa es **externo a propósito**: abrir la app de mapas del teléfono con las coordenadas ya
 resuelve la clase. El mapa embebido, dibujado por nosotros, es el tema de la versión 10.
+
+**La dirección se completa donde se descubre que falta.** Un pedido de entrega para un cliente sin
+dirección lo rechaza el servidor; la pantalla no repite esa regla, pero muestra el destino, deja
+cargar la dirección ahí mismo —queda guardada en la ficha del cliente— y **bloquea el botón de
+crear** mientras falte. Mandar al usuario a otra pantalla en medio de un pedido es hacerle perder
+lo que ya cargó.
+
+**La dirección bloquea; el punto no.** Sin dirección no hay entrega posible. Sin punto sí la hay:
+el repartidor sale con la dirección escrita y lo anota al llegar, y la pantalla lo dice en vez de
+trabar la venta. Exigir el punto recién tiene sentido en la **versión 10**, cuando cualquiera puede
+marcarlo en el mapa sin moverse del mostrador: pedir un dato que el usuario no tiene forma de
+completar es un callejón sin salida, no una validación.
 
 ---
 
@@ -152,7 +177,8 @@ RavEat/
 - [ ] Crear un pedido dispara la **notificación local** en el momento
 - [ ] Una acción de un usuario suma a la **campanita del interesado** — no a la del que la hizo
 - [ ] La bandeja pagina, y «marcar todas como leídas» pone el contador en cero
-- [ ] El formulario de cliente captura coordenadas con el GPS, pidiendo el permiso — y con el permiso denegado, la app sigue
+- [ ] El punto del cliente lo anota el que está en su puerta: el botón solo lo ven delivery y administrador
+- [ ] Un pedido de entrega para un cliente sin dirección **no se puede crear**, y la dirección se completa desde el mismo pedido
 - [ ] La entrega se abre en la app de mapas del teléfono con las coordenadas del cliente
 - [ ] Con Firebase configurado, un push enviado desde la consola **llega con la app cerrada**
 - [ ] Sin `google-services.json`, todo lo demás sigue funcionando

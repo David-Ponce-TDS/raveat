@@ -42,7 +42,8 @@ export function descargar_comprobante_pedido(id){
 	return ajax_binario({endpoint: `/api/pedidos/${id}/comprobante`, metodo: 'GET'});
 }
 
-// El QR del pedido es una imagen PNG: tambien binario.
-export function descargar_qr_pedido(id){
+// El QR tambien es binario (PNG). No se puede poner la URL en un <img src>: el endpoint pide
+// token y una imagen no manda encabezados.
+export function obtener_qr_pedido(id){
 	return ajax_binario({endpoint: `/api/pedidos/${id}/qr`, metodo: 'GET'});
 }

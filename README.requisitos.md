@@ -36,7 +36,7 @@ Lo propio de esta versión: el archivo de Firebase en su lugar y la bandera del 
 
 ```powershell
 if (Test-Path .\RavEatApp\android\app\google-services.json) { 'google-services  ok' } else { 'google-services  FALTA' }
-if (Select-String -Path .\RavEatApp\.env -Pattern '^VITE_PUSH_NOTIFICATIONS_ENABLED=true' -Quiet) { 'push en el .env  ok' } else { 'push en el .env  FALTA' }
+if (Select-String -Path .\RavEatApp\.env -Pattern '^VITE_PUSH_NOTIFICATIONS_ENABLED=false' -Quiet) { 'push en el .env  APAGADO' } else { 'push en el .env  ok' }
 ```
 
 El teléfono, conectado por USB:

@@ -12,7 +12,7 @@ using RavEat.Api.Data;
 namespace RavEat.Api.Migrations
 {
     [DbContext(typeof(RavEatDbContext))]
-    [Migration("20260915021942_PedidosDePrueba")]
+    [Migration("20260921060803_PedidosDePrueba")]
     partial class PedidosDePrueba
     {
         /// <inheritdoc />
@@ -131,6 +131,136 @@ namespace RavEat.Api.Migrations
                         .HasDatabaseName("ix_clientes_telefono");
 
                     b.ToTable("clientes", (string)null);
+                });
+
+            modelBuilder.Entity("RavEat.Api.Domain.Entities.Entrega", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTimeOffset>("ActualizadoEn")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("actualizado_en");
+
+                    b.Property<DateTimeOffset?>("AsignadaEn")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("asignada_en");
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("creado_en");
+
+                    b.Property<decimal?>("DireccionLatitud")
+                        .HasPrecision(10, 7)
+                        .HasColumnType("decimal(10,7)")
+                        .HasColumnName("direccion_latitud");
+
+                    b.Property<string>("DireccionLinea")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasColumnName("direccion_linea");
+
+                    b.Property<decimal?>("DireccionLongitud")
+                        .HasPrecision(10, 7)
+                        .HasColumnType("decimal(10,7)")
+                        .HasColumnName("direccion_longitud");
+
+                    b.Property<string>("DireccionReferencia")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)")
+                        .HasColumnName("direccion_referencia");
+
+                    b.Property<DateTimeOffset?>("EntregadaEn")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("entregada_en");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)")
+                        .HasColumnName("estado");
+
+                    b.Property<string>("Observaciones")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)")
+                        .HasColumnName("observaciones");
+
+                    b.Property<long>("PedidoId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("pedido_id");
+
+                    b.Property<long?>("RepartidorId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("repartidor_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_entregas");
+
+                    b.HasIndex("PedidoId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_entregas_pedido_id");
+
+                    b.HasIndex("RepartidorId", "Estado")
+                        .HasDatabaseName("ix_entregas_repartidor_id_estado");
+
+                    b.ToTable("entregas", (string)null);
+                });
+
+            modelBuilder.Entity("RavEat.Api.Domain.Entities.Notificacion", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTimeOffset>("ActualizadoEn")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("actualizado_en");
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("creado_en");
+
+                    b.Property<DateTimeOffset?>("LeidaEn")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("leida_en");
+
+                    b.Property<string>("Mensaje")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)")
+                        .HasColumnName("mensaje");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)")
+                        .HasColumnName("tipo");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("varchar(160)")
+                        .HasColumnName("titulo");
+
+                    b.Property<long>("UsuarioId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("usuario_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_notificaciones");
+
+                    b.HasIndex("UsuarioId", "LeidaEn")
+                        .HasDatabaseName("ix_notificaciones_usuario_id_leida_en");
+
+                    b.ToTable("notificaciones", (string)null);
                 });
 
             modelBuilder.Entity("RavEat.Api.Domain.Entities.Pedido", b =>
@@ -510,6 +640,32 @@ namespace RavEat.Api.Migrations
                         .HasDatabaseName("ix_usuarios_rol_id");
 
                     b.ToTable("usuarios", (string)null);
+                });
+
+            modelBuilder.Entity("RavEat.Api.Domain.Entities.Entrega", b =>
+                {
+                    b.HasOne("RavEat.Api.Domain.Entities.Pedido", null)
+                        .WithMany()
+                        .HasForeignKey("PedidoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_entregas_pedidos_pedido_id");
+
+                    b.HasOne("RavEat.Api.Domain.Entities.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("RepartidorId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_entregas_usuarios_repartidor_id");
+                });
+
+            modelBuilder.Entity("RavEat.Api.Domain.Entities.Notificacion", b =>
+                {
+                    b.HasOne("RavEat.Api.Domain.Entities.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_notificaciones_usuarios_usuario_id");
                 });
 
             modelBuilder.Entity("RavEat.Api.Domain.Entities.Pedido", b =>

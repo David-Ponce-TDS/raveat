@@ -4,8 +4,8 @@
 			<comp-buscador v-model="busqueda" placeholder="Buscar por código" @buscar="buscar" />
 
 			<!-- Los contadores por estado los calcula la API sobre el total filtrado, no sobre la
-				página: son los botones con los que se elige el filtro, así que no pueden depender
-				de él. Se pueden combinar: sin ninguno elegido, la API devuelve todos. -->
+			     página: son los botones con los que se elige el filtro, así que no pueden depender
+			     de él. Se pueden combinar: sin ninguno elegido, la API devuelve todos. -->
 			<div class="raveat-chips">
 				<button
 					v-for="estado in estados_disponibles"
@@ -70,22 +70,26 @@
 			:clientes="clientes_store.clientes"
 			:error="store.error || ''"
 			:guardando="store.guardando"
+			:guardando_cliente="clientes_store.guardando"
 			:productos="productos_store.productos"
 			@cerrar="modal_abierto = false"
 			@crear="crear"
+			@guardar_cliente="guardar_cliente"
 		/>
+
 		<comp-pedido-detalle-modal
 			:abierto="detalle_abierto"
-			:pedido="store.detalle || pedido_actual"
-			:items="store.detalle_items"
-			:qr_url="qr_url"
-			:color="color_estado((store.detalle || pedido_actual || {}).estado)"
+			:error="store.error || ''"
 			:guardando="store.guardando"
+			:items="store.detalle_items"
+			:pedido="store.detalle"
+			:qr="store.detalle_qr"
+			@actualizar="refrescar_detalle"
+			@cancelar="cancelar_detalle"
 			@cerrar="cerrar_detalle"
-			@cambiar_estado="cambiar_estado"
-			@cobrar="cobrar"
-			@comprobante="compartir_comprobante(pedido_actual)"
-			@cancelar="cancelar"
+			@cobrar="cobrar_detalle"
+			@comprobante="compartir_comprobante(store.detalle)"
+			@estado="cambiar_estado_detalle"
 		/>
 	</comp-page>
 </template>
@@ -95,8 +99,7 @@
 	IonButton,
 	IonIcon,
 	IonItem,
-	IonLabel,
-	alertController
+	IonLabel
 } from '@ionic/vue';
 import { addOutline, qrCodeOutline, receiptOutline } from 'ionicons/icons';
 import comp_buscador from '@/components/base/comp_buscador.vue';
@@ -107,26 +110,16 @@ import comp_lista from '@/components/base/comp_lista.vue';
 import comp_page from '@/components/estructura/comp_page.vue';
 import comp_pedido_detalle_modal from '@/components/dominio/comp_pedido_detalle_modal.vue';
 import comp_pedido_formulario_modal from '@/components/dominio/comp_pedido_formulario_modal.vue';
+import { avisar_error, avisar_exito } from '@/services/avisos_service';
 import { compartir_archivo } from '@/services/compartir_service';
 import { notificar_evento_local } from '@/services/notificaciones_nativas_service';
-import { descargar_comprobante_pedido, descargar_qr_pedido } from '@/services/pedidos_service';
+import { descargar_comprobante_pedido } from '@/services/pedidos_service';
 import { escanear_qr } from '@/services/qr_service';
+import { color_estado, etiqueta, siguiente_estado } from '@/utils/pedidos_presentacion';
 import { formatear_importe } from '@/utils/formato_moneda';
 import { use_clientes_store } from '@/stores/clientes_store';
 import { use_pedidos_store } from '@/stores/pedidos_store';
 import { use_productos_store } from '@/stores/productos_store';
-
-// Cada estado con su color. Vive en la pantalla y no en el store porque es decisión de
-// presentación: el store guarda el estado, no cómo se pinta.
-const COLOR_ESTADO = {
-	borrador: 'medium',
-	confirmado: 'primary',
-	en_preparacion: 'warning',
-	listo: 'success',
-	entregado: 'success',
-	cerrado: 'medium',
-	cancelado: 'danger'
-};
 
 export default {
 	name: 'pedidos_page',
@@ -149,6 +142,7 @@ export default {
 		return {
 			busqueda: '',
 			clientes_store: use_clientes_store(),
+			detalle_abierto: false,
 			estados_disponibles: [
 				'borrador',
 				'confirmado',
@@ -161,11 +155,8 @@ export default {
 			icono: receiptOutline,
 			icono_agregar: addOutline,
 			icono_qr: qrCodeOutline,
-			detalle_abierto: false,
 			modal_abierto: false,
-			pedido_actual: null,
 			productos_store: use_productos_store(),
-			qr_url: '',
 			store: use_pedidos_store()
 		};
 	},
@@ -196,65 +187,78 @@ export default {
 			var vm = this;
 			return vm.store.cargar({busqueda: texto});
 		},
-		color_estado: function(estado){
-			return COLOR_ESTADO[estado] || 'medium';
-		},
-		// Los valores viajan en snake_case porque asi los serializa la API. Pasarlos a texto legible
-		// en un solo lugar evita que cada pantalla invente el suyo.
-		etiqueta: function(valor){
-			if(!valor) return '';
-			return valor.replace(/_/g, ' ').replace(/^./, letra => letra.toUpperCase());
-		},
 		abrir_nuevo: function(){
 			var vm = this;
 			vm.store.error = null;
 			vm.modal_abierto = true;
+		},
+		// La direccion del cliente se completa desde el pedido y se guarda en su ficha: mandar a
+		// Clientes en medio de un pedido es hacerle perder lo que ya cargo.
+		guardar_cliente: async function(evento){
+			var vm = this;
+			const guardado = await vm.clientes_store.guardar(evento.id, evento.datos);
+			// El store recarga la lista al guardar, asi que el modal ve la direccion nueva sola.
+			if(guardado) avisar_exito('Dirección guardada en la ficha del cliente.');
 		},
 		crear: async function(datos){
 			var vm = this;
 			const creado = await vm.store.crear(datos);
 			if(creado){
 				vm.modal_abierto = false;
+				avisar_exito(`${creado.codigo} creado · ${formatear_importe(creado.total)}`);
 				// Notificacion LOCAL: la programa la propia app como respuesta a lo que el usuario
 				// acaba de hacer. No viaja por internet, y es la mas barata de las tres.
-				notificar_evento_local('Pedido creado', `${creado.codigo} · ${formatear_importe(creado.total)}`);
+				const aviso = await notificar_evento_local('Pedido creado', `${creado.codigo} · ${formatear_importe(creado.total)}`);
+				if(aviso.mensaje) avisar_error(aviso.mensaje);
 			}
 		},
-		// El detalle del pedido en un modal: datos, items, QR y todas las acciones. El QR es una
-		// imagen que genera la API; se baja como Blob y se muestra como URL de objeto.
+		// La ficha se abre con lo que ya trae la lista y despues pide el detalle: si esperara a
+		// la API, el modal se abriria vacio unos cuantos milisegundos.
 		abrir_detalle: async function(pedido){
 			var vm = this;
-			vm.pedido_actual = pedido;
-			vm.qr_url = '';
+			vm.store.error = null;
+			vm.store.detalle = pedido;
+			vm.store.detalle_items = [];
+			// El QR del pedido anterior se suelta ANTES de abrir: si no, la ficha nueva nace
+			// mostrando el QR viejo y, al revocarse su URL, queda la imagen rota en pantalla.
+			vm.store.soltar_qr();
 			vm.detalle_abierto = true;
 			await vm.store.cargar_detalle(pedido.id);
-			try{
-				const blob = await descargar_qr_pedido(pedido.id);
-				vm.qr_url = URL.createObjectURL(blob);
-			}catch(error){
-				await vm.avisar(error.mensaje || 'No se pudo cargar el QR.');
-			}
+			vm.store.cargar_qr(pedido.id);
 		},
 		cerrar_detalle: function(){
 			var vm = this;
 			vm.detalle_abierto = false;
-			if(vm.qr_url) URL.revokeObjectURL(vm.qr_url);
-			vm.qr_url = '';
-			vm.pedido_actual = null;
+			// Devolver la URL del QR: es memoria del navegador que nadie mas va a soltar.
 			vm.store.limpiar_detalle();
 		},
-		// Las acciones las resuelve el store, que recarga la lista. Si salio bien, el modal se cierra.
-		cambiar_estado: async function(estado){
+		refrescar_detalle: function(){
 			var vm = this;
-			if(await vm.store.cambiar_estado(vm.pedido_actual.id, estado)) vm.cerrar_detalle();
+			if(!vm.store.detalle) return;
+			return vm.store.cargar_detalle(vm.store.detalle.id);
 		},
-		cobrar: async function(medio_pago){
+		// Las acciones cambian el pedido: despues de cada una hay que releer la ficha, o queda
+		// mostrando el estado viejo al lado del boton que ya no corresponde.
+		cambiar_estado_detalle: async function(estado){
 			var vm = this;
-			if(await vm.store.registrar_pago(vm.pedido_actual.id, medio_pago, 0)) vm.cerrar_detalle();
+			const id = vm.store.detalle.id;
+			if(!await vm.store.cambiar_estado(id, estado)) return;
+			await vm.store.cargar_detalle(id);
+			avisar_exito(`${vm.store.detalle.codigo}: ${vm.etiqueta(estado).toLowerCase()}.`);
 		},
-		cancelar: async function(){
+		cobrar_detalle: async function(medio_pago){
 			var vm = this;
-			if(await vm.store.cancelar(vm.pedido_actual.id)) vm.cerrar_detalle();
+			const id = vm.store.detalle.id;
+			if(!await vm.store.registrar_pago(id, medio_pago, 0)) return;
+			await vm.store.cargar_detalle(id);
+			avisar_exito(`Cobrado en ${vm.etiqueta(medio_pago).toLowerCase()}.`);
+		},
+		cancelar_detalle: async function(){
+			var vm = this;
+			const id = vm.store.detalle.id;
+			if(!await vm.store.cancelar(id)) return;
+			await vm.store.cargar_detalle(id);
+			avisar_exito(`${vm.store.detalle.codigo} cancelado.`);
 		},
 		// El PDF llega como Blob y compartir_service elige el camino: dialogo del sistema o descarga.
 		compartir_comprobante: async function(pedido){
@@ -267,9 +271,9 @@ export default {
 					titulo: `Comprobante ${pedido.codigo}`,
 					texto: `Comprobante del pedido ${pedido.codigo}`
 				});
-				if(resultado.mensaje) await vm.avisar(resultado.mensaje);
+				if(resultado.mensaje) avisar_exito(resultado.mensaje);
 			}catch(error){
-				await vm.avisar(error.mensaje || 'No se pudo descargar el comprobante.');
+				avisar_error(error.mensaje || 'No se pudo descargar el comprobante.');
 			}
 		},
 		// El QR trae el codigo del pedido: escanear es tipearlo en el buscador. Si hay uno solo,
@@ -278,21 +282,16 @@ export default {
 			var vm = this;
 			const resultado = await escanear_qr();
 			if(!resultado.ok){
-				if(resultado.mensaje) await vm.avisar(resultado.mensaje);
+				if(resultado.mensaje) avisar_error(resultado.mensaje);
 				return;
 			}
 			vm.busqueda = resultado.contenido;
 			await vm.store.cargar({busqueda: resultado.contenido});
 			if(vm.store.pedidos.length == 1) vm.abrir_detalle(vm.store.pedidos[0]);
 		},
-		avisar: async function(mensaje){
-			const alerta = await alertController.create({
-				header: 'Pedidos',
-				message: mensaje,
-				buttons: [{text: 'OK', role: 'cancel'}]
-			});
-			await alerta.present();
-		},
-		formatear_importe
+		color_estado,
+		etiqueta,
+		formatear_importe,
+		siguiente_estado
 	}
 };</script>

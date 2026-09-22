@@ -209,3 +209,132 @@
     color: var(--raveat-muted);
     font-size: 0.8rem;
 }
+
+/* --- fichas de detalle --------------------------------------------------- */
+
+/* El sistema de fichas: comp_modal_detalle, comp_detalle_seccion y comp_detalle_dato dependen
+   de estas clases. Viven acá y no scoped en cada componente porque son el lenguaje visual de
+   todas las fichas de la app, y una ficha que se dibuja distinta a las demás se lee como otra
+   pantalla. */
+
+.raveat-detalle {
+    display: grid;
+    gap: 14px;
+}
+
+.raveat-detalle-seccion {
+    display: grid;
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid var(--raveat-border);
+    border-radius: 16px;
+    background: var(--raveat-surface);
+}
+
+.raveat-detalle-seccion__encabezado {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.raveat-detalle-seccion h3,
+.raveat-detalle-seccion p {
+    margin: 0;
+}
+
+.raveat-detalle-seccion h3 {
+    font-size: 16px;
+    line-height: 1.2;
+}
+
+.raveat-detalle-seccion p {
+    color: var(--raveat-muted);
+    line-height: 1.35;
+}
+
+.raveat-detalle-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.raveat-detalle-datos {
+    display: grid;
+    gap: 8px;
+}
+
+/* Etiqueta a la izquierda, valor a la derecha: la columna del valor arranca en 0 para que un
+   texto largo se corte y no estire la ficha fuera de la pantalla. */
+.raveat-detalle-dato {
+    display: grid;
+    grid-template-columns: minmax(92px, 0.52fr) minmax(0, 1fr);
+    gap: 12px;
+    align-items: baseline;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--raveat-border);
+}
+
+.raveat-detalle-dato:last-child {
+    border-bottom: 0;
+}
+
+.raveat-detalle-dato span {
+    color: var(--raveat-muted);
+    font-size: 12px;
+}
+
+.raveat-detalle-dato strong {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    text-align: right;
+}
+
+.raveat-detalle-items {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.raveat-detalle-items li {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.raveat-detalle-items li + li {
+    padding-top: 10px;
+    border-top: 1px solid var(--raveat-border);
+}
+
+.raveat-detalle-items p {
+    margin: 2px 0 0;
+    font-size: 12px;
+}
+
+.raveat-detalle-qr {
+    display: flex;
+    justify-content: center;
+    padding: 12px;
+    border-radius: 12px;
+    /* El QR es negro sobre transparente: en tema oscuro necesita su propio fondo blanco o el
+       lector no encuentra el contraste. */
+    background: #ffffff;
+}
+
+/* Ancho en multiplos del modulo y sin suavizado: el PNG viene a 8 px por modulo y escalarlo a
+   una medida fraccionaria lo deja borroso — se ve "roto" y el lector no lo engancha. */
+.raveat-detalle-qr img {
+    width: 208px;
+    max-width: 100%;
+    height: auto;
+    image-rendering: pixelated;
+}
+
+.raveat-detalle-acciones {
+    display: grid;
+    gap: 8px;
+}

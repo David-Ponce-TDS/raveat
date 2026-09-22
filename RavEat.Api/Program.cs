@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Net;
@@ -104,8 +104,11 @@ app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 
-if(args.Contains("--migrate", StringComparer.OrdinalIgnoreCase)){
-    await using var scope = app.Services.CreateAsyncScope();
+// La API migra SIEMPRE al arrancar, sin bandera que haya que acordarse de pasar. Era `--migrate`
+// y el que levantaba la API a mano terminaba contra una base vieja, con un error de MySQL sobre
+// una tabla que no existe en vez de un motivo entendible. Migrar es idempotente: si no hay
+// migraciones pendientes no hace nada.
+await using(var scope = app.Services.CreateAsyncScope()){
     var db = scope.ServiceProvider.GetRequiredService<RavEatDbContext>();
     await db.Database.MigrateAsync();
 }

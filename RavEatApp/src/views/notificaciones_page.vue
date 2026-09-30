@@ -126,8 +126,8 @@ export default {
 		icono_tipo: function(tipo){
 			return ICONO_TIPO[tipo] || informationCircleOutline;
 		},
-		// Mismo criterio que el diagnostico de Mi cuenta: 24 horas explicitas, porque el WebView de
-		// Android arma el formato de 12 sin el "a. m." y la hora se lee corrida.
+		// 24 horas explicitas: el WebView de Android arma el formato de 12 sin el "a. m." y la
+		// hora se lee corrida.
 		formatear_fecha: function(fecha){
 			if(!fecha) return '';
 			return new Date(fecha).toLocaleString('es-AR', {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false});

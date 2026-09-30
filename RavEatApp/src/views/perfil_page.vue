@@ -52,41 +52,6 @@
 				</ion-card-content>
 			</ion-card>
 
-			<ion-card class="raveat-panel">
-				<ion-card-header>
-					<ion-card-subtitle>Conexión</ion-card-subtitle>
-					<ion-card-title>Diagnóstico</ion-card-title>
-				</ion-card-header>
-				<ion-card-content>
-					<ion-item :lines="'none'" class="raveat-diagnostico__api">
-						<ion-icon slot="start" :icon="icono_api" />
-						<ion-label>
-							<p>Esta app le pide los datos a</p>
-							<h3 class="raveat-item-title">{{ api_url }}</h3>
-						</ion-label>
-					</ion-item>
-
-					<div
-						v-if="estado != 'inicial'"
-						class="raveat-diagnostico__resultado"
-						:class="estado"
-					>
-						<ion-spinner v-if="estado == 'probando'" name="dots" />
-						<ion-icon v-else :icon="estado == 'ok' ? icono_ok : icono_falla" />
-						<span>{{ mensaje }}</span>
-					</div>
-
-					<ion-button
-						expand="block"
-						fill="outline"
-						:disabled="estado == 'probando'"
-						@click="probar"
-					>
-						Probar conexión
-					</ion-button>
-				</ion-card-content>
-			</ion-card>
-
 			<ion-button expand="block" color="danger" fill="outline" @click="salir">
 				<ion-icon slot="start" :icon="icono_salir" />
 				Cerrar sesión
@@ -108,14 +73,10 @@
 	IonItem,
 	IonLabel,
 	IonList,
-	IonSpinner,
 	IonToggle,
 	alertController
 } from '@ionic/vue';
 import {
-	alertCircleOutline,
-	checkmarkCircleOutline,
-	cloudOutline,
 	contrastOutline,
 	hourglassOutline,
 	logOutOutline,
@@ -124,14 +85,10 @@ import {
 import { mapActions, mapState } from 'pinia';
 import comp_estado_vacio from '@/components/base/comp_estado_vacio.vue';
 import comp_page from '@/components/estructura/comp_page.vue';
-import { obtener_api_url } from '@/config/debug';
-import { consultar_health } from '@/services/health_service';
 import { vibrar_toque } from '@/services/vibracion_service';
 import { use_app_store } from '@/stores/app_store';
 import { use_sesion_store } from '@/stores/sesion_store';
 
-// Diagnostico: contra que URL pega la app y si esa API responde. En el telefono no hay consola a
-// mano, y esta es la forma de verlo.
 export default {
 	name: 'perfil_page',
 	components: {
@@ -149,21 +106,14 @@ export default {
 		IonItem,
 		IonLabel,
 		IonList,
-		IonSpinner,
 		IonToggle
 	},
 	data(){
 		return {
-			api_url: obtener_api_url(),
-			estado: 'inicial',
-			icono_api: cloudOutline,
 			icono_espera: hourglassOutline,
-			icono_falla: alertCircleOutline,
-			icono_ok: checkmarkCircleOutline,
 			icono_salir: logOutOutline,
 			icono_tema: contrastOutline,
 			icono_vibracion: pulseOutline,
-			mensaje: '',
 			sesion_store: use_sesion_store()
 		};
 	},
@@ -194,26 +144,6 @@ export default {
 			vm.alternar_vibracion();
 			// Al encenderla vibra una vez: es la forma de "ver" que funciona.
 			if(vm.vibracion_activa) vibrar_toque();
-		},
-		probar: async function(){
-			var vm = this;
-			vm.estado = 'probando';
-			vm.mensaje = 'Probando…';
-			try{
-				const respuesta = await consultar_health();
-				vm.estado = 'ok';
-				vm.mensaje = `La API respondió: ${respuesta.status} · ${vm.formatear_hora(respuesta.utc)}`;
-			}catch(error){
-				vm.estado = 'error';
-				vm.mensaje = error.mensaje;
-			}
-		},
-		// La hora la manda la API, no el telefono: si difieren, lo que se ve es el reloj del server.
-		// `hour12: false` no es un adorno: sin eso el WebView de Android devuelve "10:40:28" para
-		// las 22:40 —doce horas de diferencia aparentes contra el reloj del telefono.
-		formatear_hora: function(utc){
-			if(!utc) return '';
-			return new Date(utc).toLocaleTimeString('es-AR', {hour12: false});
 		},
 		salir: async function(){
 			var vm = this;

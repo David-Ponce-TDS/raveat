@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia';
 import { obtener_rol_por_codigo } from '@/config/roles';
+import { borrar_copias, guardar_copia } from '@/services/copia_local_service';
 import { cerrar_sesion, iniciar_sesion, obtener_mi_usuario } from '@/services/sesion_service';
+import { use_offline_store } from '@/stores/offline_store';
 import {
 	al_expirar,
 	borrar_sesion,
@@ -89,6 +91,9 @@ export const use_sesion_store = defineStore('sesion', {
 				}
 				await guardar_sesion(sesion.token, sesion.expira_en, sesion.refresh_token, sesion.refresh_expira_en);
 				vm.usuario = sesion.usuario;
+				// El login ya trae al usuario: se guarda como la copia de "quien soy", asi la app
+				// puede arrancar sin red desde la primera vez.
+				guardar_copia('/api/sesion/yo', {usuario: sesion.usuario});
 				return true;
 			}catch(error){
 				vm.error = error.mensaje || 'No se pudo iniciar sesión.';
@@ -113,6 +118,10 @@ export const use_sesion_store = defineStore('sesion', {
 		limpiar: async function(){
 			var vm = this;
 			await borrar_sesion();
+			// Lo guardado para mirar sin red y lo que esperaba en la cola son de quien los cargo:
+			// con la sesion se van los dos, y nada pasa de un usuario al siguiente.
+			borrar_copias();
+			use_offline_store().guardar_cola([]);
 			vm.usuario = null;
 			vm.error = null;
 		}

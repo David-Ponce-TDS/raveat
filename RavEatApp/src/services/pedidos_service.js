@@ -12,11 +12,12 @@ export function obtener_pedidos(opciones = {}){
 		pagina: opciones.pagina,
 		tamano: opciones.tamano
 	});
-	return ajax_request({endpoint: `/api/pedidos${query}`, metodo: 'GET'});
+	// `guardable`: sin red, la lista muestra lo ultimo que se cargo.
+	return ajax_request({endpoint: `/api/pedidos${query}`, metodo: 'GET', guardable: true});
 }
 
 export function obtener_pedido(id){
-	return ajax_request({endpoint: `/api/pedidos/${id}`, metodo: 'GET'});
+	return ajax_request({endpoint: `/api/pedidos/${id}`, metodo: 'GET', guardable: true});
 }
 
 // El cuerpo NO lleva precios: los pone el servidor leyendolos de la base. Si el precio viajara
@@ -25,6 +26,8 @@ export function crear_pedido(datos){
 	return ajax_request({endpoint: '/api/pedidos', metodo: 'POST', datos});
 }
 
+// Es la unica escritura que se puede hacer sin red: espera en la cola de offline_store. Se eligio
+// esta porque mandarla dos veces no rompe nada: la API rechaza la segunda.
 export function cambiar_estado_pedido(id, estado){
 	return ajax_request({endpoint: `/api/pedidos/${id}/estado`, metodo: 'PUT', datos: {estado}});
 }

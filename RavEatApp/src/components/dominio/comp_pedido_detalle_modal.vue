@@ -12,6 +12,7 @@
 				<div class="raveat-detalle-badges">
 					<ion-badge :color="color_estado(pedido.estado)">{{ etiqueta(pedido.estado) }}</ion-badge>
 					<ion-badge :color="pedido.estado_pago == 'pagado' ? 'success' : 'medium'">{{ etiqueta(pedido.estado_pago) }}</ion-badge>
+					<ion-badge v-if="pedido.sin_enviar" color="warning">Sin enviar</ion-badge>
 				</div>
 				<div class="raveat-detalle-datos">
 					<comp-detalle-dato label="Cliente" :valor="pedido.cliente_nombre || 'Mostrador'" />
@@ -45,8 +46,9 @@
 
 			<!-- El QR lleva el codigo del pedido, el mismo que imprime el comprobante: escanearlo
 			     desde la pantalla de pedidos lo encuentra. Llega como Blob y no como <img src> a
-			     la API, porque el endpoint pide token y una imagen no lo manda. -->
-			<comp-detalle-seccion titulo="QR" subtitulo="Escanealo para encontrar este pedido">
+			     la API, porque el endpoint pide token y una imagen no lo manda.
+			     Sin red no se puede pedir: la sección no se dibuja, en vez de quedar cargando. -->
+			<comp-detalle-seccion v-if="!sin_conexion" titulo="QR" subtitulo="Escanealo para encontrar este pedido">
 				<div class="raveat-detalle-qr">
 					<img v-if="qr" :src="qr" :alt="`QR del pedido ${pedido.codigo}`" />
 					<ion-spinner v-else name="crescent" />
@@ -55,21 +57,23 @@
 
 			<ion-note v-if="error" color="danger">{{ error }}</ion-note>
 
+			<!-- Sin red queda una sola acción: el cambio de estado, que espera en la cola. Cobrar,
+			     el comprobante y cancelar le piden a la API, y no se dibujan. -->
 			<div class="raveat-detalle-acciones">
 				<ion-button v-if="siguiente" expand="block" :disabled="guardando" @click="$emit('estado', siguiente)">
 					Pasar a {{ etiqueta(siguiente) }}
 				</ion-button>
-				<ion-button v-if="puede_cobrar" expand="block" fill="outline" :disabled="guardando" @click="$emit('cobrar', 'efectivo')">
+				<ion-button v-if="puede_cobrar && !sin_conexion" expand="block" fill="outline" :disabled="guardando" @click="$emit('cobrar', 'efectivo')">
 					Cobrar en efectivo
 				</ion-button>
-				<ion-button v-if="puede_cobrar" expand="block" fill="outline" :disabled="guardando" @click="$emit('cobrar', 'transferencia')">
+				<ion-button v-if="puede_cobrar && !sin_conexion" expand="block" fill="outline" :disabled="guardando" @click="$emit('cobrar', 'transferencia')">
 					Cobrar por transferencia
 				</ion-button>
-				<ion-button expand="block" fill="outline" :disabled="guardando" @click="$emit('comprobante')">
+				<ion-button v-if="!sin_conexion" expand="block" fill="outline" :disabled="guardando" @click="$emit('comprobante')">
 					<ion-icon slot="start" :icon="icono_comprobante" />
 					Comprobante
 				</ion-button>
-				<ion-button v-if="puede_cancelar" expand="block" fill="clear" color="danger" :disabled="guardando" @click="$emit('cancelar')">
+				<ion-button v-if="puede_cancelar && !sin_conexion" expand="block" fill="clear" color="danger" :disabled="guardando" @click="$emit('cancelar')">
 					Cancelar pedido
 				</ion-button>
 			</div>
@@ -142,6 +146,10 @@ export default {
 		qr: {
 			type: String,
 			default: ''
+		},
+		sin_conexion: {
+			type: Boolean,
+			default: false
 		}
 	},
 	data(){

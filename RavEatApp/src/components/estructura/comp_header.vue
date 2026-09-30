@@ -29,6 +29,7 @@
 } from '@ionic/vue';
 import { notificationsOutline } from 'ionicons/icons';
 import { use_notificaciones_store } from '@/stores/notificaciones_store';
+import { use_offline_store } from '@/stores/offline_store';
 import { use_sesion_store } from '@/stores/sesion_store';
 
 export default {
@@ -52,13 +53,15 @@ export default {
 		return {
 			icono_campanita: notificationsOutline,
 			notificaciones_store: use_notificaciones_store(),
+			offline_store: use_offline_store(),
 			sesion_store: use_sesion_store()
 		};
 	},
 	computed: {
 		puede_ver_bandeja(){
 			var vm = this;
-			return Boolean(vm.sesion_store.rol_activo);
+			// La bandeja pide red: sin conexion la campana desaparece, igual que su pantalla.
+			return Boolean(vm.sesion_store.rol_activo) && !vm.offline_store.sin_conexion;
 		},
 		no_leidas(){
 			var vm = this;

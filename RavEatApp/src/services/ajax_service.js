@@ -1,5 +1,6 @@
 import $ from 'jquery';
 import { obtener_api_url } from '@/config/debug';
+import { guardar_copia, obtener_copia } from '@/services/copia_local_service';
 import {
 	cabecera_autorizacion,
 	guardar_sesion,
@@ -172,7 +173,9 @@ function ejecutar_request(configuracion, permitir_renovar){
 		timeout = 15000,
 		headers = {},
 		// Login y logout: su 401 es la respuesta de la API, no un token vencido.
-		renovar = true
+		renovar = true,
+		// La lectura que se puede mirar sin red: con red guarda su respuesta, sin red la devuelve.
+		guardable = false
 	} = configuracion;
 	// Un FormData (la foto del producto) no se serializa ni lleva Content-Type: el boundary del
 	// multipart lo arma el navegador, y ponerlo a mano rompe la subida.
@@ -194,11 +197,21 @@ function ejecutar_request(configuracion, permitir_renovar){
 				...headers
 			}
 		})
-			.done(respuesta => resolve(respuesta))
+			.done(respuesta =>{
+				if(guardable) guardar_copia(endpoint, respuesta);
+				resolve(respuesta);
+			})
 			.fail((xhr, text_status, error_thrown) =>{
 				if(xhr.status == 401 && renovar){
 					manejar_401(permitir_renovar, () => ejecutar_request(configuracion, false))
 						.then(resolve, error => reject((error && error.estado_http) ? error : normalizar_error(xhr, text_status, error_thrown)));
+					return;
+				}
+				// Status 0 es que la API no contesto. Si de esta lectura hay una copia, la pantalla
+				// muestra lo ultimo que se vio en vez de un error.
+				const copia = guardable && !xhr.status ? obtener_copia(endpoint) : null;
+				if(copia){
+					resolve(copia);
 					return;
 				}
 				reject(normalizar_error(xhr, text_status, error_thrown));

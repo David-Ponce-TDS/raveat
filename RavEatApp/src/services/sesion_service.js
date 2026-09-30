@@ -9,7 +9,8 @@ export function cerrar_sesion(refresh_token, todos = false){
 }
 
 // Quien soy. La app lo llama al arrancar para saber si el token guardado todavia vale, y para
-// enterarse de si un admin le cambio el rol desde la ultima vez.
+// enterarse de si un admin le cambio el rol desde la ultima vez. `guardable`: sin red la app
+// arranca con el usuario de la ultima vez, en lugar de mandar al login.
 export function obtener_mi_usuario(){
-	return ajax_request({endpoint: '/api/sesion/yo', metodo: 'GET'});
+	return ajax_request({endpoint: '/api/sesion/yo', metodo: 'GET', guardable: true});
 }

@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { navegacion, TODOS } from '@/config/navegacion';
 import main_layout from '@/layouts/main_layout.vue';
 import { use_notificaciones_store } from '@/stores/notificaciones_store';
+import { use_offline_store } from '@/stores/offline_store';
 import { use_sesion_store } from '@/stores/sesion_store';
 
 // Las rutas ya no se escriben: se derivan de la configuracion. Agregar una pantalla es
@@ -11,7 +12,8 @@ const rutas_app = navegacion.map(item => ({
 	name: item.id,
 	component: item.componente,
 	meta: {
-		roles: item.roles
+		roles: item.roles,
+		sin_red: Boolean(item.sin_red)
 	}
 }));
 
@@ -94,6 +96,10 @@ router.beforeEach(to =>{
 
 	if(!sesion.autenticado) return {path: '/login', replace: true};
 
+	// Sin red solo se entra a las pantallas que tienen sus datos guardados. El menu y los tabs ya
+	// no muestran las demas; esto cubre el enlace que quedo en pantalla.
+	if(use_offline_store().sin_conexion && !to.meta.sin_red && to.path != RUTA_INICIO) return {path: RUTA_INICIO, replace: true};
+
 	const roles_permitidos = to.meta.roles;
 	// Lista vacia = NADIE. La marca [TODOS] es la que abre a cualquier autenticado, tenga rol o
 	// no: es la que lleva Inicio. Sin este chequeo el guard rechazaba Inicio y lo redirigia a
@@ -121,7 +127,7 @@ router.beforeEach(to =>{
 // Sin rol no hay campanita ni bandeja que pedir.
 router.afterEach(() =>{
 	const sesion = use_sesion_store();
-	if(!sesion.autenticado || !sesion.rol_activo) return;
+	if(!sesion.autenticado || !sesion.rol_activo || use_offline_store().sin_conexion) return;
 	use_notificaciones_store().cargar();
 });
 export default router;

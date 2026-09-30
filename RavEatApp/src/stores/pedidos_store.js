@@ -8,6 +8,15 @@ import {
 	obtener_qr_pedido,
 	registrar_pago_pedido
 } from '@/services/pedidos_service';
+import { use_offline_store } from '@/stores/offline_store';
+
+// El cambio de estado que espera en la cola se dibuja encima de lo que dice la API: el pedido
+// muestra el estado nuevo, con la marca de que todavia no se envio.
+function con_cambios_sin_enviar(pedido){
+	const cambios = use_offline_store().cola.filter(cambio => cambio.pedido_id == pedido.id);
+	if(cambios.length == 0) return pedido;
+	return {...pedido, estado: cambios[cambios.length - 1].estado, sin_enviar: true};
+}
 
 export const use_pedidos_store = defineStore('pedidos', {
 	state: () => ({
@@ -43,7 +52,7 @@ export const use_pedidos_store = defineStore('pedidos', {
 			if(filtros) vm.filtros = {...vm.filtros, ...filtros};
 			try{
 				const respuesta = await obtener_pedidos({...vm.filtros, pagina: 1});
-				vm.pedidos = (respuesta && respuesta.pedidos) || [];
+				vm.pedidos = ((respuesta && respuesta.pedidos) || []).map(con_cambios_sin_enviar);
 				vm.pagina = (respuesta && respuesta.pagina) || null;
 				vm.resumen = (respuesta && respuesta.resumen) || {};
 				vm.total = (respuesta && respuesta.total) || 0;
@@ -64,7 +73,7 @@ export const use_pedidos_store = defineStore('pedidos', {
 			try{
 				const respuesta = await obtener_pedidos({...vm.filtros, pagina: ((vm.pagina && vm.pagina.pagina) || 1) + 1});
 				const conocidos = vm.pedidos.map(pedido => pedido.id);
-				vm.pedidos = [...vm.pedidos, ...((respuesta && respuesta.pedidos) || []).filter(pedido => !conocidos.includes(pedido.id))];
+				vm.pedidos = [...vm.pedidos, ...((respuesta && respuesta.pedidos) || []).filter(pedido => !conocidos.includes(pedido.id)).map(con_cambios_sin_enviar)];
 				vm.pagina = (respuesta && respuesta.pagina) || null;
 				return vm.pedidos;
 			}catch(error){
@@ -88,12 +97,13 @@ export const use_pedidos_store = defineStore('pedidos', {
 			vm.error = null;
 			try{
 				const respuesta = await obtener_pedido(id);
-				vm.detalle = (respuesta && respuesta.pedido) || null;
+				vm.detalle = respuesta && respuesta.pedido ? con_cambios_sin_enviar(respuesta.pedido) : null;
 				vm.detalle_items = (respuesta && respuesta.items) || [];
 				return vm.detalle;
 			}catch(error){
+				// La ficha se queda con lo que trajo la lista: sin red, y sin copia de este pedido,
+				// igual se lee y se le puede cambiar el estado.
 				vm.error = error.mensaje || 'No se pudo cargar el pedido.';
-				vm.detalle = null;
 				vm.detalle_items = [];
 				return null;
 			}
@@ -144,8 +154,17 @@ export const use_pedidos_store = defineStore('pedidos', {
 		// desincronizan.
 		cambiar_estado: async function(id, estado){
 			var vm = this;
-			vm.guardando = true;
+			const offline = use_offline_store();
 			vm.error = null;
+			// Sin red el cambio no se pierde: espera en la cola y el pedido se dibuja con el
+			// estado nuevo.
+			if(offline.sin_conexion){
+				offline.encolar(id, estado);
+				vm.pedidos = vm.pedidos.map(con_cambios_sin_enviar);
+				if(vm.detalle) vm.detalle = con_cambios_sin_enviar(vm.detalle);
+				return 'pendiente';
+			}
+			vm.guardando = true;
 			try{
 				await cambiar_estado_pedido(id, estado);
 				await vm.cargar();

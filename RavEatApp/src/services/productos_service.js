@@ -4,7 +4,7 @@ import { construir_query } from '@/utils/consulta';
 // La vitrina: la carta entera con sus categorias y los contadores. No pagina porque una carta de
 // restaurante entra en una respuesta.
 export function obtener_resumen_productos(){
-	return ajax_request({endpoint: '/api/productos/resumen', metodo: 'GET'});
+	return ajax_request({endpoint: '/api/productos/resumen', metodo: 'GET', guardable: true});
 }
 
 // El catalogo de gestion: paginado, y con la busqueda y los filtros resueltos en la API.

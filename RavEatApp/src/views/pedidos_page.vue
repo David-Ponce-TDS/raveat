@@ -1,12 +1,19 @@
 <template>
 	<comp-page titulo="Pedidos" :mostrar_actualizar="true" @actualizar="cargar">
 		<div class="ion-padding raveat-page-stack">
-			<comp-buscador v-model="busqueda" placeholder="Buscar por código" @buscar="buscar" />
+			<!-- Sin red la lista no queda vacía: muestra lo último que se cargó, y lo dice. -->
+			<ion-note v-if="offline_store.sin_conexion" color="warning">
+				Sin conexión: estás viendo los datos guardados. Podés cambiar el estado de un pedido; se envía solo cuando vuelva la red.
+			</ion-note>
+
+			<!-- Buscar, filtrar, crear y escanear le piden a la API: sin red no se dibujan. Queda la
+			     lista guardada, que es lo que se puede usar. -->
+			<comp-buscador v-if="!offline_store.sin_conexion" v-model="busqueda" placeholder="Buscar por código" @buscar="buscar" />
 
 			<!-- Los contadores por estado los calcula la API sobre el total filtrado, no sobre la
 			     página: son los botones con los que se elige el filtro, así que no pueden depender
 			     de él. Se pueden combinar: sin ninguno elegido, la API devuelve todos. -->
-			<div class="raveat-chips">
+			<div v-if="!offline_store.sin_conexion" class="raveat-chips">
 				<button
 					v-for="estado in estados_disponibles"
 					:key="estado"
@@ -19,7 +26,8 @@
 				</button>
 			</div>
 
-			<div class="raveat-acciones">
+			<div v-if="!offline_store.sin_conexion" class="raveat-acciones">
+				<!-- Crear un pedido pide red: los precios y el stock los decide el servidor. -->
 				<ion-button expand="block" fill="outline" size="small" @click="abrir_nuevo">
 					<ion-icon slot="start" :icon="icono_agregar" />
 					Nuevo pedido
@@ -46,7 +54,7 @@
 			<comp-lista
 				v-else
 				:cargando="store.cargando"
-				:hay_mas="store.hay_mas"
+				:hay_mas="store.hay_mas && !offline_store.sin_conexion"
 				:mostrados="store.pedidos.length"
 				:total="store.total"
 				@cargar_mas="store.cargar_mas()"
@@ -60,6 +68,8 @@
 					<div slot="end" class="raveat-pedido-estados">
 						<ion-badge :color="color_estado(pedido.estado)">{{ etiqueta(pedido.estado) }}</ion-badge>
 						<ion-badge :color="pedido.estado_pago == 'pagado' ? 'success' : 'medium'">{{ etiqueta(pedido.estado_pago) }}</ion-badge>
+						<!-- El estado que se ve es el que eligió el usuario; la API todavía no lo sabe. -->
+						<ion-badge v-if="pedido.sin_enviar" color="warning">Sin enviar</ion-badge>
 					</div>
 				</ion-item>
 			</comp-lista>
@@ -84,6 +94,7 @@
 			:items="store.detalle_items"
 			:pedido="store.detalle"
 			:qr="store.detalle_qr"
+			:sin_conexion="offline_store.sin_conexion"
 			@actualizar="refrescar_detalle"
 			@cancelar="cancelar_detalle"
 			@cerrar="cerrar_detalle"
@@ -99,7 +110,8 @@
 	IonButton,
 	IonIcon,
 	IonItem,
-	IonLabel
+	IonLabel,
+	IonNote
 } from '@ionic/vue';
 import { addOutline, qrCodeOutline, receiptOutline } from 'ionicons/icons';
 import comp_buscador from '@/components/base/comp_buscador.vue';
@@ -118,6 +130,7 @@ import { escanear_qr } from '@/services/qr_service';
 import { color_estado, etiqueta, siguiente_estado } from '@/utils/pedidos_presentacion';
 import { formatear_importe } from '@/utils/formato_moneda';
 import { use_clientes_store } from '@/stores/clientes_store';
+import { use_offline_store } from '@/stores/offline_store';
 import { use_pedidos_store } from '@/stores/pedidos_store';
 import { use_productos_store } from '@/stores/productos_store';
 
@@ -136,7 +149,8 @@ export default {
 		IonButton,
 		IonIcon,
 		IonItem,
-		IonLabel
+		IonLabel,
+		IonNote
 	},
 	data(){
 		return {
@@ -156,6 +170,7 @@ export default {
 			icono_agregar: addOutline,
 			icono_qr: qrCodeOutline,
 			modal_abierto: false,
+			offline_store: use_offline_store(),
 			productos_store: use_productos_store(),
 			store: use_pedidos_store()
 		};
@@ -173,6 +188,8 @@ export default {
 	mounted(){
 		var vm = this;
 		vm.cargar();
+		// Por si quedó algo en la cola y la red volvió con la app cerrada.
+		vm.offline_store.sincronizar();
 		// Clientes y productos hacen falta para el formulario de alta. Los dos stores ya son
 		// compartidos, asi que si otra pantalla los cargo, esto no vuelve a pedirlos de cero.
 		vm.clientes_store.cargar({busqueda: ''});
@@ -224,7 +241,8 @@ export default {
 			vm.store.soltar_qr();
 			vm.detalle_abierto = true;
 			await vm.store.cargar_detalle(pedido.id);
-			vm.store.cargar_qr(pedido.id);
+			// El QR lo genera la API: sin red no se pide, y la ficha no lo muestra.
+			if(!vm.offline_store.sin_conexion) vm.store.cargar_qr(pedido.id);
 		},
 		cerrar_detalle: function(){
 			var vm = this;
@@ -242,7 +260,14 @@ export default {
 		cambiar_estado_detalle: async function(estado){
 			var vm = this;
 			const id = vm.store.detalle.id;
-			if(!await vm.store.cambiar_estado(id, estado)) return;
+			const resultado = await vm.store.cambiar_estado(id, estado);
+			if(!resultado) return;
+			// Encolar no es un error: para el usuario quedó hecho, y la ficha ya muestra el
+			// estado nuevo. No hay nada que releer de la API hasta que vuelva la red.
+			if(resultado == 'pendiente'){
+				avisar_exito('Cambio guardado sin conexión. Se envía solo cuando vuelva la red.');
+				return;
+			}
 			await vm.store.cargar_detalle(id);
 			avisar_exito(`${vm.store.detalle.codigo}: ${vm.etiqueta(estado).toLowerCase()}.`);
 		},

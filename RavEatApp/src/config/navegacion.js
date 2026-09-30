@@ -43,6 +43,9 @@ export const grupos_menu = [
 //   menu_roles  -> quien la ve en el menu lateral
 //   tab_roles   -> quien la ve en la barra de tabs
 // Una pantalla de detalle, por ejemplo, es accesible pero no aparece en el menu ni en tabs.
+//
+// `sin_red` marca la pantalla que se puede usar sin conexion: tiene sus datos guardados. Sin
+// red, las que no la llevan desaparecen del menu y de los tabs en vez de abrir un error.
 export const navegacion = [
 	{
 		id: 'inicio',
@@ -54,6 +57,7 @@ export const navegacion = [
 		roles: [TODOS],
 		menu_roles: [TODOS],
 		tab_roles: [TODOS],
+		sin_red: true,
 		grupo_menu: 'operacion',
 		orden: 10,
 		componente: () => import('@/views/inicio_page.vue')
@@ -90,6 +94,7 @@ export const navegacion = [
 		roles: ['administrador', 'vendedor', 'caja'],
 		menu_roles: ['administrador', 'vendedor', 'caja'],
 		tab_roles: ['administrador', 'vendedor', 'caja'],
+		sin_red: true,
 		grupo_menu: 'operacion',
 		orden: 40,
 		componente: () => import('@/views/pedidos_page.vue')
@@ -129,6 +134,7 @@ export const navegacion = [
 		roles: [TODOS],
 		menu_roles: [TODOS],
 		tab_roles: [TODOS],
+		sin_red: true,
 		grupo_menu: 'configuracion',
 		orden: 100,
 		componente: () => import('@/views/perfil_page.vue')
@@ -159,8 +165,9 @@ export const navegacion = [
 // Hasta v4 estas funciones devolvian TODO cuando no habia rol, porque no habia sesion. Mantener
 // ese atajo ahora seria un agujero: un usuario recien creado, todavia sin habilitar, veria el
 // menu completo.
-function filtrar(lista_de_roles, rol){
+function filtrar(lista_de_roles, rol, sin_conexion = false){
 	return navegacion
+		.filter(item => !sin_conexion || item.sin_red)
 		.filter(item =>{
 			const permitidos = item[lista_de_roles] || [];
 			if(permitidos.includes(TODOS)) return true;
@@ -173,12 +180,12 @@ export function obtener_navegacion_rol(rol){
 	return filtrar('roles', rol);
 }
 
-export function obtener_menu_rol(rol){
-	return filtrar('menu_roles', rol);
+export function obtener_menu_rol(rol, sin_conexion = false){
+	return filtrar('menu_roles', rol, sin_conexion);
 }
 
-export function obtener_grupos_menu_rol(rol){
-	const items = obtener_menu_rol(rol);
+export function obtener_grupos_menu_rol(rol, sin_conexion = false){
+	const items = obtener_menu_rol(rol, sin_conexion);
 	return grupos_menu
 		.map(grupo => ({
 			...grupo,
@@ -192,6 +199,6 @@ export function obtener_grupos_menu_rol(rol){
 // El tope se corta aca y no en el template, para que la regla viva con la configuracion.
 export const MAXIMO_TABS = 5;
 
-export function obtener_tabs_rol(rol){
-	return filtrar('tab_roles', rol).slice(0, MAXIMO_TABS);
+export function obtener_tabs_rol(rol, sin_conexion = false){
+	return filtrar('tab_roles', rol, sin_conexion).slice(0, MAXIMO_TABS);
 }

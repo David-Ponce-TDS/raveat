@@ -19,6 +19,7 @@
 	IonTabButton
 } from '@ionic/vue';
 import { obtener_tabs_rol } from '@/config/navegacion';
+import { use_offline_store } from '@/stores/offline_store';
 import { use_sesion_store } from '@/stores/sesion_store';
 
 export default {
@@ -31,6 +32,7 @@ export default {
 	},
 	data(){
 		return {
+			offline_store: use_offline_store(),
 			sesion_store: use_sesion_store()
 		};
 	},
@@ -39,7 +41,8 @@ export default {
 			var vm = this;
 			// El mismo rol que usa el menu, recortado al maximo de tabs. Con null solo quedaban
 			// las pantallas de [TODOS]: la barra mostraba Inicio y Mi cuenta para cualquiera.
-			return obtener_tabs_rol(vm.sesion_store.rol_activo);
+			// Sin red quedan las pantallas que tienen sus datos guardados.
+			return obtener_tabs_rol(vm.sesion_store.rol_activo, vm.offline_store.sin_conexion);
 		}
 	}
 };</script>

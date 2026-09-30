@@ -5,6 +5,7 @@ import router from './router';
 import { inicializar_notificaciones_nativas } from './services/notificaciones_nativas_service';
 import pinia from './stores/pinia';
 import { use_app_store } from './stores/app_store';
+import { use_offline_store } from './stores/offline_store';
 import { use_sesion_store } from './stores/sesion_store';
 import '@ionic/vue/css/core.css';
 import '@ionic/vue/css/normalize.css';
@@ -38,5 +39,7 @@ use_sesion_store().iniciar().finally(function(){
 		// Despues de montar, no antes: pedir el permiso de notificaciones sobre una pantalla en
 		// blanco es la peor primera impresion posible. Si falta Firebase, el push se saltea solo.
 		inicializar_notificaciones_nativas();
+		// El monitor de red arranca con la app: si quedo algo encolado y hay red, sale solo.
+		use_offline_store().iniciar();
 	});
 });

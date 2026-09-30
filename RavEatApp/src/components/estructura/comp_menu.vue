@@ -41,6 +41,7 @@
 	IonToolbar
 } from '@ionic/vue';
 import { obtener_grupos_menu_rol } from '@/config/navegacion';
+import { use_offline_store } from '@/stores/offline_store';
 import { use_sesion_store } from '@/stores/sesion_store';
 
 export default {
@@ -65,6 +66,7 @@ export default {
 	},
 	data(){
 		return {
+			offline_store: use_offline_store(),
 			sesion_store: use_sesion_store()
 		};
 	},
@@ -74,7 +76,8 @@ export default {
 			// El rol sale de la sesion: es un computed, asi que el menu se rearma solo cuando
 			// cambia el usuario. Pasarle null —como quedo hasta v5— mostraba nada mas las
 			// pantallas de [TODOS], y un administrador veia un menu de dos items.
-			return obtener_grupos_menu_rol(vm.sesion_store.rol_activo);
+			// Sin red quedan las pantallas que tienen sus datos guardados.
+			return obtener_grupos_menu_rol(vm.sesion_store.rol_activo, vm.offline_store.sin_conexion);
 		}
 	},
 	methods: {

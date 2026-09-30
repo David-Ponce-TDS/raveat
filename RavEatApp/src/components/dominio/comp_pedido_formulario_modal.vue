@@ -40,7 +40,7 @@
 						<strong>Entregar en</strong>
 						<span>{{ cliente_seleccionado.direccion_linea }}</span>
 						<span v-if="cliente_seleccionado.direccion_referencia" class="raveat-item-meta">{{ cliente_seleccionado.direccion_referencia }}</span>
-						<span class="raveat-item-meta">{{ cliente_con_punto ? coordenadas_cliente : 'Sin punto: el repartidor sale con la dirección escrita y lo anota al llegar.' }}</span>
+						<span class="raveat-item-meta">{{ cliente_con_punto ? coordenadas_cliente : 'Sin punto: el mapa busca por la dirección escrita.' }}</span>
 					</template>
 					<template v-else>
 						<strong>{{ cliente_seleccionado.nombre }} no tiene dirección cargada.</strong>
@@ -263,8 +263,8 @@ export default {
 		// llama al store. Un componente no habla con la API.
 		guardar_direccion_del_cliente: function(){
 			var vm = this;
-			// El punto no se toca: lo anota el repartidor cuando llega a la puerta. Acá, en el
-			// mostrador, "mi ubicación" sería la del local.
+			// El punto no se carga acá: en el mostrador "mi ubicación" sería la del local. Se captura
+			// desde Clientes con el GPS estando ahí; sin punto, el mapa busca por la dirección escrita.
 			vm.$emit('guardar_cliente', {
 				id: vm.cliente_seleccionado.id,
 				datos: {

@@ -1,5 +1,5 @@
 <template>
-	<ion-modal :is-open="abierto" @didDismiss="$emit('cerrar')">
+	<ion-modal :is-open="abierto" @willPresent="preparar_formulario" @didDismiss="$emit('cerrar')">
 		<ion-header>
 			<ion-toolbar>
 				<ion-title>{{ producto ? 'Editar producto' : 'Nuevo producto' }}</ion-title>
@@ -164,10 +164,11 @@ export default {
 			return resolver_url_imagen((vm.producto && vm.producto.imagen_url) || '');
 		}
 	},
-	watch: {
-		abierto(valor){
+	methods: {
+		// Se vacía al abrir y no en `created`: el modal se monta una sola vez y se reutiliza.
+		// Lo llama el propio modal con @willPresent, cada vez que se abre.
+		preparar_formulario: function(){
 			var vm = this;
-			if(!valor) return;
 			vm.quitar_foto();
 			vm.foto_mensaje = '';
 			vm.formulario = vm.producto
@@ -179,9 +180,7 @@ export default {
 					disponible: vm.producto.disponible != false
 				}
 				: vm.formulario_vacio();
-		}
-	},
-	methods: {
+		},
 		formulario_vacio: function(){
 			return {
 				categoria_id: null,

@@ -1,5 +1,5 @@
 <template>
-	<ion-modal :is-open="abierto" @didDismiss="$emit('cerrar')">
+	<ion-modal :is-open="abierto" @willPresent="preparar_formulario" @didDismiss="$emit('cerrar')">
 		<ion-header>
 			<ion-toolbar>
 				<ion-title>{{ cliente ? 'Editar cliente' : 'Nuevo cliente' }}</ion-title>
@@ -161,12 +161,12 @@ export default {
 			return formatear_coordenadas(vm.formulario.direccion_latitud, vm.formulario.direccion_longitud);
 		}
 	},
-	watch: {
+	methods: {
 		// Se rellena al abrir y no en `created`: el modal se monta una sola vez y se reutiliza para
 		// todos los clientes, asi que sin esto el segundo que se abre muestra los datos del primero.
-		abierto(valor){
+		// Lo llama el propio modal con @willPresent, cada vez que se abre.
+		preparar_formulario: function(){
 			var vm = this;
-			if(!valor) return;
 			vm.ubicacion_mensaje = '';
 			vm.formulario = vm.cliente
 				? {
@@ -179,9 +179,7 @@ export default {
 					direccion_longitud: vm.cliente.direccion_longitud == null ? null : vm.cliente.direccion_longitud
 				}
 				: {...FORMULARIO_VACIO};
-		}
-	},
-	methods: {
+		},
 		// El permiso denegado llega como mensaje, no como excepcion: se muestra y se sigue sin
 		// coordenadas. Cargar un cliente sin ubicacion es un estado valido, no un error.
 		capturar_ubicacion: async function(){

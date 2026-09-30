@@ -1,5 +1,5 @@
 <template>
-	<ion-modal :is-open="abierto" @didDismiss="$emit('cerrar')">
+	<ion-modal :is-open="abierto" @willPresent="preparar_formulario" @didDismiss="$emit('cerrar')">
 		<ion-header>
 			<ion-toolbar>
 				<ion-title>Nuevo pedido</ion-title>
@@ -247,18 +247,17 @@ export default {
 			return vm.items.reduce((suma, item) => suma + item.precio * item.cantidad, 0);
 		}
 	},
-	watch: {
-		abierto(valor){
+	methods: {
+		// Se vacía al abrir y no en `created`: el modal se monta una sola vez y se reutiliza.
+		// Lo llama el propio modal con @willPresent, cada vez que se abre.
+		preparar_formulario: function(){
 			var vm = this;
-			if(!valor) return;
 			vm.cliente_id = null;
 			vm.tipo = 'presencial';
 			vm.observaciones = '';
 			vm.items = [];
 			vm.direccion_nueva = {direccion_linea: '', direccion_referencia: ''};
-		}
-	},
-	methods: {
+		},
 		// La ficha del cliente se guarda por el camino de siempre: el modal avisa y la pantalla
 		// llama al store. Un componente no habla con la API.
 		guardar_direccion_del_cliente: function(){

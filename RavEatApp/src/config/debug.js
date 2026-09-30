@@ -6,6 +6,10 @@
 // configura en su .env la IP de su maquina mediante VITE_API_URL_DEBUG.
 const api_url_debug_predeterminada = 'http://localhost:5080';
 
+// La API publicada. Es una URL publica, no un secreto: va en el codigo para que el APK de release
+// apunte a produccion sin depender de un .env que en otra maquina puede no estar.
+const api_url_produccion = 'https://raveat.tryasp.net';
+
 export const debug_config = {
 	debug_activado: import.meta.env.VITE_DEBUG_ACTIVADO != 'false',
 	api_url_debug: (import.meta.env.VITE_API_URL_DEBUG || api_url_debug_predeterminada).replace(/\/+$/, '')
@@ -14,5 +18,5 @@ export const debug_config = {
 export function obtener_api_url(){
 	const api_url_entorno = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
 	if(debug_config.debug_activado) return debug_config.api_url_debug;
-	return api_url_entorno;
+	return api_url_entorno || api_url_produccion;
 }

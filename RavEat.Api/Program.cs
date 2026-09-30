@@ -4,11 +4,13 @@ using System.Text.Json.Serialization;
 using System.Net;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using QuestPDF.Infrastructure;
 using RavEat.Api.Auth;
 using RavEat.Api.Data;
+using RavEat.Api.Domain.Entities;
 
 // QuestPDF es gratis para este uso, pero exige declarar la licencia: sin esta linea, el primer
 // comprobante falla.
@@ -40,6 +42,11 @@ if(string.IsNullOrWhiteSpace(jwtOpciones.Key)) {
     if(!builder.Environment.IsDevelopment()) throw new InvalidOperationException("No se configuro Jwt:Key. Definila en User Secrets o en la variable de entorno Jwt__Key antes de publicar.");
     jwtOpciones.Key = TokenService.GenerarClaveEfimera();
 }
+// La migracion crea al administrador con la clave del taller, que es publica. En Production esa
+// clave no puede quedar: sin Admin:Password la API no arranca, igual que sin Jwt:Key.
+var adminPassword = builder.Configuration["Admin:Password"] ?? string.Empty;
+if(adminPassword.Length < 8 && !builder.Environment.IsDevelopment()) throw new InvalidOperationException("No se configuro Admin:Password, o tiene menos de 8 caracteres. Definila en la variable de entorno Admin__Password antes de publicar.");
+
 var tokenService = new TokenService(jwtOpciones);
 builder.Services.AddSingleton(jwtOpciones);
 builder.Services.AddSingleton(tokenService);
@@ -111,6 +118,17 @@ app.UseAuthorization();
 await using(var scope = app.Services.CreateAsyncScope()){
     var db = scope.ServiceProvider.GetRequiredService<RavEatDbContext>();
     await db.Database.MigrateAsync();
+
+    // Con Admin:Password definida, el administrador de la migracion deja de entrar con la clave
+    // del taller. Se compara antes de guardar para no reescribir el hash en cada arranque.
+    if(adminPassword.Length >= 8) {
+        var hasher = new PasswordHasher<Usuario>();
+        var admin = await db.Usuarios.FirstOrDefaultAsync(x => x.Email == "admin@raveat.local");
+        if(admin is not null && hasher.VerifyHashedPassword(admin, admin.PasswordHash, adminPassword) == PasswordVerificationResult.Failed) {
+            admin.PasswordHash = hasher.HashPassword(admin, adminPassword);
+            await db.SaveChangesAsync();
+        }
+    }
 }
 
 app.MapControllers();

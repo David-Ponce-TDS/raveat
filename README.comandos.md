@@ -1,10 +1,10 @@
-# Comandos · versión 7
+# Comandos · versión 8
 
 Todo lo que se tipea para poner esta versión a andar, en orden. Los comandos son para
 **PowerShell en Windows** y se ejecutan **desde la raíz del repositorio**, salvo que se indique
 otra cosa.
 
-Qué es esta versión y por qué está hecha así: [`README.unidad-07.md`](README.unidad-07.md).
+Qué es esta versión y por qué está hecha así: [`README.unidad-08.md`](README.unidad-08.md).
 
 ## 1 · Instalar
 
@@ -16,32 +16,21 @@ Set-Location ..
 dotnet tool restore
 ```
 
-`npm install` trae también los tres plugins nuevos. Están declarados en `package.json`: no se
-instalan aparte. La API no suma paquetes en esta versión.
-
-| Paquete | Para qué |
-|---|---|
-| `@capacitor/geolocation` | capturar las coordenadas del cliente |
-| `@capacitor/local-notifications` | la notificación local, la que dispara la propia app |
-| `@capacitor/push-notifications` | registrarse en FCM y recibir el push |
-
-Para saber si ya están, desde `RavEatApp`: cada plugin tiene que aparecer con su versión.
+Un solo paquete nuevo: `@capacitor/network`, el estado de la red. La cola offline no necesita
+paquete: es `localStorage` y un service. Para saber si ya está, desde `RavEatApp`:
 
 ```powershell
-npm ls @capacitor/geolocation @capacitor/local-notifications @capacitor/push-notifications
+npm ls @capacitor/network
 ```
 
-En un proyecto propio se suman así — el `cap sync` registra la parte Android de cada plugin:
+En un proyecto propio se suma así — el `cap sync` registra la parte Android del plugin:
 
 ```powershell
 Set-Location .\RavEatApp
-npm install @capacitor/geolocation @capacitor/local-notifications @capacitor/push-notifications
+npm install @capacitor/network
 npm run build
 npx cap sync android
 ```
-
-Los dos permisos de ubicación no los agrega ningún comando: van a mano en `AndroidManifest.xml`
-(ver [Datos del proyecto Android](#datos-del-proyecto-android)).
 
 ## 2 · Crear la base y el usuario
 
@@ -58,77 +47,38 @@ La contraseña va en User Secrets, nunca en `appsettings.json`:
 
 ```powershell
 Set-Location .\RavEat.Api
+dotnet user-secrets list
 dotnet user-secrets set "ConnectionStrings:Default" "Server=localhost;Port=3306;Database=raveat_app;User=raveat_app;Password=TU_CLAVE;"
 Set-Location ..
 ```
 
-El `UserSecretsId` es el mismo en todas las ramas: se configura una vez. Para ver qué quedó:
-`dotnet user-secrets list`.
+## 3 · El esquema
 
-## 3 · Crear el esquema
+Esta versión **no suma migraciones**: si venís de la versión 7, la base ya está al día. La API
+aplica las migraciones sola cada vez que arranca. Para inspeccionar o reconstruir desde cero:
 
 ```powershell
 Set-Location .\RavEat.Api
+dotnet tool run dotnet-ef -- migrations list
+dotnet tool run dotnet-ef -- database drop --force
 dotnet tool run dotnet-ef -- database update
 Set-Location ..
 ```
-
-Esta versión **suma tres migraciones**: `Reparto` y `Bandeja`, que crean las tablas `entregas` y
-`notificaciones`, y `PedidosDePrueba`, que siembra **seis pedidos con sus ítems y sus entregas** —
-uno de mostrador, uno para retirar, dos de entrega esperando repartidor, uno ya entregado y uno
-cancelado — para que las pantallas de reparto y el mapa no arranquen vacías. Las anteriores siguen
-cargando la carta, los clientes, los cinco roles y el administrador inicial.
-
-> **Si venís de otra versión, la base hay que reconstruirla** (`database drop --force` y de nuevo
-> `update`): cada rama tiene su propia cadena de migraciones y no es acumulativa entre ramas.
 
 ## 4 · La URL de la API en el frontend
 
 ```powershell
 Set-Location .\RavEatApp
-Copy-Item .\.env.example .\.env
+if (Test-Path .\.env) { '.env ya existe' } else { Copy-Item .\.env.example .\.env }
 Set-Location ..
 ```
 
-Editá `.env` y poné la IP de tu máquina en la red local (`ipconfig`):
+Editá `.env` con la IP de tu máquina (`ipconfig`): `VITE_API_URL_DEBUG=http://TU_IP_LAN:5080`.
+Para trabajar solo en el navegador: `VITE_DEBUG_ACTIVADO=false`.
 
-```
-VITE_API_URL_DEBUG=http://TU_IP_LAN:5080
-```
+Ese archivo vale para desarrollo. El build de release no lo lee: usa `.env.release` (sección 9).
 
-El push viene **prendido** desde `.env.example`: la app intenta registrarse en FCM al arrancar. Para
-apagarlo —trabajar sin Firebase, por ejemplo— se pone la bandera en `false`:
-
-```
-VITE_PUSH_NOTIFICATIONS_ENABLED=false
-```
-
-> **El `.env` se lee cuando arranca Vite**, no en caliente: si lo tocás con el servidor levantado,
-> hay que cortarlo y volver a levantarlo. En el APK es peor —el valor queda **compilado adentro**—,
-> así que después de cambiar el `.env` hay que reinstalar la app.
-
-En el teléfono, `localhost` es el propio teléfono. Para trabajar solo en el navegador:
-`VITE_DEBUG_ACTIVADO=false`, y la app usa `VITE_API_URL` (`http://localhost:5080`).
-
-## 5 · El archivo de Firebase
-
-Solo para el push. Se baja de la consola de Firebase con el paquete `app.raveat` y va acá:
-
-```
-RavEatApp/android/app/google-services.json
-```
-
-**No se versiona**: `.gitignore` lo corta, porque es la credencial de tu proyecto. Comprobar que
-está en su lugar:
-
-```powershell
-if (Test-Path .\RavEatApp\android\app\google-services.json) { 'ok' } else { 'FALTA' }
-```
-
-El `build.gradle` aplica el plugin de Google **solo si el archivo existe**: sin él la app compila
-igual y funciona todo menos el push. El build no puede depender de un secreto.
-
-## 6 · Correr
+## 5 · Correr
 
 Dos terminales:
 
@@ -148,157 +98,218 @@ npm run dev
 | Health | `http://localhost:5080/health` |
 | App (Vite) | `http://localhost:5173` |
 
-**Empezá siempre por `/health`.** La app abre en la **vitrina pública** (`/vitrina`): la carta se ve
-sin cuenta, porque los endpoints que la alimentan están marcados `[AllowAnonymous]`. Con el icono de
-la esquina del logo se pasa al login, y el logo del login vuelve a la vitrina; se entra con el administrador que
-sembró la migración. Con la sesión iniciada, **Mi cuenta → Diagnóstico** muestra contra qué URL pega la
-app y si responde.
+## 6 · Probar el offline sin salir a la calle
 
-Cada bloque se prueba por consola antes de tocar la pantalla, en **otra** terminal. Casi todo pide
-token: primero se entra, y el token va en el encabezado `Authorization`.
+| Dónde | Cómo se corta la red |
+|---|---|
+| Teléfono | modo avión |
+| Navegador | DevTools → Network → **Offline** |
 
-```powershell
-Invoke-RestMethod http://localhost:5080/health
-$sesion = Invoke-RestMethod -Method Post "http://localhost:5080/api/sesion/login" -ContentType "application/json" -Body '{"email":"admin@raveat.local","password":"RavEat123!"}'
-$auth = @{ Authorization = "Bearer $($sesion.sesion.token)" }
-Invoke-RestMethod "http://localhost:5080/api/notificaciones" -Headers $auth | ConvertTo-Json -Depth 4
-Invoke-RestMethod "http://localhost:5080/api/entregas" -Headers $auth | ConvertTo-Json -Depth 4
+1. Con red, entrar a **Pedidos** y abrir la ficha de un pedido: eso deja las copias guardadas.
+2. Cortar la red.
+3. Recargar **Pedidos**: muestra la misma lista, con el aviso de datos guardados.
+4. Abrir la ficha y tocar **Pasar a…**: el pedido queda con el estado nuevo y la marca «Sin enviar».
+5. Mirar la pantalla: no están el buscador, los filtros, **Nuevo pedido** ni **Escanear**, y en
+   la ficha queda una sola acción, **Pasar a…**.
+6. Volver la red: el cambio se envía solo y la marca desaparece.
+
+Las copias y la cola se miran desde la consola del navegador:
+
+```js
+Object.keys(localStorage).filter(clave => clave.startsWith('raveat_copia:'))
+JSON.parse(localStorage.getItem('raveat_cola_offline'))
 ```
 
-**La bandeja va a venir vacía, y no es un error.** Es la regla del módulo funcionando: ninguna
-notificación se escribe para el que ejecutó la acción. Para verla con algo adentro hacen falta dos
-usuarios — uno crea el pedido, el otro le cambia el estado:
-
-```powershell
-$otro = Invoke-RestMethod -Method Post "http://localhost:5080/api/sesion/login" -ContentType "application/json" -Body '{"email":"OTRO_USUARIO","password":"SU_CLAVE"}'
-$auth2 = @{ Authorization = "Bearer $($otro.sesion.token)" }
-Invoke-RestMethod -Method Put "http://localhost:5080/api/pedidos/1/estado" -Headers $auth2 -ContentType "application/json" -Body '{"estado":"confirmado"}'
-Invoke-RestMethod "http://localhost:5080/api/notificaciones" -Headers $auth | ConvertTo-Json -Depth 4
-```
-
-Ahora el `resumen.no_leidas` del **primero** dejó de ser cero. Ese número es el de la campanita: sale
-del resumen del servidor sobre la bandeja completa, nunca de contar las filas que bajaron.
-
-La entrega no se crea por su propio endpoint: **nace con el pedido** de tipo `entregas`. Un pedido
-de ese tipo sin cliente con dirección se rechaza antes de existir:
-
-```powershell
-try { Invoke-RestMethod -Method Post "http://localhost:5080/api/pedidos" -Headers $auth -ContentType "application/json" -Body '{"tipo":"entregas","items":[{"producto_id":1,"cantidad":1}]}' } catch { (New-Object IO.StreamReader($_.Exception.Response.GetResponseStream())).ReadToEnd() }
-```
-
-Responde `entrega_sin_cliente`. Con un cliente que sí tiene dirección, el mismo `POST` devuelve el
-pedido y `GET /api/entregas` ya la muestra en `pendiente`.
-
-## 7 · Compilar
+## 7 · Compilar y llevar el debug al teléfono
 
 ```powershell
 Set-Location .\RavEatApp
 npm run lint
 npm run build
-Set-Location ..
+npx cap sync android
+
+Set-Location .\android
+.\gradlew installDebug
+Set-Location ..\..
 
 dotnet build .\RavEat.Api\RavEat.Api.csproj
 ```
 
-**`cap sync` copia lo que hay en `dist/`, no lo que hay en `src/`** — sin un `build` previo, el
-APK lleva el código viejo. Es el olvido más común.
+## 8 · La firma, una sola vez
 
-## 8 · Llevarlo al teléfono
+Primero, si ya hay keystore: no se genera dos veces.
+
+```powershell
+Set-Location .\RavEatApp\android
+if (Test-Path .\raveat-release.jks) { 'keystore          ok' } else { 'keystore          FALTA' }
+if (Test-Path .\keystore.properties) { 'keystore.properties ok' } else { 'keystore.properties FALTA' }
+```
+
+Si falta, se genera con `keytool`, que viene con el JDK de Android Studio. Pide las contraseñas y
+los datos del titular por teclado:
+
+```powershell
+keytool -genkeypair -v -keystore raveat-release.jks -alias raveat -keyalg RSA -keysize 2048 -validity 10000
+Copy-Item .\keystore.properties.example .\keystore.properties
+notepad .\keystore.properties
+```
+
+Si `keytool` no figura en el `PATH`, se llama con la ruta completa:
+
+```powershell
+& "$env:ProgramFiles\Android\Android Studio\jbr\bin\keytool.exe" -genkeypair -v -keystore raveat-release.jks -alias raveat -keyalg RSA -keysize 2048 -validity 10000
+```
+
+En un proyecto propio cambian dos valores: el nombre del archivo y el alias.
+
+```powershell
+keytool -genkeypair -v -keystore MI_APP-release.jks -alias MI_ALIAS -keyalg RSA -keysize 2048 -validity 10000
+```
+
+Dos reglas:
+
+- **El keystore y sus contraseñas nunca se versionan.** `.gitignore` corta `*.jks`, `*.keystore` y
+  `keystore.properties`.
+- **El keystore se respalda fuera de la máquina**, el mismo día. Perderlo es perder la posibilidad
+  de actualizar la app publicada.
+
+Para ver la huella del keystore, que después piden Firebase y Google Play:
+
+```powershell
+keytool -list -v -keystore .\raveat-release.jks -alias raveat
+```
+
+## 9 · El APK de release
 
 ```powershell
 Set-Location .\RavEatApp
-npm run build
+npm run build:release
 npx cap sync android
 
 Set-Location .\android
-.\gradlew installDebug      # instalar en el dispositivo conectado
-.\gradlew assembleDebug     # solo generar el APK
+.\gradlew assembleRelease
 ```
 
-Salidas en `android/app/build/outputs/`. La notificación local, el push y el diálogo del permiso de
-ubicación **se prueban acá**: en el navegador, el push no existe y la local no sale de la pestaña.
+El APK firmado queda en `app\build\outputs\apk\release\app-release.apk`. El AAB, que es el
+formato que pide Google Play, se genera en la versión 12.
 
-Para volver a ver el diálogo del permiso desde cero —por ejemplo, después de un «no volver a
-preguntar»—, se desinstala y se instala de nuevo:
+`build:release` compila con `--mode release`: `.env.release`, que está versionado, apaga el modo
+debug y vacía las dos URL. La app queda apuntando a la URL de producción de
+`src/config/debug.js`. En un proyecto propio esa constante se cambia por la dirección de tu API.
+
+Sin `keystore.properties` el comando termina igual y el APK sale como
+`app-release-unsigned.apk`, que el teléfono no instala.
+
+Para comprobar que el APK quedó firmado — `apksigner` viene con las build-tools del SDK:
+
+```powershell
+$apksigner = Get-ChildItem "$env:ANDROID_HOME\build-tools" -Recurse -Filter apksigner.bat | Select-Object -Last 1
+& $apksigner.FullName verify --print-certs .\app\build\outputs\apk\release\app-release.apk
+```
+
+Debug y release firman distinto: para instalar uno sobre el otro hay que desinstalar antes.
 
 ```powershell
 adb uninstall app.raveat
-Set-Location .\RavEatApp\android
-.\gradlew installDebug
+adb install .\app\build\outputs\apk\release\app-release.apk
 ```
 
-## 9 · Mandar un push
+## 10 · Publicar la API en MonsterASP.NET
 
-El envío **no sale de nuestra API**: se hace desde la consola de Firebase, y esa es la lección. Se
-necesita el APK instalado, con `google-services.json` adentro y el permiso de notificaciones
-concedido.
+La cuenta es gratuita. Todo se hace desde el panel web, salvo el paquete, que se arma en la PC.
 
-1. Abrir la app una vez: al arrancar se registra en FCM.
-2. En la consola de Firebase: **Messaging → Nueva campaña → Notificaciones**.
-3. Escribir título y texto, elegir la app `app.raveat` y enviar.
-4. **Cerrar la app** antes de que llegue: el push es el único de los tres que llega con la app
-   cerrada.
+**En el panel, una vez:**
 
-El token de registro queda en el log del dispositivo, por si hace falta apuntarle a uno solo:
+1. **Databases → MySQL**: crear la base. Anotar servidor, base, usuario y contraseña.
+2. **Create new service → Website**: plan **Free**, **Free subdomain** con el nombre del sitio
+   —bajo `.runasp.net` o `.tryasp.net`— y **My own application**. El asistente no pregunta la
+   versión de .NET: el sitio ya corre .NET 10.
+3. **Scripting → Environment variables** del sitio, y **Restart application** después de cargarlas:
+
+| Variable | Valor |
+|---|---|
+| `ConnectionStrings__Default` | `Server=dbXXXXX.databaseasp.net;Port=3306;Database=BASE;User=USUARIO;Password=CLAVE;` |
+| `Jwt__Key` | una clave larga y al azar, generada con el bloque de abajo |
+| `Admin__Password` | la contraseña del administrador en producción, de 8 caracteres o más |
+| `Cors__AllowedOrigins__0` | `http://localhost` — el origen del APK |
+| `Cors__AllowedOrigins__1` | `https://localhost` — el origen del APK si Capacitor usa su esquema por defecto |
+| `Cors__AllowedOrigins__2` | `http://localhost:5173` — el navegador de tu PC, para probar la web contra la API publicada |
+
+La clave de `Jwt__Key` sale de este bloque, que la deja en el portapapeles sin mostrarla: se pega
+directo en el panel.
 
 ```powershell
-adb logcat -s Capacitor/Console | Select-String "Push token registrado"
+$bytes = New-Object byte[] 48
+[Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
+[Convert]::ToBase64String($bytes) | Set-Clipboard
 ```
 
-## 10 · Migraciones
+La contraseña de la base se copia en **Databases → la base → Password**, con el ícono de copiar y
+sin apretar **Show**. El panel oculta en la lista la cadena y la contraseña, pero **muestra
+`Jwt__Key` entera**: esa lista no se captura ni se comparte en pantalla.
+
+La contraseña del taller es pública: está en este repositorio. Publicada, la API no arranca sin
+`Admin__Password`, y al arrancar se la pone a `admin@raveat.local` en lugar de la del taller. En la
+PC no cambia nada.
+
+4. **HTTPS → Enable HTTPS**: emite el certificado de Let's Encrypt. Es un paso aparte de crear el
+   sitio: sin emitirlo, HTTP anda y HTTPS no. Con el certificado emitido, en la misma pantalla,
+   **Force redirect to HTTPS → Enabled**: nadie manda su contraseña sin cifrar.
+
+**En la PC, cada vez que se publica: armar el paquete.** Son tres líneas, desde la carpeta del
+repositorio. Antes, frenar la API local: si está corriendo, el `publish` falla con MSB3026 por
+archivos bloqueados.
 
 ```powershell
-Set-Location .\RavEat.Api
-dotnet tool run dotnet-ef -- migrations list
-dotnet tool run dotnet-ef -- database update
-dotnet tool run dotnet-ef -- database drop --force
+$salida = "$env:USERPROFILE\Documents\raveat"
+dotnet publish .\RavEat.Api\RavEat.Api.csproj -c Release -o "$salida\publish-api"
+Compress-Archive -Path "$salida\publish-api\*" -DestinationPath "$salida\raveat-api.zip" -Force
 ```
 
-El `--` no es decorativo: sin él, `dotnet tool run` se come los argumentos. Estos comandos son para
-inspeccionar y para **reconstruir la base desde cero** (`database drop --force` y después `update`):
-la API ya **aplica las migraciones sola cada vez que arranca**, así que no hace falta acordarse de
-ninguna bandera para levantarla al día.
+| Línea | Qué hace |
+|---|---|
+| `$salida` | la carpeta donde queda todo: en Documentos, **fuera del repositorio** |
+| `dotnet publish` | compila la API y deja en `publish-api` lo que el servidor necesita: los `.dll`, `web.config` y las imágenes de la carta |
+| `Compress-Archive` | arma `raveat-api.zip` con eso, que es el archivo que se sube |
 
-Para crear una migración propia, el ciclo es **compilar, generar, revisar, aplicar** — `dotnet-ef`
-lee el ensamblado **compilado**, así que sin `dotnet build` antes del `add` la migración sale vacía
-o vieja:
+El `\*` comprime el contenido de la carpeta y no la carpeta: sin él, `web.config` queda un nivel
+más adentro y el sitio responde 403. Las fotos que subiste probando en tu PC (`wwwroot\uploads`)
+no entran al paquete: el proyecto las deja afuera.
+
+5. **Files → `wwwroot` → Upload file**: subir el zip, **descomprimirlo** ahí con sobrescritura, y
+   **Scripting → Restart application**.
+6. Probar, cambiando la dirección por la de tu sitio:
 
 ```powershell
-Set-Location .\RavEat.Api
-dotnet build
-dotnet tool run dotnet-ef -- migrations add MiCambio
-dotnet tool run dotnet-ef -- migrations list
-dotnet tool run dotnet-ef -- database update
+Invoke-RestMethod https://TU_SITIO.runasp.net/health
+Invoke-RestMethod https://TU_SITIO.runasp.net/api/categorias | ConvertTo-Json -Depth 4
 ```
+
+La API aplica las migraciones al arrancar, con la cadena del panel: las tablas y los datos de
+ejemplo quedan creados la primera vez que el sitio responde. `appsettings.json` viaja con
+`Password=CAMBIAR`; la cadena real, la clave JWT y la contraseña del administrador viven en las
+variables del panel, que la sobrescritura no toca.
 
 ## Si algo falla
 
 | Síntoma | Causa probable | Qué hacer |
 |---|---|---|
-| La campanita siempre en cero | Estás solo: no se notifica al que ejecuta la acción | Dos usuarios, uno crea y el otro cambia el estado (Sección 6) |
-| La bandeja trae notificaciones de otro | No puede pasar: la consulta filtra por el token | Si pasa, hay un `usuario_id` viajando por query donde no debe |
-| El contador no coincide con las filas en pantalla | Está bien: el contador es de la bandeja completa | Es el `resumen` del servidor, no la página |
-| El push no llega | Falta `google-services.json`, la bandera del `.env` o el permiso | Secciones 4 y 5, y reinstalar el APK |
-| El push no llega **con la app abierta** | Es lo esperado en Android: en primer plano no se muestra solo | Cerrar la app y volver a enviar |
-| La app compila pero nunca se registra en FCM | El `.json` se lee al **compilar**: se agregó después del build | `npm run build` + `npx cap sync android` + `installDebug` |
-| «Sin permiso de ubicación» y no vuelve a preguntar | «No volver a preguntar»: el sistema ya no muestra el diálogo | Es lo esperado: la app manda a los ajustes |
-| Las coordenadas quedan vacías y el cliente se guarda igual | Es lo esperado: sin coordenadas el mapa busca por la dirección | Nada |
-| `getCurrentPosition` tarda y termina en error | GPS apagado, o bajo techo sin señal | Prender la ubicación del teléfono; la aproximada alcanza |
-| «Un pedido de entrega necesita un cliente» | El pedido de tipo `entregas` nació sin cliente | Elegir cliente, y que tenga dirección cargada |
-| «El cliente no tiene dirección cargada» | El cliente existe pero la dirección está vacía | Editarlo y cargar la dirección |
-| La entrega no aparece después de crear el pedido | El pedido no era de tipo `entregas` | La entrega nace **solo** con ese tipo |
-| «Solo se puede tomar la entrega para uno mismo» | Un delivery quiso asignársela a otro | Los que venden asignan; delivery solo toma |
-| «La entrega la mueve el repartidor asignado» | Otro delivery quiso moverla | La mueve el suyo, o admin y los que venden |
-| La notificación local no aparece en el navegador | El plugin solo existe en el APK | Probarla en el teléfono |
-| «No se pudo conectar con la API» | La API no está levantada, o la URL apunta a otro lado | Probar `/health`; con sesión, **Mi cuenta → Diagnóstico** |
-| Todo devuelve **401** | Sin sesión: los endpoints exigen token | Entrar con el administrador sembrado |
-| En el navegador anda y en el teléfono no | `VITE_API_URL_DEBUG` apunta a `localhost` | Poner la IP LAN de la PC (`ipconfig`) |
-| Cambié la IP del `.env` y el APK sigue con la vieja | La URL queda **grabada dentro del bundle** | `npm run build` + `npx cap sync android` de nuevo |
-| `dotnet build` falla con MSB3026/3027 | La API corriendo tiene tomados sus `.dll` | Pararla (`Ctrl+C`) y recompilar |
-| `Access denied for user ...` | Falta el secreto: `appsettings.json` dice `Password=CAMBIAR` | Sección 2 |
-| El 400 sale en rojo y sin cuerpo | `Invoke-RestMethod` esconde el body | Leerlo con el `StreamReader` de la Sección 6 |
-| Error de CORS **con la API levantada** | Dos API pelearon el puerto 5080 | `Get-NetTCPConnection -LocalPort 5080 -State Listen`, cerrar todas y levantar una |
-| Toqué `src/` y el teléfono muestra lo viejo | Falta `npm run build` antes de `cap sync` | Sección 7 |
+| Sin red, Pedidos muestra el error y no la lista | Esa lectura nunca se hizo con red: no hay copia | Entrar una vez con red; los filtros y las búsquedas tienen copia aparte |
+| El cambio de estado no se encola y sale el error de conexión | El teléfono tiene red, pero la API no responde | Reintentar cuando responda: se encola solo cuando el sistema informa que no hay red |
+| El cambio no se envía al volver la red | No hay sesión: sin token no se envía | Iniciar sesión y abrir Pedidos |
+| «La API no aceptó 1 de los cambios guardados» | Otro usuario movió el pedido mientras no había red | Nada: la lista se recarga con el estado real |
+| El APK de release sale `unsigned` | Falta `keystore.properties` | Sección 8 |
+| `Keystore was tampered with, or password was incorrect` | La contraseña de `keystore.properties` no es la del keystore | Corregirla; si se perdió, no se recupera |
+| `INSTALL_FAILED_UPDATE_INCOMPATIBLE` | Debug y release firman distinto | `adb uninstall app.raveat` y reinstalar |
+| El APK de release no conecta con tu PC | Apunta a producción: es lo esperado | Para desarrollo, el APK de debug |
+| El sitio publicado responde 500.30 | Falta `ConnectionStrings__Default`, `Jwt__Key` o `Admin__Password`, o no se hizo Restart | Revisar las variables del panel |
+| El sitio responde 403 o 404 en todo | El zip llevó la carpeta y no su contenido | Rearmarlo con el `\*` |
+| HTTP anda y HTTPS no | El certificado no se emitió | **HTTPS → Enable HTTPS** |
+| El APK dice error de CORS contra producción | Falta `http://localhost` en `Cors__AllowedOrigins__N` | Cargarlo y Restart |
+| La web de tu PC no conecta con la API publicada | Falta `http://localhost:5173` en `Cors__AllowedOrigins__N`, o el `.env` sigue apuntando a la API local | Cargarlo y Restart; en `.env`, `VITE_API_URL` con la dirección del sitio |
+| `dotnet publish` falla con MSB3026/3027 | La API local tiene tomados sus `.dll` | Pararla y publicar de nuevo |
+| «No se pudo conectar con la API» | La API no está levantada, o la URL apunta a otro lado | Probar `/health`; **Mi cuenta → Diagnóstico** |
+| Toqué `src/` y el teléfono muestra lo viejo | Falta el build antes de `cap sync` | Sección 7 o 9 |
 
 ## Datos del proyecto Android
 
@@ -309,24 +320,10 @@ dotnet tool run dotnet-ef -- database update
 | `minSdkVersion` | 24 |
 | `compileSdkVersion` / `targetSdkVersion` | 36 |
 | Capacitor | 8.4.1 |
+| Origen de la app en el teléfono | `http://localhost` |
 
-`gradlew` (el *wrapper*) fija qué Gradle se usa: siempre se invoca `.\gradlew`, nunca `gradle`.
-
-| En `AndroidManifest.xml` | Por qué |
-|---|---|
-| `CAMERA` | permiso **peligroso**: se declara y además se pide en tiempo de ejecución |
-| `READ_EXTERNAL_STORAGE` (hasta Android 12) | la galería; desde Android 13 el selector no pide permiso |
-| `ACCESS_COARSE_LOCATION` · `ACCESS_FINE_LOCATION` | las dos precisiones: desde Android 12 el usuario puede dar solo la aproximada |
-| `<provider>` de `FileProvider` + `res/xml/file_paths.xml` | la cámara entrega la foto a la webview por ahí |
-
-`VIBRATE`, `POST_NOTIFICATIONS` y el permiso de biometría los declaran sus plugins por fusión de
-manifiestos: no se tocan a mano.
-
-### Firma
-
-Sigue alcanzando el `debug.keystore` automático de Android Studio. Si generás un keystore propio,
-la regla es una sola: **el keystore y sus contraseñas nunca se versionan.** Lo mismo vale para
-`google-services.json`.
+Los permisos del manifiesto son los de la versión 7: esta versión no agrega ninguno a mano. El
+plugin de red declara `ACCESS_NETWORK_STATE` por fusión de manifiestos.
 
 ### Íconos y splash · bajo demanda
 

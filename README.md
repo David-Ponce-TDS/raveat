@@ -4,11 +4,11 @@
 
 # RavEat
 
-### U7 · Ubicación y notificaciones
+### U8 · Offline, API publicada y distribución interna
 
-*Tres cosas distintas se llaman «notificación» — y la ubicación entra por el reparto.*
+*La red se cae y la app sigue siendo usable — y después se firma y habla con una API publicada.*
 
-`version-07` &nbsp;·&nbsp; Ionic Vue 3 &nbsp;·&nbsp; Capacitor 8 &nbsp;·&nbsp; ASP.NET Core (.NET 10) &nbsp;·&nbsp; EF Core 9 &nbsp;·&nbsp; MySQL 8
+`version-08` &nbsp;·&nbsp; Ionic Vue 3 &nbsp;·&nbsp; Capacitor 8 &nbsp;·&nbsp; ASP.NET Core (.NET 10) &nbsp;·&nbsp; EF Core 9 &nbsp;·&nbsp; MySQL 8
 
 </div>
 
@@ -22,7 +22,7 @@ Tres documentos, en este orden:
 |---|---|---|
 | 1 | [**Requisitos**](README.requisitos.md) | qué tiene que estar instalado, cómo saber qué te falta y cómo dejarlo listo |
 | 2 | [**Comandos**](README.comandos.md) | todo lo que se tipea para poner la app a andar, en orden, con su «si algo falla» |
-| 3 | [**La unidad**](README.unidad-07.md) | qué es esta versión, qué cambia desde la anterior y por qué está hecha así |
+| 3 | [**La unidad**](README.unidad-08.md) | qué es esta versión, qué cambia desde la anterior y por qué está hecha así |
 
 Los dos primeros te dejan **corriendo**; el tercero te deja **entendiendo**.
 

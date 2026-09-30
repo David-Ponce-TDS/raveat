@@ -21,4 +21,9 @@
     <PackageReference Include="QRCoder" Version="1.8.0" />
     <PackageReference Include="QuestPDF" Version="2025.7.0" />
   </ItemGroup>
+
+  <!-- Lo que se subio probando en la PC no viaja a produccion: el paquete sale sin esa carpeta. -->
+  <ItemGroup>
+    <Content Update="wwwroot\uploads\**" CopyToPublishDirectory="Never" />
+  </ItemGroup>
 </Project>

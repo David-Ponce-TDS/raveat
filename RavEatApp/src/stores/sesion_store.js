@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia';
 import { obtener_rol_por_codigo } from '@/config/roles';
 import { borrar_copias, guardar_copia } from '@/services/copia_local_service';
+import { registrar_dispositivo } from '@/services/dispositivos_service';
+import { obtener_token_push } from '@/services/notificaciones_nativas_service';
 import { cerrar_sesion, iniciar_sesion, obtener_mi_usuario } from '@/services/sesion_service';
 import { use_offline_store } from '@/stores/offline_store';
 import {
@@ -64,6 +66,7 @@ export const use_sesion_store = defineStore('sesion', {
 				}
 				const respuesta = await obtener_mi_usuario();
 				vm.usuario = (respuesta && respuesta.usuario) || null;
+				vm.vincular_dispositivo();
 				return vm.usuario;
 			}catch(error){
 				// La sesion guardada se borra SOLO si el servidor dijo que ya no vale (401): token
@@ -94,6 +97,7 @@ export const use_sesion_store = defineStore('sesion', {
 				// El login ya trae al usuario: se guarda como la copia de "quien soy", asi la app
 				// puede arrancar sin red desde la primera vez.
 				guardar_copia('/api/sesion/yo', {usuario: sesion.usuario});
+				vm.vincular_dispositivo();
 				return true;
 			}catch(error){
 				vm.error = error.mensaje || 'No se pudo iniciar sesión.';
@@ -102,6 +106,16 @@ export const use_sesion_store = defineStore('sesion', {
 				vm.cargando = false;
 			}
 		},
+		// Anota este telefono en la API para que le lleguen las push del usuario. Se llama al entrar,
+		// al restaurar la sesion y cuando FCM entrega el token, porque cualquiera de las tres cosas
+		// puede pasar ultima. Sin token (navegador, sin Firebase) o sin rol (no recibe avisos) no
+		// hay nada que anotar. Si falla, la push no llega pero la app sigue: no se espera ni se avisa.
+		vincular_dispositivo: function(){
+			var vm = this;
+			const token = obtener_token_push();
+			if(!token || !vm.rol_activo) return;
+			registrar_dispositivo(token).catch(() => {});
+		},
 		salir: async function(todos = false){
 			var vm = this;
 			try{
@@ -109,7 +123,7 @@ export const use_sesion_store = defineStore('sesion', {
 				// Se avisa al servidor para que revoque el refresh. Si la llamada falla —sin red,
 				// por ejemplo— igual se borra la sesion local: quedarse adentro porque no hubo
 				// internet seria peor.
-				if(refresh_token) await cerrar_sesion(refresh_token, todos);
+				if(refresh_token) await cerrar_sesion(refresh_token, todos, obtener_token_push());
 			}catch{
 				// Sin conexion no hay nada que hacer del lado del servidor.
 			}

@@ -3,8 +3,10 @@ import { IonicVue } from '@ionic/vue';
 import App from './App.vue';
 import router from './router';
 import { inicializar_notificaciones_nativas } from './services/notificaciones_nativas_service';
+import { obtener_navegacion_rol } from './config/navegacion';
 import pinia from './stores/pinia';
 import { use_app_store } from './stores/app_store';
+import { use_notificaciones_store } from './stores/notificaciones_store';
 import { use_offline_store } from './stores/offline_store';
 import { use_sesion_store } from './stores/sesion_store';
 import '@ionic/vue/css/core.css';
@@ -38,7 +40,22 @@ use_sesion_store().iniciar().finally(function(){
 		app.mount('#app');
 		// Despues de montar, no antes: pedir el permiso de notificaciones sobre una pantalla en
 		// blanco es la peor primera impresion posible. Si falta Firebase, el push se saltea solo.
-		inicializar_notificaciones_nativas();
+		inicializar_notificaciones_nativas({
+			al_registrar: () => use_sesion_store().vincular_dispositivo(),
+			// La push trae un aviso que ya esta en la bandeja: se recarga para que suba la campanita.
+			al_recibir: () => {
+				if(use_sesion_store().autenticado) use_notificaciones_store().cargar();
+			},
+			// Mismo destino que tocar el aviso en la bandeja: el pedido si el rol entra a Pedidos y
+			// la bandeja si no (un delivery recibe avisos de pedidos pero no ve esa pantalla).
+			al_tocar: datos => {
+				const sesion = use_sesion_store();
+				if(!sesion.autenticado) return;
+				const ve_pedidos = obtener_navegacion_rol(sesion.rol_activo).some(item => item.id == 'pedidos');
+				if(datos.pedido_codigo && ve_pedidos) router.push({path: '/app/pedidos', query: {buscar: datos.pedido_codigo}});
+				else router.push('/app/notificaciones');
+			}
+		});
 		// El monitor de red arranca con la app: si quedo algo encolado y hay red, sale solo.
 		use_offline_store().iniciar();
 	});

@@ -11,6 +11,7 @@ using QuestPDF.Infrastructure;
 using RavEat.Api.Auth;
 using RavEat.Api.Data;
 using RavEat.Api.Domain.Entities;
+using RavEat.Api.Push;
 
 // QuestPDF es gratis para este uso, pero exige declarar la licencia: sin esta linea, el primer
 // comprobante falla.
@@ -46,6 +47,10 @@ if(string.IsNullOrWhiteSpace(jwtOpciones.Key)) {
 // clave no puede quedar: sin Admin:Password la API no arranca, igual que sin Jwt:Key.
 var adminPassword = builder.Configuration["Admin:Password"] ?? string.Empty;
 if(adminPassword.Length < 8 && !builder.Environment.IsDevelopment()) throw new InvalidOperationException("No se configuro Admin:Password, o tiene menos de 8 caracteres. Definila en la variable de entorno Admin__Password antes de publicar.");
+// Lo mismo para los cuatro usuarios de prueba de la migracion UsuariosDePrueba, uno por rol: nacen
+// con la clave del taller y publicada la API no arranca sin la suya.
+var pruebaPassword = builder.Configuration["UsuariosDePrueba:Password"] ?? string.Empty;
+if(pruebaPassword.Length < 8 && !builder.Environment.IsDevelopment()) throw new InvalidOperationException("No se configuro UsuariosDePrueba:Password, o tiene menos de 8 caracteres. Definila en la variable de entorno UsuariosDePrueba__Password antes de publicar.");
 
 var tokenService = new TokenService(jwtOpciones);
 builder.Services.AddSingleton(jwtOpciones);
@@ -94,7 +99,11 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddControllers().AddJsonOptions(options => ConfigurarJson(options.JsonSerializerOptions));
 builder.Services.ConfigureHttpJsonOptions(options => ConfigurarJson(options.SerializerOptions));
-builder.Services.AddDbContext<RavEatDbContext>(options => options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 0))).UseSnakeCaseNamingConvention());
+// El envio de push es uno solo para toda la API (FirebaseApp no se crea dos veces); el que lo
+// dispara al guardar es uno por DbContext, porque junta las notificaciones de ese guardado.
+builder.Services.AddSingleton<EnvioPush>();
+builder.Services.AddScoped<PushAlGuardar>();
+builder.Services.AddDbContext<RavEatDbContext>((servicios, options) => options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 0))).UseSnakeCaseNamingConvention().AddInterceptors(servicios.GetRequiredService<PushAlGuardar>()));
 if(builder.Environment.IsDevelopment()) {
     builder.Services.AddCors(options => options.AddPolicy(corsPolicy, policy => policy.SetIsOriginAllowed(EsOrigenDesarrolloPermitido).AllowAnyHeader().AllowAnyMethod()));
 }
@@ -121,13 +130,23 @@ await using(var scope = app.Services.CreateAsyncScope()){
 
     // Con Admin:Password definida, el administrador de la migracion deja de entrar con la clave
     // del taller. Se compara antes de guardar para no reescribir el hash en cada arranque.
+    var hasher = new PasswordHasher<Usuario>();
     if(adminPassword.Length >= 8) {
-        var hasher = new PasswordHasher<Usuario>();
         var admin = await db.Usuarios.FirstOrDefaultAsync(x => x.Email == "admin@raveat.local");
         if(admin is not null && hasher.VerifyHashedPassword(admin, admin.PasswordHash, adminPassword) == PasswordVerificationResult.Failed) {
             admin.PasswordHash = hasher.HashPassword(admin, adminPassword);
             await db.SaveChangesAsync();
         }
+    }
+    // Con UsuariosDePrueba:Password definida, los cuatro usuarios de prueba dejan la clave del
+    // taller. Mismo cuidado que con el admin: solo se reescribe el hash que no coincide.
+    if(pruebaPassword.Length >= 8) {
+        string[] emailsDePrueba = ["vendedor@raveat.local", "proceso@raveat.local", "caja@raveat.local", "delivery@raveat.local"];
+        var usuariosDePrueba = await db.Usuarios.Where(x => emailsDePrueba.Contains(x.Email)).ToListAsync();
+        foreach(var usuario in usuariosDePrueba.Where(x => hasher.VerifyHashedPassword(x, x.PasswordHash, pruebaPassword) == PasswordVerificationResult.Failed)) {
+            usuario.PasswordHash = hasher.HashPassword(usuario, pruebaPassword);
+        }
+        await db.SaveChangesAsync();
     }
 }
 

@@ -22,6 +22,22 @@
             </intent-filter>
         </activity>
         <!-- La camara entrega la foto a la webview por este proveedor: sin el, falla al sacarla. -->
+        <!-- Icono y color de las push de FCM: sin el icono chico (silueta blanca sobre fondo
+             transparente), Android muestra en la barra de estado el glifo generico del sistema, un
+             circulo. El PNG sale de recursos/iconos/ic_stat_notify-fuente.png con el Asset Studio. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_stat_notify" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/notification_color" />
+        <!-- Canal predeterminado de las push: el de importancia alta que crea la app al arrancar
+             (notificaciones_nativas_service). Sin esto FCM usa su canal callado y la push no
+             aparece como banner. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="avisos" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

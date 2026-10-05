@@ -1,10 +1,10 @@
-# Comandos · versión 8
+# Comandos · versión 9
 
 Todo lo que se tipea para poner esta versión a andar, en orden. Los comandos son para
 **PowerShell en Windows** y se ejecutan **desde la raíz del repositorio**, salvo que se indique
 otra cosa.
 
-Qué es esta versión y por qué está hecha así: [`README.unidad-08.md`](README.unidad-08.md).
+Qué es esta versión y por qué está hecha así: [`README.unidad-09.md`](README.unidad-09.md).
 
 ## 1 · Instalar
 
@@ -97,6 +97,19 @@ npm run dev
 | API | `http://localhost:5080` |
 | Health | `http://localhost:5080/health` |
 | App (Vite) | `http://localhost:5173` |
+
+### Ver el esqueleto y el scroll infinito
+
+Con la API en la misma máquina los datos llegan antes de que el esqueleto se alcance a ver. Para
+verlo, en el navegador: DevTools → Network → **Slow 3G**, y recargar cualquier lista. El scroll
+infinito se ve con más de veinte pedidos: al llegar al pie aparece «Cargando más...» y la lista
+sigue; en la última página el sensor se apaga y queda «Mostrando N de N».
+
+### Volver a empezar
+
+El administrador tiene en **Mi cuenta → Herramientas de prueba** el botón que borra todos los
+pedidos, sus ítems, entregas y notificaciones, y deja la numeración en `PED-0001`. La carta, los
+clientes y los usuarios no se tocan. Pide escribir `BORRAR`.
 
 ## 6 · Probar el offline sin salir a la calle
 
@@ -231,9 +244,11 @@ La cuenta es gratuita. Todo se hace desde el panel web, salvo el paquete, que se
 | `ConnectionStrings__Default` | `Server=dbXXXXX.databaseasp.net;Port=3306;Database=BASE;User=USUARIO;Password=CLAVE;` |
 | `Jwt__Key` | una clave larga y al azar, generada con el bloque de abajo |
 | `Admin__Password` | la contraseña del administrador en producción, de 8 caracteres o más |
+| `UsuariosDePrueba__Password` | la de los cuatro usuarios de prueba (vendedor, proceso, caja y delivery) en producción, de 8 caracteres o más |
 | `Cors__AllowedOrigins__0` | `http://localhost` — el origen del APK |
 | `Cors__AllowedOrigins__1` | `https://localhost` — el origen del APK si Capacitor usa su esquema por defecto |
 | `Cors__AllowedOrigins__2` | `http://localhost:5173` — el navegador de tu PC, para probar la web contra la API publicada |
+| `Firebase__CuentaDeServicio` | `firebase-cuenta.json` — la push automática, sección 11. Opcional: sin ella la API anda y no manda push |
 
 La clave de `Jwt__Key` sale de este bloque, que la deja en el portapapeles sin mostrarla: se pega
 directo en el panel.
@@ -249,8 +264,8 @@ sin apretar **Show**. El panel oculta en la lista la cadena y la contraseña, pe
 `Jwt__Key` entera**: esa lista no se captura ni se comparte en pantalla.
 
 La contraseña del taller es pública: está en este repositorio. Publicada, la API no arranca sin
-`Admin__Password`, y al arrancar se la pone a `admin@raveat.local` en lugar de la del taller. En la
-PC no cambia nada.
+`Admin__Password` ni `UsuariosDePrueba__Password`, y al arrancar se las pone a `admin@raveat.local`
+y a los cuatro usuarios de prueba en lugar de la del taller. En la PC no cambia nada.
 
 4. **HTTPS → Enable HTTPS**: emite el certificado de Let's Encrypt. Es un paso aparte de crear el
    sitio: sin emitirlo, HTTP anda y HTTPS no. Con el certificado emitido, en la misma pantalla,
@@ -290,6 +305,60 @@ ejemplo quedan creados la primera vez que el sitio responde. `appsettings.json` 
 `Password=CAMBIAR`; la cadena real, la clave JWT y la contraseña del administrador viven en las
 variables del panel, que la sobrescritura no toca.
 
+## 11 · La push automática: la cuenta de servicio de Firebase
+
+Cada aviso que entra a la bandeja sale también como push, y lo manda la API. Para pedírselo a FCM,
+la API se identifica con la **cuenta de servicio** del proyecto: un JSON con clave privada, que no
+es el `google-services.json` de la app. Ese es público y va adentro del APK; este es un secreto y
+no sale de tu PC ni del servidor.
+
+**Una vez: bajar la clave.** En la consola de Firebase, **Configuración del proyecto → Cuentas de
+servicio → Generar nueva clave privada**. Guardarla fuera del repositorio, en la misma carpeta del
+paquete de la sección 10:
+
+```powershell
+$salida = "$env:USERPROFILE\Documents\raveat"
+New-Item -ItemType Directory -Force $salida | Out-Null
+Move-Item "$env:USERPROFILE\Downloads\*-firebase-adminsdk-*.json" "$salida\firebase-cuenta.json"
+```
+
+**En la PC: decirle a la API dónde está.** Va en User Secrets, como la cadena de conexión:
+
+```powershell
+dotnet user-secrets set "Firebase:CuentaDeServicio" "$env:USERPROFILE\Documents\raveat\firebase-cuenta.json" --project .\RavEat.Api
+```
+
+Al levantar, la consola de la API no tiene que decir `Push apagado`. Si lo dice, el secreto no
+está o tiene otro nombre.
+
+**En MonsterASP.NET: el mismo archivo, al lado de la API.** **Files → `wwwroot` → Upload file**
+con `firebase-cuenta.json`, la variable `Firebase__CuentaDeServicio` con ese nombre (sección 10) y
+**Restart application**. Es el mismo lugar del zip, pero no va adentro: el paquete se arma desde el
+repositorio y el JSON nunca entra al repositorio.
+
+**Probarlo con dos sesiones.** La migración `UsuariosDePrueba` deja un usuario por rol, todos con
+la clave del taller `RavEat123!`, la misma del administrador. Publicada la API, la reemplaza
+`UsuariosDePrueba__Password` (sección 10):
+
+| Usuario | Rol |
+|---|---|
+| `vendedor@raveat.local` | Vendedor |
+| `proceso@raveat.local` | Proceso |
+| `caja@raveat.local` | Caja |
+| `delivery@raveat.local` | Delivery |
+
+El teléfono entra como `vendedor@raveat.local` y crea un pedido; el navegador entra como
+`proceso@raveat.local` y le cambia el estado. Con la app cerrada, al teléfono le llega la push como
+banner flotante; con la app abierta, aparece el mismo aviso y la campanita sube. Tocarla abre el
+pedido.
+Con varios avisos juntos Android los agrupa: el resumen del grupo abre la app, cada aviso abre su
+pedido.
+
+```powershell
+# Que el telefono quedo anotado: una fila por telefono con sesion abierta.
+mysql -u raveat_app -p raveat_app -e "SELECT usuario_id, LEFT(token, 20) AS token, actualizado_en FROM dispositivos_push;"
+```
+
 ## Si algo falla
 
 | Síntoma | Causa probable | Qué hacer |
@@ -302,11 +371,15 @@ variables del panel, que la sobrescritura no toca.
 | `Keystore was tampered with, or password was incorrect` | La contraseña de `keystore.properties` no es la del keystore | Corregirla; si se perdió, no se recupera |
 | `INSTALL_FAILED_UPDATE_INCOMPATIBLE` | Debug y release firman distinto | `adb uninstall app.raveat` y reinstalar |
 | El APK de release no conecta con tu PC | Apunta a producción: es lo esperado | Para desarrollo, el APK de debug |
-| El sitio publicado responde 500.30 | Falta `ConnectionStrings__Default`, `Jwt__Key` o `Admin__Password`, o no se hizo Restart | Revisar las variables del panel |
+| El sitio publicado responde 500.30 | Falta `ConnectionStrings__Default`, `Jwt__Key`, `Admin__Password` o `UsuariosDePrueba__Password`, o no se hizo Restart | Revisar las variables del panel |
 | El sitio responde 403 o 404 en todo | El zip llevó la carpeta y no su contenido | Rearmarlo con el `\*` |
 | HTTP anda y HTTPS no | El certificado no se emitió | **HTTPS → Enable HTTPS** |
 | El APK dice error de CORS contra producción | Falta `http://localhost` en `Cors__AllowedOrigins__N` | Cargarlo y Restart |
 | La web de tu PC no conecta con la API publicada | Falta `http://localhost:5173` en `Cors__AllowedOrigins__N`, o el `.env` sigue apuntando a la API local | Cargarlo y Restart; en `.env`, `VITE_API_URL` con la dirección del sitio |
+| La consola de la API dice `Push apagado` | Falta `Firebase:CuentaDeServicio` en User Secrets, o `Firebase__CuentaDeServicio` en el panel | Sección 11 |
+| La API no arranca: `FileNotFoundException` del JSON | La ruta del secreto no apunta al archivo | `Test-Path` con esa ruta; en MonsterASP, el JSON tiene que estar en `wwwroot` |
+| La bandeja recibe el aviso y el teléfono no | `dispositivos_push` está vacía: el teléfono nunca mandó su token | Cerrar sesión y volver a entrar en el teléfono, con el permiso de notificaciones dado |
+| La push le llega al usuario anterior del teléfono | La sesión anterior venció sin **Salir**, y el que entró después todavía no tiene rol | Salir desde **Mi cuenta**: el logout da de baja el teléfono |
 | `dotnet publish` falla con MSB3026/3027 | La API local tiene tomados sus `.dll` | Pararla y publicar de nuevo |
 | «No se pudo conectar con la API» | La API no está levantada, o la URL apunta a otro lado | Probar `/health`; **Mi cuenta → Diagnóstico** |
 | Toqué `src/` y el teléfono muestra lo viejo | Falta el build antes de `cap sync` | Sección 7 o 9 |
@@ -324,6 +397,18 @@ variables del panel, que la sobrescritura no toca.
 
 Los permisos del manifiesto son los de la versión 7: esta versión no agrega ninguno a mano. El
 plugin de red declara `ACCESS_NETWORK_STATE` por fusión de manifiestos.
+
+### El icono de la notificación
+
+Las push y los avisos locales llevan el gorro de RavEat en la barra de estado. Es un PNG aparte del
+ícono de la app —`ic_stat_notify`, silueta blanca sobre fondo transparente, en las cinco
+densidades de `res/drawable-*`—, porque Android pinta el icono chico de un solo color. Lo usan las
+push por el `meta-data` del manifiesto y los avisos locales por `capacitor.config.json`. Sin él,
+los dos muestran un círculo genérico.
+
+Se regenera solo si cambia el dibujo: la fuente es `recursos/iconos/ic_stat_notify-fuente.png` y
+se sube al [Asset Studio](https://romannurik.github.io/AndroidAssetStudio/icons-notification.html)
+con el nombre `ic_stat_notify`; el zip que devuelve se descomprime sobre `res/`.
 
 ### Íconos y splash · bajo demanda
 

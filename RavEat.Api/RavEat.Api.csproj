@@ -11,6 +11,9 @@
 
   <ItemGroup>
     <PackageReference Include="EFCore.NamingConventions" Version="9.0.0" />
+    <!-- 3.5.0 y no la ultima: desde la 3.6 el token de registro figura obsoleto a favor del Fid,
+         pero el plugin de Capacitor entrega el token de registro y FCM lo sigue aceptando. -->
+    <PackageReference Include="FirebaseAdmin" Version="3.5.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.17" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.17">

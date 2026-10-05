@@ -64,6 +64,12 @@ public sealed class EntregaConfiguration : IEntityTypeConfiguration<Entrega> {
     public void Configure(EntityTypeBuilder<Entrega> b){ ConfigurationExtensions.Base(b, "entregas"); b.Property(x => x.DireccionLinea).HasMaxLength(255).IsRequired(); b.Property(x => x.DireccionReferencia).HasMaxLength(500); b.Property(x => x.DireccionLatitud).HasPrecision(10, 7); b.Property(x => x.DireccionLongitud).HasPrecision(10, 7); b.Property(x => x.Estado).EnumTexto(); b.Property(x => x.Observaciones).HasMaxLength(1000); b.HasIndex(x => x.PedidoId).IsUnique(); b.HasIndex(x => new {x.RepartidorId, x.Estado}); b.HasOne<Pedido>().WithMany().HasForeignKey(x => x.PedidoId).OnDelete(DeleteBehavior.Cascade); b.HasOne<Usuario>().WithMany().HasForeignKey(x => x.RepartidorId).OnDelete(DeleteBehavior.SetNull); }
 }
 
+public sealed class DispositivoPushConfiguration : IEntityTypeConfiguration<DispositivoPush> {
+    // El token es unico: si el telefono cambia de usuario, la fila se reasigna en vez de duplicarse
+    // y la push nunca le llega al usuario anterior. Cascade: los telefonos no sobreviven al usuario.
+    public void Configure(EntityTypeBuilder<DispositivoPush> b){ ConfigurationExtensions.Base(b, "dispositivos_push"); b.Property(x => x.Token).HasMaxLength(512).IsRequired(); b.HasIndex(x => x.Token).IsUnique(); b.HasOne<Usuario>().WithMany().HasForeignKey(x => x.UsuarioId).OnDelete(DeleteBehavior.Cascade); }
+}
+
 public sealed class NotificacionConfiguration : IEntityTypeConfiguration<Notificacion> {
     // El indice por (usuario, leida_en) sirve a las dos consultas de la bandeja: listar las del
     // usuario y contar las no leidas. Cascade: la bandeja no sobrevive al usuario.

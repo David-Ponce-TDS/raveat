@@ -4,8 +4,10 @@ export function iniciar_sesion(email, password){
 	return ajax_request({endpoint: '/api/sesion/login', metodo: 'POST', datos: {email, password}, renovar: false});
 }
 
-export function cerrar_sesion(refresh_token, todos = false){
-	return ajax_request({endpoint: '/api/sesion/logout', metodo: 'POST', datos: {refresh_token, todos}, renovar: false});
+// El token de FCM viaja con el logout: es cuando el telefono deja de ser de este usuario, y la API
+// lo da de baja en el mismo paso, sin un endpoint aparte.
+export function cerrar_sesion(refresh_token, todos = false, token_push = null){
+	return ajax_request({endpoint: '/api/sesion/logout', metodo: 'POST', datos: {refresh_token, todos, token_push}, renovar: false});
 }
 
 // Quien soy. La app lo llama al arrancar para saber si el token guardado todavia vale, y para

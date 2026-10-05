@@ -1,8 +1,9 @@
-# Requisitos · versión 8
+# Requisitos · versión 9
 
-**Nada nuevo que instalar en la máquina.** El plugin de red entra con `npm install` y `keytool`
-—el que genera el keystore— vino con el JDK de Android Studio. Lo nuevo se **genera** o se **crea
-en la web**: el keystore y una cuenta gratuita.
+**Nada nuevo que instalar en la máquina.** Entran dos paquetes y una credencial: `cropperjs`, la
+librería del recorte de la foto, que viene con `npm install`; `FirebaseAdmin`, que viene con el
+`restore` de la API; y la **cuenta de servicio** de Firebase, para que la API mande la push. Ningún
+plugin ni permiso nuevo en el teléfono.
 
 - [x] Git
 - [x] Node.js 22 o superior — trae `npm`
@@ -14,11 +15,10 @@ en la web**: el keystore y una cuenta gratuita.
 - [x] Teléfono Android con cámara, con la depuración USB activada
 - [x] Proyecto de Firebase con `google-services.json` descargado
 - [x] Un segundo dispositivo, o una segunda sesión
-- [ ] **Keystore de release** — se genera una vez y se guarda para siempre. Nuevo en esta versión
-- [ ] **Cuenta de MonsterASP.NET** — para publicar la API y MySQL. Nuevo en esta versión
-
-**La cuenta es opcional para cursar.** Sin ella se llega hasta el APK firmado; con ella, ese APK
-habla con tu propia API.
+- [x] Keystore de release, generado en la versión 8
+- [x] Cuenta de MonsterASP.NET, opcional: sin ella se llega hasta el APK firmado
+- [ ] **`cropperjs`** — entra con `npm install` en `RavEatApp`. Nuevo en esta versión
+- [ ] **Cuenta de servicio de Firebase** — el JSON con clave privada, cargado en User Secrets. Nuevo en esta versión
 
 ## Comprobarlo
 
@@ -47,6 +47,15 @@ if (Test-Path .\RavEatApp\android\keystore.properties) { 'keystore.properties ok
 ```
 
 Cómo se generan: [`README.comandos.md`](README.comandos.md), sección 8.
+
+Y la cuenta de servicio, que es lo nuevo:
+
+```powershell
+$ruta = dotnet user-secrets list --project .\RavEat.Api | Select-String 'Firebase:CuentaDeServicio' | ForEach-Object { ($_ -split ' = ', 2)[1] }
+if ($ruta -and (Test-Path $ruta)) { 'cuenta de servicio  ok' } else { 'cuenta de servicio  FALTA' }
+```
+
+Cómo se baja y se carga: [`README.comandos.md`](README.comandos.md), sección 11.
 
 ## La cuenta de esta versión
 

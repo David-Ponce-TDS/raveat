@@ -7,6 +7,10 @@
         "cleartext": true
     },
     "plugins": {
+        "LocalNotifications": {
+            "smallIcon": "ic_stat_notify",
+            "iconColor": "#3880FF"
+        },
         "SplashScreen": {
             "launchAutoHide": true,
             "launchFadeOutDuration": 300,

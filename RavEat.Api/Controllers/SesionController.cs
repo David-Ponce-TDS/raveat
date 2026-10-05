@@ -64,9 +64,15 @@ public sealed class SesionController(RavEatDbContext db, TokenService tokens) : 
             // Cerrar sesion en todos los dispositivos: revoca todo lo vigente del usuario.
             var vigentes = await db.RefreshTokens.Where(x => x.UsuarioId == guardado.UsuarioId && x.RevocadoEn == null).ToListAsync(cancellationToken);
             vigentes.ForEach(token => token.RevocadoEn = DateTimeOffset.UtcNow);
+            // Y ningun telefono sigue recibiendo sus push.
+            db.DispositivosPush.RemoveRange(await db.DispositivosPush.Where(x => x.UsuarioId == guardado.UsuarioId).ToListAsync(cancellationToken));
         }
         else {
             guardado.RevocadoEn = DateTimeOffset.UtcNow;
+            // El telefono que cierra la sesion deja de recibir las push de este usuario.
+            if(!string.IsNullOrWhiteSpace(request.TokenPush)) {
+                db.DispositivosPush.RemoveRange(await db.DispositivosPush.Where(x => x.Token == request.TokenPush && x.UsuarioId == guardado.UsuarioId).ToListAsync(cancellationToken));
+            }
         }
         await db.SaveChangesAsync(cancellationToken);
         return Ok(new {cerrada = true});
@@ -114,4 +120,4 @@ public sealed class SesionController(RavEatDbContext db, TokenService tokens) : 
 public sealed record SesionResponse(string Token, DateTimeOffset ExpiraEn, string RefreshToken, DateTimeOffset RefreshExpiraEn, UsuarioResponse Usuario);
 public sealed record LoginRequest(string Email, string Password);
 public sealed record RefreshRequest(string RefreshToken);
-public sealed record LogoutRequest(string RefreshToken, bool Todos);
+public sealed record LogoutRequest(string RefreshToken, bool Todos, string? TokenPush);

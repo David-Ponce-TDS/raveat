@@ -130,6 +130,46 @@ namespace RavEat.Api.Migrations
                     b.ToTable("clientes", (string)null);
                 });
 
+            modelBuilder.Entity("RavEat.Api.Domain.Entities.DispositivoPush", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTimeOffset>("ActualizadoEn")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("actualizado_en");
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("creado_en");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("varchar(512)")
+                        .HasColumnName("token");
+
+                    b.Property<long>("UsuarioId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("usuario_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_dispositivos_push");
+
+                    b.HasIndex("Token")
+                        .IsUnique()
+                        .HasDatabaseName("ix_dispositivos_push_token");
+
+                    b.HasIndex("UsuarioId")
+                        .HasDatabaseName("ix_dispositivos_push_usuario_id");
+
+                    b.ToTable("dispositivos_push", (string)null);
+                });
+
             modelBuilder.Entity("RavEat.Api.Domain.Entities.Entrega", b =>
                 {
                     b.Property<long>("Id")
@@ -637,6 +677,16 @@ namespace RavEat.Api.Migrations
                         .HasDatabaseName("ix_usuarios_rol_id");
 
                     b.ToTable("usuarios", (string)null);
+                });
+
+            modelBuilder.Entity("RavEat.Api.Domain.Entities.DispositivoPush", b =>
+                {
+                    b.HasOne("RavEat.Api.Domain.Entities.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_dispositivos_push_usuarios_usuario_id");
                 });
 
             modelBuilder.Entity("RavEat.Api.Domain.Entities.Entrega", b =>

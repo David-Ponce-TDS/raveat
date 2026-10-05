@@ -1,5 +1,5 @@
 <template>
-	<ion-modal :is-open="abierto" @willPresent="preparar_formulario" @didDismiss="$emit('cerrar')">
+	<ion-modal :is-open="abierto" class="raveat-modal-flotante" @willPresent="preparar_formulario" @didDismiss="$emit('cerrar')">
 		<ion-header>
 			<ion-toolbar>
 				<ion-title>{{ cliente ? 'Editar cliente' : 'Nuevo cliente' }}</ion-title>
@@ -8,14 +8,14 @@
 				</ion-buttons>
 			</ion-toolbar>
 		</ion-header>
-		<ion-content>
+		<div class="raveat-modal-flotante__cuerpo">
 			<div class="ion-padding raveat-page-stack">
 				<ion-list class="raveat-card">
 					<ion-item>
-						<ion-input v-model="formulario.nombre" label="Nombre" label-placement="stacked" placeholder="Nombre y apellido" />
+						<ion-input v-model="formulario.nombre" label="Nombre *" label-placement="stacked" placeholder="Nombre y apellido" />
 					</ion-item>
 					<ion-item>
-						<ion-input v-model="formulario.telefono" label="Teléfono" label-placement="stacked" placeholder="11-5555-0000" />
+						<ion-input v-model="formulario.telefono" label="Teléfono *" label-placement="stacked" placeholder="11-5555-0000" />
 					</ion-item>
 					<ion-item>
 						<ion-input v-model="formulario.email" type="email" label="Email" label-placement="stacked" placeholder="Opcional" />
@@ -31,6 +31,11 @@
 					     administrador: al vendedor que carga un cliente desde el mostrador, "usar mi
 					     ubicacion" le guardaria la del local. Elegir el punto en un mapa es v10. -->
 					<ion-item lines="none">
+						<!-- Marcada o no, de un vistazo: el texto de abajo dice cual punto o por que no hay. -->
+						<span slot="end" class="raveat-pill" :class="tiene_coordenadas ? 'raveat-tinte-success' : 'raveat-tinte-medium'">
+							<ion-icon :icon="tiene_coordenadas ? icono_marcada : icono_sin_marcar" aria-hidden="true" />
+							{{ tiene_coordenadas ? 'Marcada' : 'Sin marcar' }}
+						</span>
 						<ion-label>
 							<h2>Ubicación</h2>
 							<p v-if="tiene_coordenadas">{{ coordenadas_texto }}</p>
@@ -56,21 +61,23 @@
 				<!-- El error viene de la API. La validacion del servidor es la que manda: este
 				     formulario no la repite, porque tener la misma regla en dos lados garantiza
 				     que en algun momento digan cosas distintas. -->
-				<ion-note v-if="error" color="danger">{{ error }}</ion-note>
+				<comp-aviso v-if="error" tono="error" :mensaje="error" />
+				<!-- Solo la PRESENCIA de los obligatorios (los campos con *), con el motivo a la
+				     vista: un boton gris sin explicacion obliga a adivinar. -->
+				<comp-aviso v-else-if="motivo_incompleto" tono="pendiente" titulo="Falta un dato" :mensaje="motivo_incompleto" />
 
-				<ion-button expand="block" :disabled="guardando" @click="guardar">
+				<ion-button expand="block" :disabled="guardando || Boolean(motivo_incompleto)" @click="guardar">
 					<ion-spinner v-if="guardando" name="crescent" />
 					<span v-else>Guardar</span>
 				</ion-button>
 			</div>
-		</ion-content>
+		</div>
 	</ion-modal>
 </template>
 
 <script>import {
 	IonButton,
 	IonButtons,
-	IonContent,
 	IonHeader,
 	IonIcon,
 	IonInput,
@@ -78,12 +85,12 @@
 	IonLabel,
 	IonList,
 	IonModal,
-	IonNote,
 	IonSpinner,
 	IonTitle,
 	IonToolbar
 } from '@ionic/vue';
-import { locateOutline } from 'ionicons/icons';
+import { checkmarkCircleOutline, locateOutline, locationOutline } from 'ionicons/icons';
+import comp_aviso from '@/components/base/comp_aviso.vue';
 import { formatear_coordenadas, obtener_ubicacion_actual } from '@/services/geolocalizacion_service';
 import { use_sesion_store } from '@/stores/sesion_store';
 
@@ -100,9 +107,9 @@ const FORMULARIO_VACIO = {
 export default {
 	name: 'comp_cliente_formulario_modal',
 	components: {
+		CompAviso: comp_aviso,
 		IonButton,
 		IonButtons,
-		IonContent,
 		IonHeader,
 		IonIcon,
 		IonInput,
@@ -110,7 +117,6 @@ export default {
 		IonLabel,
 		IonList,
 		IonModal,
-		IonNote,
 		IonSpinner,
 		IonTitle,
 		IonToolbar
@@ -141,12 +147,21 @@ export default {
 		return {
 			capturando_ubicacion: false,
 			formulario: {...FORMULARIO_VACIO},
+			icono_marcada: checkmarkCircleOutline,
+			icono_sin_marcar: locationOutline,
 			icono_ubicacion: locateOutline,
 			sesion_store: use_sesion_store(),
 			ubicacion_mensaje: ''
 		};
 	},
 	computed: {
+		// Lo demas (duplicados, formatos) lo valida el servidor: aca solo que no falte nada.
+		motivo_incompleto(){
+			var vm = this;
+			if(!String(vm.formulario.nombre || '').trim()) return 'Poné el nombre del cliente.';
+			if(!String(vm.formulario.telefono || '').trim()) return 'Poné el teléfono.';
+			return '';
+		},
 		// Solo el que puede estar en la puerta: delivery, y el administrador para corregir.
 		puede_anotar_punto(){
 			var vm = this;

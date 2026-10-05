@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { aplicar_estilo_barras } from '@/services/barras_sistema_service';
 
 export const use_app_store = defineStore('app', {
 	state: () => ({
@@ -25,8 +26,11 @@ export const use_app_store = defineStore('app', {
 			localStorage.setItem('raveat_tema', this.tema);
 			this.aplicar_tema_actual();
 		},
+		// Unico lugar que aplica el tema, y por eso el unico que avisa a las barras del sistema:
+		// los iconos de la barra de estado se ven sobre el header y cambian junto con el tema.
 		aplicar_tema_actual(){
 			document.documentElement.classList.toggle('ion-palette-dark', this.tema == 'oscuro');
+			aplicar_estilo_barras(this.tema == 'oscuro');
 		},
 		alternar_vibracion(){
 			this.vibracion = !this.vibracion;

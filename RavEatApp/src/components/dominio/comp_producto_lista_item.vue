@@ -1,24 +1,31 @@
 <template>
-	<ion-item class="producto_lista_item">
-		<ion-thumbnail slot="start">
-			<img :src="imagen" :alt="producto.nombre" />
-		</ion-thumbnail>
-		<ion-label>
-			<h2 class="raveat-item-title">{{ producto.nombre }}</h2>
-			<p>{{ producto.categoria_nombre }}</p>
-			<p v-if="descripcion" class="raveat-item-meta">{{ descripcion }}</p>
-		</ion-label>
-		<ion-badge slot="end" :color="producto.disponible ? 'success' : 'medium'">{{ precio }}</ion-badge>
+	<!-- La fila con cara de tarjeta: foto grande, la categoria como rotulo con su icono y su
+	     acento, la descripcion en dos lineas y el precio como pildora del mismo acento, gris
+	     cuando no esta disponible: el precio sigue ahi, lo que cambia es que hoy no se pide. -->
+	<ion-item button lines="none" :detail="false">
+		<div class="raveat-fila">
+			<img class="raveat-producto-fila__foto" :src="imagen" :alt="producto.nombre" loading="lazy" />
+			<div class="raveat-fila__texto">
+				<span class="raveat-producto-fila__categoria" :style="{color: `var(--ion-color-${acento})`}">
+					<ion-icon :icon="icono" aria-hidden="true" />
+					{{ producto.categoria_nombre }}
+				</span>
+				<h3 class="raveat-item-title">{{ producto.nombre }}</h3>
+				<p v-if="descripcion" class="raveat-item-meta raveat-producto-fila__descripcion">{{ descripcion }}</p>
+			</div>
+			<!-- El precio es lo predeterminado; la pantalla puede poner otra cosa al final de la fila
+			     (un estado, un boton) sin rehacer el item entero. -->
+			<slot name="acciones">
+				<span class="raveat-producto-fila__precio" :class="producto.disponible ? clase_tinte(acento) : 'raveat-tinte-medium'">{{ precio }}</span>
+			</slot>
+		</div>
 	</ion-item>
 </template>
 
-<script>import {
-	IonBadge,
-	IonItem,
-	IonLabel,
-	IonThumbnail
-} from '@ionic/vue';
+<script>import { IonIcon, IonItem } from '@ionic/vue';
 import { IMAGEN_PRODUCTO_DEFAULT } from '@/config/constantes';
+import { acento_categoria, icono_categoria } from '@/utils/categorias';
+import { clase_tinte } from '@/utils/estados';
 import { formatear_importe } from '@/utils/formato_moneda';
 import { resolver_url_imagen } from '@/utils/imagenes';
 
@@ -28,10 +35,8 @@ import { resolver_url_imagen } from '@/utils/imagenes';
 export default {
 	name: 'comp_producto_lista_item',
 	components: {
-		IonBadge,
-		IonItem,
-		IonLabel,
-		IonThumbnail
+		IonIcon,
+		IonItem
 	},
 	props: {
 		imagen_default: {
@@ -44,6 +49,14 @@ export default {
 		}
 	},
 	computed: {
+		acento(){
+			var vm = this;
+			return acento_categoria(vm.producto.categoria_id);
+		},
+		icono(){
+			var vm = this;
+			return icono_categoria(vm.producto.categoria_nombre);
+		},
 		descripcion(){
 			var vm = this;
 			return vm.producto.descripcion || '';
@@ -56,5 +69,8 @@ export default {
 			var vm = this;
 			return formatear_importe(vm.producto.precio);
 		}
+	},
+	methods: {
+		clase_tinte
 	}
 };</script>

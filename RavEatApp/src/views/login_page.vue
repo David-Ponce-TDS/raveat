@@ -13,7 +13,9 @@
 				<!-- Un form de verdad y no dos inputs sueltos: asi el navegador y el teléfono
 				     ofrecen guardar la contraseña y la completan la proxima vez. La app nunca la
 				     guarda — eso es trabajo del gestor de contraseñas. -->
-				<form @submit.prevent="entrar">
+				<!-- La misma grilla de la pagina: sin ella, el aviso de error quedaba pegado a los
+				     campos y al boton. -->
+				<form class="raveat-page-stack" @submit.prevent="entrar">
 					<ion-list class="raveat-card">
 						<ion-item>
 							<ion-input
@@ -40,9 +42,11 @@
 						</ion-item>
 					</ion-list>
 
-					<ion-note v-if="sesion_store.error" color="danger">{{ sesion_store.error }}</ion-note>
+					<comp-aviso v-if="sesion_store.error" tono="error" :mensaje="sesion_store.error" />
 
-					<ion-button type="submit" expand="block" :disabled="sesion_store.cargando">
+					<!-- Sigue siendo el submit del form (Enter tambien entra), pero sin email o sin
+					     contraseña no hay nada que mandar: apagado, en vez de un 400 de la API. -->
+					<ion-button type="submit" expand="block" :disabled="sesion_store.cargando || !email.trim() || !password">
 						<ion-spinner v-if="sesion_store.cargando" name="crescent" />
 						<span v-else>Entrar</span>
 					</ion-button>
@@ -66,11 +70,11 @@
 	IonInput,
 	IonItem,
 	IonList,
-	IonNote,
 	IonPage,
 	IonSpinner
 } from '@ionic/vue';
 import { fingerPrintOutline } from 'ionicons/icons';
+import comp_aviso from '@/components/base/comp_aviso.vue';
 import comp_vidriera from '@/components/estructura/comp_vidriera.vue';
 import { biometria_disponible, verificar_identidad } from '@/services/biometria_service';
 import { restaurar_sesion } from '@/services/token_service';
@@ -81,6 +85,7 @@ import { use_sesion_store } from '@/stores/sesion_store';
 export default {
 	name: 'login_page',
 	components: {
+		CompAviso: comp_aviso,
 		CompVidriera: comp_vidriera,
 		IonButton,
 		IonContent,
@@ -88,7 +93,6 @@ export default {
 		IonInput,
 		IonItem,
 		IonList,
-		IonNote,
 		IonPage,
 		IonSpinner
 	},

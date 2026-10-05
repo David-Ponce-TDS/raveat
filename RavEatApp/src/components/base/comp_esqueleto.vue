@@ -1,58 +1,42 @@
 <template>
-	<!-- Tarjetas: la misma grilla y la misma tarjeta que dibuja la vitrina. -->
-	<div v-if="variante == 'tarjetas'" class="raveat-grilla">
-		<article v-for="fila in filas" :key="fila" class="raveat-producto-card">
-			<div class="raveat-producto-card__imagen">
-				<ion-skeleton-text :animated="true" style="width: 100%; height: 100%; margin: 0;" />
-			</div>
+	<!-- Tarjetas fantasma con la misma grilla y proporcion que las tarjetas reales: la foto
+	     cuadrada define la altura, asi la vitrina no salta cuando llegan los datos. -->
+	<div v-if="variante == 'tarjetas'" class="raveat-grilla" aria-hidden="true">
+		<div v-for="fila in filas" :key="fila" class="raveat-producto-card">
+			<div class="raveat-esqueleto__barra raveat-esqueleto__imagen"></div>
 			<div class="raveat-producto-card__info">
-				<h3><ion-skeleton-text :animated="true" style="width: 70%" /></h3>
-				<p><ion-skeleton-text :animated="true" style="width: 90%" /></p>
+				<div class="raveat-esqueleto__barra raveat-esqueleto__titulo" style="width: 70%"></div>
+				<div class="raveat-esqueleto__barra raveat-esqueleto__linea" style="width: 95%"></div>
+				<div class="raveat-esqueleto__barra raveat-esqueleto__linea" style="width: 60%"></div>
 			</div>
-		</article>
+		</div>
 	</div>
 
-	<!-- Lista: la fila con miniatura, titulo y subtitulo de las pantallas de gestion. -->
-	<ion-list v-else class="raveat-panel">
-		<ion-item v-for="fila in filas" :key="fila">
-			<ion-thumbnail slot="start">
-				<ion-skeleton-text :animated="true" />
-			</ion-thumbnail>
-			<ion-label>
-				<h3><ion-skeleton-text :animated="true" style="width: 55%" /></h3>
-				<p><ion-skeleton-text :animated="true" style="width: 80%" /></p>
-			</ion-label>
-		</ion-item>
-	</ion-list>
+	<!-- Filas fantasma con la forma de las filas-tarjeta de las listas de gestion. -->
+	<div v-else aria-hidden="true">
+		<div v-for="fila in filas" :key="fila" class="raveat-esqueleto__fila">
+			<div class="raveat-esqueleto__barra raveat-esqueleto__miniatura"></div>
+			<div class="raveat-esqueleto__texto">
+				<div class="raveat-esqueleto__barra raveat-esqueleto__titulo" style="width: 55%"></div>
+				<div class="raveat-esqueleto__barra raveat-esqueleto__linea" style="width: 80%"></div>
+			</div>
+		</div>
+	</div>
 </template>
 
-<script>import {
-	IonItem,
-	IonLabel,
-	IonList,
-	IonSkeletonText,
-	IonThumbnail
-} from '@ionic/vue';
-
+<script>
+// Las barras son propias y no ion-skeleton-text: Ionic las pinta con el color del texto al 6,5 %
+// y sobre una tarjeta no se distinguen del fondo. Los estilos viven en theme/componentes.css.
 export default {
 	name: 'comp_esqueleto',
-	components: {
-		IonItem,
-		IonLabel,
-		IonList,
-		IonSkeletonText,
-		IonThumbnail
-	},
 	props: {
-		// Cuantas filas fantasma dibujar. La idea es que ocupen mas o menos lo mismo que
-		// los datos reales, para que la pantalla no salte cuando terminan de llegar.
+		// Cuantas filas o tarjetas fantasma dibujar: mas o menos las que ocupan los datos reales.
 		filas: {
 			type: Number,
 			default: 4
 		},
-		// Con que forma dibujarlas: `lista` o `tarjetas`. El esqueleto tiene que anticipar lo que
-		// viene despues; si la vitrina muestra tarjetas y el esqueleto filas, la pantalla se
-		// reacomoda entera al llegar los datos y el efecto se nota como un parpadeo.
+		// `lista` imita las filas de las listas; `tarjetas`, la grilla de la vitrina. El esqueleto
+		// anticipa la forma de lo que viene: si no coincide, la pantalla se reacomoda de golpe.
 		variante: {
 			type: String,
 			default: 'lista'

@@ -97,9 +97,9 @@ ion-menu ion-item.seleccionado ion-icon {
 .raveat-producto-card {
     overflow: hidden;
     border: 1px solid var(--raveat-border);
-    border-radius: 16px;
+    border-radius: var(--raveat-radio);
     background: var(--raveat-surface);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+    box-shadow: var(--raveat-sombra);
 }
 
 .raveat-producto-card.agotado {
@@ -157,6 +157,59 @@ ion-menu ion-item.seleccionado ion-icon {
     font-size: 0.7rem;
 }
 
+/* Los controles del borrador flotan sobre la foto. Agregar se separa del precio para no
+   taparlo; la cantidad y quitar aparecen solo cuando ya hay unidades. */
+.raveat-producto-card__cantidad {
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 26px;
+    height: 26px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: var(--ion-color-primary);
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.raveat-producto-card__agregar,
+.raveat-producto-card__quitar {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 999px;
+    color: #fff;
+    cursor: pointer;
+}
+
+.raveat-producto-card__agregar {
+    right: 8px;
+    bottom: 46px;
+    width: 34px;
+    height: 34px;
+    background: var(--ion-color-primary);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.3);
+}
+
+.raveat-producto-card__quitar {
+    right: 8px;
+    top: 8px;
+    width: 26px;
+    height: 26px;
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.raveat-producto-card__agregar ion-icon,
+.raveat-producto-card__quitar ion-icon {
+    font-size: 18px;
+}
+
 .raveat-producto-card__info {
     padding: 10px 12px 12px;
 }
@@ -195,26 +248,286 @@ ion-menu ion-item.seleccionado ion-icon {
 
 /* --- avatar con la inicial ----------------------------------------------- */
 
-/* Sin fotos de clientes, la inicial sobre un circulo de color da un ancla visual para recorrer
-   la lista. Es mas util que un icono generico repetido en todas las filas. */
+/* Sin fotos de clientes, la inicial sobre un cuadrado tenido da un ancla visual para recorrer la
+   lista. Mismo tamano y radio que el icono de estado: en la fila ocupan el mismo lugar. */
 .raveat-avatar-inicial {
     display: flex;
+    flex: 0 0 auto;
     align-items: center;
     justify-content: center;
-    background: var(--raveat-surface-strong);
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: rgba(var(--ion-color-primary-rgb), 0.14);
     color: var(--ion-color-primary);
+    font-size: 1.05rem;
     font-weight: 700;
 }
 
-/* --- estados de un pedido ------------------------------------------------ */
+/* --- listas donde cada fila es su propia tarjeta -------------------------- */
 
-/* Dos badges apilados: el del pedido y el del pago. Son dos ejes distintos —un pedido entregado
-   puede seguir impago— y por eso no se resumen en uno solo. */
-.raveat-pedido-estados {
+/* El contenedor pierde el panel: borde, fondo y sombra pasan a cada fila. */
+.raveat-lista-tarjetas {
+    padding: 0;
+    background: transparent;
+}
+
+.raveat-lista-tarjetas > ion-item,
+.raveat-lista-tarjetas > ion-item-sliding {
+    margin-bottom: 10px;
+    overflow: hidden;
+    border-radius: var(--raveat-radio);
+    box-shadow: var(--raveat-sombra);
+}
+
+.raveat-lista-tarjetas > ion-item:last-child,
+.raveat-lista-tarjetas > ion-item-sliding:last-child {
+    margin-bottom: 0;
+}
+
+.raveat-lista-tarjetas ion-item {
+    --background: var(--raveat-surface);
+    --border-width: 0;
+    --inner-border-width: 0;
+    --padding-start: 14px;
+    --inner-padding-end: 14px;
+    --padding-top: 12px;
+    --padding-bottom: 12px;
+    border: 1px solid var(--raveat-border);
+    border-radius: var(--raveat-radio);
+}
+
+/* Con deslizamiento la tarjeta es el ion-item-sliding: la opcion revelada queda detras de las
+   mismas esquinas, y el item de adentro no repite el borde. */
+.raveat-lista-tarjetas ion-item-sliding ion-item {
+    border: 0;
+    border-radius: 0;
+}
+
+/* La fila-tarjeta: algo a la izquierda (icono de estado, avatar o foto), el texto en el medio y
+   una columna a la derecha (importe, estado). Cada pantalla arma sus piezas con estas clases. */
+.raveat-tarjeta {
+    display: grid;
+    width: 100%;
+    min-width: 0;
+}
+
+.raveat-fila {
     display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+}
+
+.raveat-fila__texto {
+    display: grid;
+    flex: 1;
+    gap: 3px;
+    min-width: 0;
+}
+
+.raveat-fila__texto h3,
+.raveat-fila__texto p {
+    margin: 0;
+}
+
+.raveat-fila__derecha {
+    display: flex;
+    flex: 0 0 auto;
     flex-direction: column;
     align-items: flex-end;
-    gap: 4px;
+    gap: 6px;
+}
+
+.raveat-fila__referencias {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+/* El pie de la tarjeta, separado por un punteado: las referencias que no compiten con el titulo. */
+.raveat-fila__pie {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--raveat-border);
+}
+
+/* El codigo del pedido: lo que se busca de un vistazo. Chip tenido con un punto adelante. */
+.raveat-codigo {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    font-variant-numeric: tabular-nums;
+}
+
+.raveat-codigo::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+/* --- indicadores de resumen ------------------------------------------------ */
+
+/* Los contadores de la API como tarjetas en una fila que se desliza. Cuando son filtros, tocar
+   una equivale a elegir ese estado; la activa se marca con el borde primario. */
+.raveat-indicadores {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 2px 0 6px;
+    scrollbar-width: none;
+}
+
+.raveat-indicadores::-webkit-scrollbar {
+    display: none;
+}
+
+.raveat-indicador {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 10px;
+    min-width: 148px;
+    padding: 10px 12px;
+    border: 1px solid var(--raveat-border);
+    border-radius: var(--raveat-radio);
+    background: var(--raveat-surface);
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.raveat-indicador:active {
+    transform: scale(0.97);
+}
+
+.raveat-indicador.activo {
+    border-color: var(--ion-color-primary);
+    box-shadow: 0 0 0 1px var(--ion-color-primary) inset;
+}
+
+.raveat-indicador__texto {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+.raveat-indicador__texto span {
+    overflow: hidden;
+    color: var(--raveat-muted);
+    font-size: 0.75rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.raveat-indicador__texto strong {
+    font-size: 1.3rem;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+/* --- fila de producto ------------------------------------------------------ */
+
+/* La foto grande y redondeada manda: es lo mismo que se ve en la vitrina, en formato fila. */
+.raveat-producto-fila__foto {
+    flex: none;
+    width: 64px;
+    height: 64px;
+    border-radius: 14px;
+    object-fit: cover;
+    background: var(--raveat-surface-strong);
+}
+
+.raveat-producto-fila__categoria {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--ion-color-primary);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+/* Dos lineas y corta: sin el tope las filas quedan de alturas muy distintas. */
+.raveat-producto-fila__descripcion {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* El precio como pildora cuadrada: tenida mientras se puede pedir, gris cuando no. */
+.raveat-producto-fila__precio {
+    flex: none;
+    padding: 8px 12px;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+/* --- tarjeta de la cuenta ---------------------------------------------------- */
+
+.raveat-perfil {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
+}
+
+/* La inicial sobre el mismo gradiente de la vidriera: es la firma visual de la app. */
+.raveat-perfil__avatar {
+    display: grid;
+    flex: 0 0 auto;
+    place-items: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #0052d4 0%, #4364f7 55%, #6fb1fc 100%);
+    color: #fff;
+    font-size: 1.3rem;
+    font-weight: 800;
+}
+
+.raveat-perfil__texto {
+    display: grid;
+    flex: 1;
+    gap: 3px;
+    min-width: 0;
+}
+
+.raveat-perfil__texto h2,
+.raveat-perfil__texto p {
+    margin: 0;
+}
+
+.raveat-perfil__texto h2 {
+    font-size: 1.15rem;
+    font-weight: 800;
+}
+
+.raveat-perfil__texto p {
+    overflow: hidden;
+    color: var(--raveat-muted);
+    font-size: 0.85rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* --- buscador y lista paginada ------------------------------------------- */
@@ -226,61 +539,342 @@ ion-menu ion-item.seleccionado ion-icon {
     --border-radius: 12px;
 }
 
-.raveat-ver-mas {
-    margin-top: 10px;
+/* El aviso del scroll infinito. Tiene alto SIEMPRE, cargue o no: el sensor de Ionic ignora un
+   elemento de alto 0 y, con el spinner condicional adentro, media 0 hasta el primer disparo, que
+   por eso no llegaba nunca. */
+.raveat-cargando-mas {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    color: var(--raveat-muted);
+    font-size: 0.85rem;
 }
 
 .raveat-lista-pie {
-    margin: 6px 2px 0;
+    margin: 8px 2px 14px;
     color: var(--raveat-muted);
     font-size: 0.8rem;
     text-align: center;
 }
 
+/* --- esqueleto de carga -------------------------------------------------- */
+
+/* Barras propias con un destello que las recorre. Los colores viven en global.css porque
+   cambian con el tema: en claro el destello es blanco fuerte; en oscuro, apenas una luz. */
+.raveat-esqueleto__barra {
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+    background: var(--raveat-esqueleto);
+}
+
+.raveat-esqueleto__barra::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, var(--raveat-esqueleto-brillo), transparent);
+    animation: raveat-esqueleto-barrido 1.6s ease-in-out infinite;
+}
+
+/* El barrido es decorativo: si el sistema pide menos movimiento, la barra queda quieta. */
+@media (prefers-reduced-motion: reduce) {
+    .raveat-esqueleto__barra::after {
+        animation: none;
+    }
+}
+
+@keyframes raveat-esqueleto-barrido {
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+/* La foto cuadrada de la tarjeta fantasma: es la que define la altura de la grilla. */
+.raveat-esqueleto__imagen {
+    aspect-ratio: 1 / 1;
+    border-radius: 0;
+}
+
+/* Alto de un titulo y de una linea de cuerpo reales, para que la pantalla no salte al llegar. */
+.raveat-esqueleto__titulo {
+    height: 15px;
+    margin-bottom: 9px;
+}
+
+.raveat-esqueleto__linea {
+    height: 11px;
+}
+
+.raveat-esqueleto__linea + .raveat-esqueleto__linea {
+    margin-top: 7px;
+}
+
+/* La fila fantasma tiene la misma forma que una fila-tarjeta: miniatura, titulo y linea. */
+.raveat-esqueleto__fila {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border: 1px solid var(--raveat-border);
+    border-radius: var(--raveat-radio);
+    background: var(--raveat-surface);
+}
+
+.raveat-esqueleto__fila + .raveat-esqueleto__fila {
+    margin-top: 10px;
+}
+
+.raveat-esqueleto__miniatura {
+    flex: none;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--raveat-radio-chico);
+}
+
+.raveat-esqueleto__texto {
+    flex: 1;
+}
+
 /* --- selector de cantidad ------------------------------------------------ */
 
+/* Un solo widget contenido, no tres piezas sueltas. */
 .raveat-cantidad {
     display: flex;
     align-items: center;
     gap: 2px;
+    padding: 2px;
+    border: 1px solid var(--raveat-border);
+    border-radius: 10px;
+    background: var(--raveat-surface-strong);
+}
+
+.raveat-cantidad ion-button {
+    --padding-start: 6px;
+    --padding-end: 6px;
+    min-width: 28px;
+    height: 28px;
+    margin: 0;
 }
 
 /* Ancho fijo para que la fila no se mueva al pasar de 9 a 10 unidades. */
 .raveat-cantidad strong {
     min-width: 2ch;
     text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+/* --- el borrador del pedido ------------------------------------------------ */
+
+/* Flota sobre la carta, por encima de los tabs: el borrador tiene que verse mientras se
+   sigue eligiendo, no al final de un scroll largo. */
+.raveat-borrador {
+    position: fixed;
+    left: 50%;
+    bottom: calc(76px + var(--ion-safe-area-bottom, 0px));
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: min(92%, 460px);
+    padding: 8px 8px 8px 16px;
+    border: 1px solid var(--raveat-border);
+    border-radius: var(--raveat-radio);
+    background: var(--raveat-surface);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+    transform: translateX(-50%);
+}
+
+.raveat-borrador__info {
+    display: grid;
+    flex: 1;
+    gap: 2px;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.raveat-borrador__info strong {
+    font-size: 0.95rem;
+}
+
+.raveat-borrador__info span {
+    color: var(--ion-color-primary);
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.raveat-borrador ion-button {
+    margin: 0;
+}
+
+/* Los items del borrador dentro del formulario: foto, nombre y total arriba; precio unitario y
+   el selector de cantidad abajo. En dos lineas porque con tres columnas fijas el nombre quedaba
+   en 45 px en un telefono. */
+.raveat-pedido-items {
+    display: grid;
+    gap: 8px;
+}
+
+.raveat-pedido-item {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    grid-template-areas:
+        "foto nombre total"
+        "foto detalle detalle";
+    column-gap: 12px;
+    row-gap: 6px;
+    padding: 10px 12px;
+    border: 1px solid var(--raveat-border);
+    border-radius: var(--raveat-radio);
+    background: var(--raveat-surface);
+}
+
+.raveat-pedido-item__foto {
+    display: grid;
+    grid-area: foto;
+    place-items: center;
+    overflow: hidden;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: var(--raveat-surface-strong);
+    color: var(--ion-color-primary);
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.raveat-pedido-item__foto img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.raveat-pedido-item__nombre {
+    grid-area: nombre;
+    overflow: hidden;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.raveat-pedido-item__total {
+    grid-area: total;
+    font-weight: 800;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.raveat-pedido-item__detalle {
+    display: flex;
+    grid-area: detalle;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.raveat-pedido-item__precio {
+    color: var(--raveat-muted);
+    font-size: 0.8rem;
+}
+
+.raveat-pedido-vacio {
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+    padding: 18px;
+    border: 1px dashed var(--raveat-border);
+    border-radius: var(--raveat-radio);
+    color: var(--raveat-muted);
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.raveat-pedido-vacio ion-icon {
+    font-size: 1.8rem;
 }
 
 /* --- foto del producto --------------------------------------------------- */
 
+/* La foto manda: es lo primero que se ve del producto en la carta, asi que es lo primero que se
+   ve del formulario. Arriba, grande y centrada; los campos van debajo. */
 .raveat-foto {
-    width: 100%;
-    padding: 8px 0;
-}
-
-.raveat-foto__previa {
-    display: block;
-    width: 96px;
-    height: 96px;
-    object-fit: cover;
-    border-radius: 12px;
-    border: 1px solid var(--raveat-border);
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+    padding: 20px 16px 14px;
+    border-radius: var(--raveat-radio);
     background: var(--raveat-surface-strong);
 }
 
-.raveat-foto__previa--vacia {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--raveat-muted);
-    font-size: 30px;
+/* La vista previa de lo que ya tiene el producto, cuadrada como en la carta. */
+.raveat-foto__marco {
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    width: 176px;
+    height: 176px;
+    border: 1px solid var(--raveat-border);
+    border-radius: var(--raveat-radio);
+    background: rgba(0, 0, 0, 0.18);
 }
 
-.raveat-foto__acciones {
-    display: flex;
-    flex-wrap: wrap;
+.raveat-foto__marco img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.raveat-foto__vacia {
+    display: grid;
+    justify-items: center;
     gap: 6px;
-    margin-top: 8px;
+    color: var(--raveat-muted);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.raveat-foto__vacia ion-icon {
+    font-size: 2.4rem;
+}
+
+/* El recorte: la foto nueva dentro de un marco oscuro, con el encuadre cuadrado de Cropper. */
+.raveat-foto__recorte {
+    width: min(100%, 320px);
+    height: 300px;
+    overflow: hidden;
+    border-radius: 18px;
+    background: #0b0b0d;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+
+.raveat-foto__recorte img {
+    display: block;
+    max-width: 100%;
+}
+
+/* Dos columnas parejas; un boton solo (el selector del navegador) o el ultimo impar (Quitar)
+   ocupan el renglon entero. */
+.raveat-foto__acciones {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+}
+
+.raveat-foto__acciones ion-button {
+    margin: 0;
+}
+
+.raveat-foto__acciones ion-button:only-child,
+.raveat-foto__acciones ion-button:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
 }
 
 /* El permiso denegado se muestra al lado del boton que lo pidio: es una respuesta, no un error. */
@@ -375,3 +969,539 @@ ion-menu ion-item.seleccionado ion-icon {
     font-size: 12px;
 }
 
+
+/* --- hoja deslizante: la ficha con foto de fondo ----------------------------- */
+
+/* La foto (o el fondo tenido) queda clavada arriba con sticky, y la hoja —con z-index mayor—
+   le desliza por encima al scrollear. Ese par sticky/z-index es todo el truco: sin header ni
+   librerias. Vive en comp_modal_detalle; las fichas solo ponen el contenido. */
+ion-content.raveat-hoja-content {
+    --background: var(--raveat-surface);
+}
+
+/* Cerrar flota sobre la foto via slot="fixed": Ionic lo posiciona absoluto y el scroll no lo mueve. */
+.raveat-hoja__cerrar {
+    top: calc(var(--ion-safe-area-top, 0px) + 10px);
+    right: 10px;
+    width: 40px;
+    height: 40px;
+    margin: 0;
+    /* Opaco de verdad: scrolleada la hoja, el boton queda sobre el texto y con 45 % se leia a
+       traves. */
+    --background: rgba(0, 0, 0, 0.72);
+    --background-activated: rgba(0, 0, 0, 0.85);
+    --background-hover: rgba(0, 0, 0, 0.8);
+    --border-radius: 50%;
+    --box-shadow: none;
+    --color: #fff;
+    --padding-start: 0;
+    --padding-end: 0;
+}
+
+.raveat-hoja__fondo {
+    position: sticky;
+    top: 0;
+    z-index: 0;
+    overflow: hidden;
+    height: clamp(240px, 42vh, 400px);
+    background: #000;
+}
+
+.raveat-hoja__fondo img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Sin foto, el fondo es un degradado del color del estado, con el resumen encima. */
+.raveat-hoja__fondo--tinte {
+    display: grid;
+    height: auto;
+    min-height: 220px;
+    align-items: start;
+    color: #fff;
+}
+
+.raveat-hoja__fondo--primary { background: linear-gradient(135deg, var(--ion-color-primary-shade), var(--ion-color-primary-tint)); }
+.raveat-hoja__fondo--secondary { background: linear-gradient(135deg, var(--ion-color-secondary-shade), var(--ion-color-secondary-tint)); }
+.raveat-hoja__fondo--tertiary { background: linear-gradient(135deg, var(--ion-color-tertiary-shade), var(--ion-color-tertiary-tint)); }
+.raveat-hoja__fondo--success { background: linear-gradient(135deg, var(--ion-color-success-shade), var(--ion-color-success-tint)); }
+.raveat-hoja__fondo--warning { background: linear-gradient(135deg, var(--ion-color-warning-shade), var(--ion-color-warning-tint)); color: #1d1d1d; }
+.raveat-hoja__fondo--danger { background: linear-gradient(135deg, var(--ion-color-danger-shade), var(--ion-color-danger-tint)); }
+.raveat-hoja__fondo--medium { background: linear-gradient(135deg, var(--ion-color-medium-shade), var(--ion-color-medium-tint)); }
+
+/* El resumen que va sobre el fondo tenido: icono grande, titulo, subtitulo e importe. */
+.raveat-hero {
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+    /* Abajo sobra a proposito: la hoja monta 24 px sobre el fondo y, con tres lineas de texto
+       (la ficha del cliente), la ultima quedaba pegada al borde de la hoja. */
+    padding: calc(var(--ion-safe-area-top, 0px) + 56px) 20px 68px;
+    text-align: center;
+}
+
+.raveat-hero__icono {
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    margin-bottom: 6px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    font-size: 2rem;
+}
+
+.raveat-hero__titulo {
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+}
+
+.raveat-hero__subtitulo {
+    margin: 0;
+    opacity: 0.85;
+    font-size: 0.92rem;
+}
+
+.raveat-hero__importe {
+    margin: 6px 0 0;
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+}
+
+/* La hoja: margen negativo para montarse sobre el fondo y esquinas de action sheet. */
+.raveat-hoja {
+    position: relative;
+    z-index: 1;
+    min-height: 260px;
+    margin-top: -24px;
+    border-radius: 24px 24px 0 0;
+    background: var(--raveat-surface);
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.raveat-hoja__asa {
+    width: 40px;
+    height: 4px;
+    margin: 10px auto 0;
+    border-radius: 2px;
+    background: var(--raveat-border);
+}
+
+.raveat-hoja__encabezado {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.raveat-hoja__titulo {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+}
+
+/* El rotulo chico arriba del titulo: la categoria del plato, el tipo del pedido. */
+.raveat-hoja__rotulo {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--ion-color-primary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+/* El precio centrado entre dos lineas, como en una carta impresa: es la ficha que se le
+   muestra al comensal, no una fila de gestion. */
+.raveat-hoja__precio {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 4px 0;
+}
+
+.raveat-hoja__precio::before,
+.raveat-hoja__precio::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+}
+
+.raveat-hoja__precio::before {
+    background: linear-gradient(90deg, transparent, rgba(var(--ion-color-primary-rgb), 0.55));
+}
+
+.raveat-hoja__precio::after {
+    background: linear-gradient(90deg, rgba(var(--ion-color-primary-rgb), 0.55), transparent);
+}
+
+.raveat-hoja__precio strong {
+    padding: 10px 24px;
+    border: 1px solid rgba(var(--ion-color-primary-rgb), 0.35);
+    border-radius: 14px;
+    background: rgba(var(--ion-color-primary-rgb), 0.07);
+    font-size: 1.55rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+}
+
+/* El simbolo de la moneda, mas chico y en el primario: el numero es lo que se lee. */
+.raveat-hoja__simbolo {
+    margin-right: 4px;
+    color: var(--ion-color-primary);
+    font-size: 1.2rem;
+}
+
+/* La ficha del plato se lee como una carta impresa: titulo y subtitulos con serifa. La del
+   sistema (Georgia): una tipografia descargada seria peso en el APK para una sola pantalla. */
+.raveat-hoja__titulo--serifa {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: clamp(1.8rem, 7vw, 2.2rem);
+    font-weight: 700;
+    line-height: 1.12;
+}
+
+.raveat-hoja__seccion {
+    margin: 2px 0 0;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+}
+
+.raveat-hoja__divisor {
+    border-top: 1px dashed var(--raveat-border);
+}
+
+.raveat-hoja__descripcion {
+    margin: 0;
+    color: var(--raveat-muted);
+    font-size: 1rem;
+    line-height: 1.55;
+}
+
+/* --- zona peligrosa de la cuenta ------------------------------------------- */
+
+/* El borde rojo separa la herramienta de prueba del resto: que se note desde lejos que esta
+   tarjeta no es una preferencia mas. */
+.raveat-zona-peligrosa {
+    border-color: var(--ion-color-danger);
+}
+
+.raveat-zona-peligrosa__aviso {
+    margin: 0 0 12px;
+    color: var(--raveat-muted);
+    line-height: 1.4;
+}
+
+/* --- ficha de la entrega ------------------------------------------------------ */
+
+/* Cuatro botones de contacto no entran en un renglon de telefono: de a dos por fila. */
+.raveat-acciones--envuelve {
+    flex-wrap: wrap;
+}
+
+.raveat-acciones--envuelve ion-button {
+    flex: 1 1 calc(50% - 4px);
+}
+
+/* Los numeros que se leen de un vistazo, lado a lado arriba de los datos. */
+.raveat-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 8px;
+}
+
+.raveat-kpi {
+    display: grid;
+    gap: 2px;
+    padding: 10px 12px;
+    border-radius: var(--raveat-radio-chico);
+    background: var(--raveat-surface-strong);
+}
+
+.raveat-kpi span {
+    color: var(--raveat-muted);
+    font-size: 0.75rem;
+}
+
+.raveat-kpi strong {
+    font-size: 1.05rem;
+    font-variant-numeric: tabular-nums;
+}
+
+/* El recorrido: una linea vertical con un punto por paso. El tramo ya hecho va en verde, el
+   paso actual lleva un halo y el cierre negativo (cancelada) va en rojo. */
+.raveat-entrega-timeline {
+    margin: 0;
+    padding: 0 0 0 6px;
+    list-style: none;
+}
+
+.raveat-entrega-timeline__paso {
+    position: relative;
+    padding: 0 0 22px 20px;
+    border-left: 3px solid var(--raveat-border);
+}
+
+.raveat-entrega-timeline__paso:last-child {
+    padding-bottom: 0;
+    border-left-color: transparent;
+}
+
+.raveat-entrega-timeline__paso.completado {
+    border-left-color: var(--ion-color-success);
+}
+
+.raveat-entrega-timeline__punto {
+    position: absolute;
+    top: 2px;
+    left: -9px;
+    width: 15px;
+    height: 15px;
+    border: 2px solid var(--raveat-surface);
+    border-radius: 50%;
+    background: var(--raveat-border);
+}
+
+.raveat-entrega-timeline__paso.completado .raveat-entrega-timeline__punto {
+    background: var(--ion-color-success);
+}
+
+.raveat-entrega-timeline__paso.actual .raveat-entrega-timeline__punto {
+    background: var(--ion-color-primary);
+    box-shadow: 0 0 0 4px rgba(var(--ion-color-primary-rgb), 0.25);
+}
+
+.raveat-entrega-timeline__paso.completado.actual .raveat-entrega-timeline__punto {
+    background: var(--ion-color-success);
+    box-shadow: 0 0 0 4px rgba(var(--ion-color-success-rgb), 0.25);
+}
+
+.raveat-entrega-timeline__paso.negativo .raveat-entrega-timeline__punto {
+    background: var(--ion-color-danger);
+    box-shadow: 0 0 0 4px rgba(var(--ion-color-danger-rgb), 0.25);
+}
+
+.raveat-entrega-timeline__paso.negativo strong {
+    color: var(--ion-color-danger);
+}
+
+.raveat-entrega-timeline__texto {
+    display: grid;
+    gap: 2px;
+    line-height: 1.3;
+}
+
+.raveat-entrega-timeline__texto span {
+    color: var(--raveat-muted);
+    font-size: 0.8rem;
+}
+
+/* La frase de que le pasa al pedido, con la pildora debajo y nunca recortada. */
+.raveat-entrega-final {
+    display: grid;
+    justify-items: start;
+    gap: 8px;
+    padding: 10px 12px;
+    border: 1px solid var(--raveat-border);
+    border-radius: var(--raveat-radio-chico);
+    background: var(--raveat-surface-strong);
+    font-size: 0.88rem;
+}
+
+.raveat-entrega-final .raveat-pill {
+    max-width: 100%;
+    white-space: normal;
+}
+
+/* Una accion chica al final del pie de la tarjeta (el mapa de la entrega), empujada a la derecha. */
+.raveat-fila__accion {
+    margin: 0 0 0 auto;
+}
+
+/* --- boton flotante -------------------------------------------------------------- */
+
+/* La lista deja lugar abajo para que el boton flotante no tape la ultima tarjeta. */
+.raveat-page-stack.raveat-con-fab {
+    padding-bottom: 96px;
+}
+
+/* Los botones que despliega el FAB, casi del tamano del principal (56 px): con los 40 px por
+   defecto, las dos acciones mas usadas de la pantalla eran las mas dificiles de tocar. */
+.raveat-fab-accion {
+    width: 52px;
+    height: 52px;
+    --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.raveat-fab-accion ion-icon {
+    font-size: 24px;
+}
+
+/* --- vitrina por categoria --------------------------------------------------------- */
+
+/* Cierra la seccion de la categoria: debajo de la grilla y con su mismo ancho. */
+.raveat-seccion__ver-mas {
+    margin: 12px 0 0;
+}
+
+/* --- categoria nueva dentro del formulario de producto ------------------------------ */
+
+.raveat-nueva-categoria {
+    padding: 2px 4px 6px;
+}
+
+.raveat-nueva-categoria__campo {
+    --background: var(--raveat-surface-strong);
+    margin-top: 2px;
+    border-radius: var(--raveat-radio-chico);
+}
+
+/* --- panel de resumen de una pantalla ---------------------------------------------- */
+
+/* La cabecera de las pantallas de gestion: titulo, cuanto hay y la accion principal. */
+.raveat-panel-resumen {
+    display: grid;
+    gap: 12px;
+    padding: 16px;
+}
+
+.raveat-panel-resumen__encabezado h2,
+.raveat-panel-resumen__encabezado p {
+    margin: 0;
+}
+
+.raveat-panel-resumen__encabezado h2 {
+    font-size: 1.3rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+}
+
+.raveat-panel-resumen__encabezado p {
+    margin-top: 2px;
+    color: var(--raveat-muted);
+    font-size: 0.9rem;
+}
+
+.raveat-panel-resumen ion-button {
+    margin: 0;
+}
+
+/* --- ficha del cliente ------------------------------------------------------------- */
+
+/* Un pedido anterior se toca para abrir su ficha en Pedidos. */
+.raveat-detalle-items__boton {
+    cursor: pointer;
+}
+
+/* --- aviso ---------------------------------------------------------------------- */
+
+/* Barra lateral de color, icono y texto: lo que lo distingue de un parrafo cualquiera de un
+   vistazo. Los tonos salen de la paleta de Ionic. */
+.raveat-aviso {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1px solid var(--raveat-border);
+    border-left: 3px solid var(--raveat-border);
+    border-radius: 12px;
+    background: var(--raveat-surface);
+    font-size: 0.88rem;
+    line-height: 1.4;
+}
+
+.raveat-aviso__icono {
+    flex: 0 0 auto;
+    margin-top: 1px;
+    font-size: 1.2rem;
+}
+
+.raveat-aviso__texto {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+.raveat-aviso__texto strong {
+    font-size: 0.92rem;
+}
+
+.raveat-aviso__texto span {
+    color: var(--raveat-muted);
+}
+
+.raveat-aviso--info { border-left-color: var(--ion-color-primary); }
+.raveat-aviso--info .raveat-aviso__icono { color: var(--ion-color-primary); }
+.raveat-aviso--pendiente { border-left-color: var(--ion-color-warning); }
+.raveat-aviso--pendiente .raveat-aviso__icono { color: var(--ion-color-warning-shade); }
+.raveat-aviso--error { border-left-color: var(--ion-color-danger); }
+.raveat-aviso--error .raveat-aviso__icono,
+.raveat-aviso--error .raveat-aviso__texto span { color: var(--ion-color-danger); }
+.raveat-aviso--exito { border-left-color: var(--ion-color-success); }
+.raveat-aviso--exito .raveat-aviso__icono { color: var(--ion-color-success); }
+
+/* El + del selector de productos del pedido: cuadrado, del tamano del contador que lo
+   reemplaza al sumar, para que la fila no salte. */
+.raveat-boton-sumar {
+    margin: 0;
+    width: 40px;
+    height: 40px;
+    --border-radius: 10px;
+    --padding-start: 0;
+    --padding-end: 0;
+}
+
+/* Ionic le da el foco al cuadro de confirmacion al abrirlo y Chrome le dibuja su anillo de foco:
+   un borde blanco alrededor del cuadro oscuro. En el telefono no hay teclado que lo necesite. */
+ion-alert .alert-wrapper:focus-visible,
+ion-action-sheet .action-sheet-group:focus-visible {
+    outline: none;
+}
+
+/* --- seleccion multiple ------------------------------------------------------------- */
+
+/* La barra del lote: el "todos" a la izquierda y las acciones a la derecha. */
+.raveat-seleccion {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 14px;
+}
+
+.raveat-seleccion__acciones {
+    display: flex;
+    gap: 6px;
+}
+
+.raveat-seleccion__acciones ion-button {
+    margin: 0;
+}
+
+/* La marca de la fila no recibe el toque: lo recibe la fila entera, que es la que decide. */
+.raveat-seleccion__marca {
+    flex: 0 0 auto;
+    /* Dentro de un ion-item, Ionic estira el checkbox al 100 % para que ocupe la fila entera:
+       aca va al lado del texto, y con ese ancho el nombre y el rol se quedaban sin lugar. */
+    width: auto;
+    height: auto;
+    pointer-events: none;
+}
+
+.raveat-lista-tarjetas ion-item.raveat-fila--marcada {
+    --background: rgba(var(--ion-color-primary-rgb), 0.08);
+    border-color: var(--ion-color-primary);
+}

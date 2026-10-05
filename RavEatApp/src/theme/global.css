@@ -7,12 +7,23 @@
     --raveat-border: rgba(18, 18, 18, 0.16);
     /* Gris mas oscuro que ion-color-medium para mejor contraste sobre fondo claro. */
     --raveat-muted: #565a66;
+    /* Esqueleto de carga: una base que se ve de verdad y el destello que la recorre. El
+       ion-skeleton-text de Ionic pinta el texto al 6,5 % y sobre la tarjeta desaparece. */
+    --raveat-esqueleto: rgba(18, 18, 18, 0.12);
+    --raveat-esqueleto-brillo: rgba(255, 255, 255, 0.6);
+    /* La forma de las tarjetas, una sola vez: el radio y la sombra que repite toda la app. */
+    --raveat-radio: 16px;
+    --raveat-radio-chico: 10px;
+    --raveat-sombra: 0 6px 18px rgba(0, 0, 0, 0.12);
 }
 
 :root.ion-palette-dark {
     --raveat-surface: var(--ion-card-background, #1f1f1f);
     --raveat-surface-strong: rgba(255, 255, 255, 0.06);
     --raveat-border: rgba(255, 255, 255, 0.08);
+    --raveat-esqueleto: rgba(255, 255, 255, 0.1);
+    --raveat-esqueleto-brillo: rgba(255, 255, 255, 0.16);
+    --raveat-sombra: 0 6px 18px rgba(0, 0, 0, 0.4);
 }
 
 /* La columna se fija en minmax(0, 1fr) y no se deja en auto: una columna auto se agranda hasta
@@ -32,12 +43,70 @@
     background: var(--raveat-surface);
 }
 
+/* --- escala tipografica -------------------------------------------------- */
+
+/* Tres pasos y nada mas: el titulo de una fila, su dato secundario y el importe destacado. La
+   jerarquia la hacen el peso y el color; cada pantalla usa estas clases y no inventa tamanos. */
 .raveat-item-title {
+    margin: 0 0 2px;
+    font-size: 1.05rem;
     font-weight: 700;
+    letter-spacing: -0.01em;
 }
 
 .raveat-item-meta {
     color: var(--raveat-muted);
+    font-size: 0.85rem;
+}
+
+/* Un paso por encima del titulo: el importe es lo que caja mira primero, sin gritar. */
+.raveat-precio-destacado {
+    font-size: 1.15rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+/* --- tintes por color de la paleta --------------------------------------- */
+
+/* Fondo translucido y texto del color: asi se muestra un estado en toda la app. Una clase por
+   color de Ionic; el dominio elige cual en utils/estados.js y ninguna pantalla mezcla otra. */
+.raveat-tinte-primary { background: rgba(var(--ion-color-primary-rgb), 0.14); color: var(--ion-color-primary); }
+.raveat-tinte-secondary { background: rgba(var(--ion-color-secondary-rgb), 0.14); color: var(--ion-color-secondary); }
+.raveat-tinte-tertiary { background: rgba(var(--ion-color-tertiary-rgb), 0.16); color: var(--ion-color-tertiary); }
+.raveat-tinte-success { background: rgba(var(--ion-color-success-rgb), 0.14); color: var(--ion-color-success); }
+.raveat-tinte-warning { background: rgba(var(--ion-color-warning-rgb), 0.18); color: var(--ion-color-warning-shade); }
+.raveat-tinte-danger { background: rgba(var(--ion-color-danger-rgb), 0.14); color: var(--ion-color-danger); }
+.raveat-tinte-medium { background: rgba(var(--ion-color-medium-rgb), 0.18); color: var(--ion-color-medium-shade); }
+
+/* La pildora tenida, con icono opcional: reemplaza al ion-badge solido en filas y fichas. */
+.raveat-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1.3;
+    white-space: nowrap;
+}
+
+.raveat-pill ion-icon {
+    flex: 0 0 auto;
+    font-size: 0.95rem;
+}
+
+/* El icono del estado en su cuadrado tenido, a la izquierda de la fila o del indicador. */
+.raveat-icono-estado {
+    display: grid;
+    flex: 0 0 auto;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    font-size: 1.2rem;
 }
 
 /* --- vidriera: el encabezado de bienvenida ------------------------------- */
@@ -104,9 +173,9 @@
     overflow: hidden;
     margin: 0;
     border: 1px solid var(--raveat-border);
-    border-radius: 16px;
+    border-radius: var(--raveat-radio);
     background: var(--raveat-surface);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+    box-shadow: var(--raveat-sombra);
 }
 
 .raveat-seccion-titulo {
@@ -118,15 +187,17 @@
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.04em;
+    color: var(--raveat-seccion-acento, inherit);
 }
 
-/* La barrita de color a la izquierda del titulo, en la misma gama que la vidriera. */
+/* La barrita de color a la izquierda del titulo. Con acento (--raveat-seccion-acento, el de la
+   categoria en la vitrina) toma ese color; sin acento, el degradado de la vidriera. */
 .raveat-seccion-titulo::before {
     content: "";
     width: 5px;
     height: 20px;
     border-radius: 3px;
-    background: linear-gradient(180deg, #4364f7, #6fb1fc);
+    background: var(--raveat-seccion-acento, linear-gradient(180deg, #4364f7, #6fb1fc));
 }
 
 /* --- grilla y tarjeta de producto ---------------------------------------- */
@@ -142,9 +213,9 @@
 .raveat-producto-card {
     overflow: hidden;
     border: 1px solid var(--raveat-border);
-    border-radius: 16px;
+    border-radius: var(--raveat-radio);
     background: var(--raveat-surface);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+    box-shadow: var(--raveat-sombra);
 }
 
 .raveat-producto-card.agotado {
@@ -337,4 +408,64 @@
 .raveat-detalle-acciones {
     display: grid;
     gap: 8px;
+}
+
+/* --- botones ---------------------------------------------------------------- */
+
+/* Un solo boton para toda la app: esquinas de 12 px, alto de 3 rem y el texto tal cual se escribe.
+   Ionic los dibuja en mayusculas y con esquinas de 4 px en Material; con las tarjetas de 16 px
+   quedaban de otra epoca. Los chicos (size="small") y los de las barras conservan su alto. */
+ion-button {
+    --border-radius: 12px;
+    --padding-start: 1rem;
+    --padding-end: 1rem;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+ion-button:not(.button-small):not(.in-toolbar) {
+    min-height: 3rem;
+}
+
+ion-button.button-small {
+    --border-radius: 10px;
+}
+
+/* --- modal flotante ----------------------------------------------------------- */
+
+/* Los formularios no tapan la pantalla: flotan como una tarjeta, con esquinas redondas y el
+   fondo oscurecido atras. Se miden por su contenido: por eso adentro no hay ion-content —que se
+   posiciona absoluto y no aporta alto— sino un cuerpo propio que es el que scrollea cuando el
+   formulario no entra. Las fichas siguen a pantalla completa: la foto de fondo es su razon de ser. */
+ion-modal.raveat-modal-flotante {
+    --width: min(94%, 460px);
+    --height: auto;
+    --max-height: 88%;
+    --border-radius: 20px;
+    --box-shadow: 0 28px 48px rgba(0, 0, 0, 0.4);
+    --backdrop-opacity: 0.35;
+}
+
+ion-modal.raveat-modal-flotante .ion-page {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    max-height: 88vh;
+    contain: content;
+}
+
+ion-modal.raveat-modal-flotante ion-header {
+    flex: 0 0 auto;
+}
+
+ion-modal.raveat-modal-flotante ion-toolbar {
+    --background: var(--raveat-surface);
+}
+
+.raveat-modal-flotante__cuerpo {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    background: var(--ion-background-color);
 }

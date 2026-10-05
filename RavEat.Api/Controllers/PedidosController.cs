@@ -216,14 +216,14 @@ public sealed class PedidosController(RavEatDbContext db) : ControllerBase {
         if(!permitidos.Contains(request.Estado)) {
             return BadRequest(new {
                 codigo = "transicion_invalida",
-                mensaje = $"Un pedido en '{Etiqueta(pedido.Estado)}' no puede pasar a '{Etiqueta(request.Estado)}'."
+                mensaje = $"Un pedido en '{pedido.Estado.Texto()}' no puede pasar a '{request.Estado.Texto()}'."
             });
         }
 
         pedido.Estado = request.Estado;
         if(request.Estado == EstadoPedido.Confirmado) pedido.ConfirmadoEn = DateTimeOffset.UtcNow;
         if(request.Estado == EstadoPedido.Cerrado) pedido.CerradoEn = DateTimeOffset.UtcNow;
-        await NotificarCreadorAsync(pedido, $"lo pasó a '{Etiqueta(request.Estado)}'.", cancellationToken);
+        await NotificarCreadorAsync(pedido, $"lo pasó a '{request.Estado.Texto()}'.", cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
         return Ok(new {estado = pedido.Estado});
     }
@@ -241,7 +241,7 @@ public sealed class PedidosController(RavEatDbContext db) : ControllerBase {
         pedido.MedioPago = request.MedioPago;
         pedido.PropinaImporte = request.PropinaImporte;
         pedido.PagadoEn = DateTimeOffset.UtcNow;
-        await NotificarCreadorAsync(pedido, $"registró el pago ({Etiqueta(request.MedioPago)}).", cancellationToken);
+        await NotificarCreadorAsync(pedido, $"registró el pago ({request.MedioPago.Texto()}).", cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
         return Ok(new {estado_pago = pedido.EstadoPago, total = pedido.Total, propina_importe = pedido.PropinaImporte});
     }
@@ -254,7 +254,7 @@ public sealed class PedidosController(RavEatDbContext db) : ControllerBase {
         var pedido = await db.Pedidos.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
         if(pedido is null) return NotFound(new {codigo = "pedido_no_encontrado", mensaje = "El pedido no existe."});
         if(!TransicionesValidas[pedido.Estado].Contains(EstadoPedido.Cancelado)) {
-            return BadRequest(new {codigo = "transicion_invalida", mensaje = $"Un pedido en '{Etiqueta(pedido.Estado)}' ya no se puede cancelar."});
+            return BadRequest(new {codigo = "transicion_invalida", mensaje = $"Un pedido en '{pedido.Estado.Texto()}' ya no se puede cancelar."});
         }
         pedido.Estado = EstadoPedido.Cancelado;
         if(pedido.EstadoPago == EstadoPago.Pendiente) pedido.EstadoPago = EstadoPago.Anulado;
@@ -289,12 +289,6 @@ public sealed class PedidosController(RavEatDbContext db) : ControllerBase {
         if(codigo is null) return NotFound(new {codigo = "pedido_no_encontrado", mensaje = "El pedido no existe."});
         return File(GenerarQrPedido(codigo), "image/png", $"{codigo}-qr.png");
     }
-
-    // Los mensajes de error y el comprobante nombran los enums como los serializa la API
-    // (snake_case), no como se llaman en C#: si no, la pantalla muestra 'EnPreparacion' donde el
-    // resto dice 'en_preparacion' y parecen dos cosas distintas.
-    private static string Etiqueta<T>(T valor) where T : struct, Enum =>
-        System.Text.Json.JsonNamingPolicy.SnakeCaseLower.ConvertName(valor.ToString());
 
     // El codigo lo genera el servidor: identifica al pedido en el mostrador (y en el QR), y no
     // puede depender de dos telefonos que no se hablan entre si.
@@ -366,7 +360,7 @@ public sealed class PedidosController(RavEatDbContext db) : ControllerBase {
                         row.RelativeItem().Text("Total").Bold();
                         row.RelativeItem().AlignRight().Text(totalConPropina.ToString("C0", CulturaPesos)).Bold();
                     });
-                    column.Item().PaddingTop(6).Text($"Pago: {Etiqueta(pedido.EstadoPago)}{(pedido.MedioPago.HasValue ? $" - {Etiqueta(pedido.MedioPago.Value)}" : string.Empty)}");
+                    column.Item().PaddingTop(6).Text($"Pago: {pedido.EstadoPago.Texto()}{(pedido.MedioPago.HasValue ? $" - {pedido.MedioPago.Value.Texto()}" : string.Empty)}");
                 });
                 // El mismo QR de /qr, impreso: escanear el papel encuentra el pedido en la app.
                 page.Footer().AlignCenter().Column(column => {

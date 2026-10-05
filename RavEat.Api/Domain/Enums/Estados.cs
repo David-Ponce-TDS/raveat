@@ -48,3 +48,38 @@ public enum TipoNotificacion {
     Pedido,
     Entrega
 }
+
+// Como se NOMBRA cada valor en los textos que lee una persona: el aviso de la bandeja (y su push),
+// los errores de transicion y el comprobante. Son los mismos textos de utils/estados.js en la app:
+// antes salia el codigo de la API ('en_preparacion') y el aviso no se parecia a la pantalla.
+public static class TextosEstados {
+    public static string Texto(this EstadoPedido estado) => estado switch {
+        EstadoPedido.Borrador => "Borrador",
+        EstadoPedido.Confirmado => "Confirmado",
+        EstadoPedido.EnPreparacion => "En preparación",
+        EstadoPedido.Listo => "Listo",
+        EstadoPedido.Entregado => "Entregado",
+        EstadoPedido.Cerrado => "Cerrado",
+        _ => "Cancelado"
+    };
+
+    public static string Texto(this EstadoPago estado) => estado switch {
+        EstadoPago.Pendiente => "Pendiente",
+        EstadoPago.Pagado => "Pagado",
+        _ => "Anulado"
+    };
+
+    public static string Texto(this MedioPago medio) => medio switch {
+        MedioPago.Efectivo => "Efectivo",
+        MedioPago.Transferencia => "Transferencia",
+        _ => "Tarjeta"
+    };
+
+    public static string Texto(this EstadoEntrega estado) => estado switch {
+        EstadoEntrega.Pendiente => "Pendiente",
+        EstadoEntrega.Asignada => "Asignada",
+        EstadoEntrega.EnCamino => "En camino",
+        EstadoEntrega.Entregada => "Entregada",
+        _ => "Cancelada"
+    };
+}

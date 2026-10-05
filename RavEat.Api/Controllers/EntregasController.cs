@@ -141,7 +141,7 @@ public sealed class EntregasController(RavEatDbContext db) : ControllerBase {
 
         var permitidos = TransicionesValidas[entrega.Estado];
         if(!permitidos.Contains(request.Estado)) {
-            return BadRequest(new {codigo = "transicion_invalida", mensaje = $"Una entrega en '{Etiqueta(entrega.Estado)}' no puede pasar a '{Etiqueta(request.Estado)}'."});
+            return BadRequest(new {codigo = "transicion_invalida", mensaje = $"Una entrega en '{entrega.Estado.Texto()}' no puede pasar a '{request.Estado.Texto()}'."});
         }
 
         entrega.Estado = request.Estado;
@@ -168,9 +168,6 @@ public sealed class EntregasController(RavEatDbContext db) : ControllerBase {
     // El nombre del que ejecuta sale de la base: el token lleva id, email y rol, no el nombre.
     private Task<string> NombreDeQuienEjecuta(CancellationToken cancellationToken) =>
         db.Usuarios.AsNoTracking().Where(x => x.Id == User.UsuarioId()).Select(x => x.Nombre).FirstAsync(cancellationToken);
-
-    private static string Etiqueta(EstadoEntrega estado) =>
-        System.Text.Json.JsonNamingPolicy.SnakeCaseLower.ConvertName(estado.ToString());
 }
 
 public sealed record EntregaResumenResponse(

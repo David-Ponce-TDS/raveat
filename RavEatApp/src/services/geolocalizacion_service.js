@@ -42,3 +42,10 @@ export function url_mapa(latitud, longitud, direccion = ''){
 	}
 	return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(direccion)}`;
 }
+
+// "Ruta" en vez de "mapa": abre el navegador ya calculando como llegar. Para el repartidor en la
+// calle, ver el punto y despues pedir indicaciones son dos pasos; esto es uno.
+export function url_ruta(latitud, longitud, direccion = ''){
+	const destino = latitud != null && longitud != null ? `${latitud},${longitud}` : direccion;
+	return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destino)}`;
+}

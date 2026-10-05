@@ -2,7 +2,7 @@ import { Capacitor } from '@capacitor/core';
 import { Directory, Filesystem } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 
-// Compartir un archivo (el comprobante en PDF). Devuelve siempre {ok, mensaje}.
+// Compartir un archivo (el comprobante en PDF) o un texto. Devuelve siempre {ok, mensaje}.
 //   - Android: se escribe a disco y se comparte la URI (el sistema no lee un Blob de la webview)
 //   - Navegador: navigator.share con un File y, si no sabe compartir archivos, la descarga
 export async function compartir_archivo({nombre_archivo, blob, titulo, texto}){
@@ -23,6 +23,25 @@ export async function compartir_archivo({nombre_archivo, blob, titulo, texto}){
 			dialogTitle: titulo || 'Compartir comprobante'
 		});
 		return {ok: true, mensaje: null};
+	}catch(error){
+		return {ok: false, mensaje: normalizar_mensaje(error)};
+	}
+}
+
+// Compartir texto plano (los datos de un pedido). No pide nada a la API, asi que anda sin red.
+// En el navegador sin navigator.share, el texto queda en el portapapeles y se avisa.
+export async function compartir_texto({titulo, texto, dialogo}){
+	try{
+		if(Capacitor.isNativePlatform()){
+			await Share.share({title: titulo, text: texto, dialogTitle: dialogo || titulo || 'Compartir'});
+			return {ok: true, mensaje: null};
+		}
+		if(navigator.share){
+			await navigator.share({title: titulo, text: texto});
+			return {ok: true, mensaje: null};
+		}
+		await navigator.clipboard.writeText(texto);
+		return {ok: true, mensaje: 'El navegador no permite compartir: se copió al portapapeles.'};
 	}catch(error){
 		return {ok: false, mensaje: normalizar_mensaje(error)};
 	}

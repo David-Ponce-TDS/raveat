@@ -1,22 +1,48 @@
 <template>
 	<comp-modal-detalle
 		:abierto="abierto"
+		:hero_color="pedido ? estado_pedido(pedido.estado).color : ''"
 		:mostrar_actualizar="true"
 		:titulo="pedido ? pedido.codigo : 'Pedido'"
 		@actualizar="$emit('actualizar')"
 		@cerrar="$emit('cerrar')"
 	>
+		<!-- El fondo tenido con el color del estado: el icono, el codigo, quien y cuanto. Lo que
+		     se lee de un vistazo antes de bajar a los datos. -->
+		<template #hero>
+			<div v-if="pedido" class="raveat-hero">
+				<div class="raveat-hero__icono">
+					<ion-icon :icon="estado_pedido(pedido.estado).icono" aria-hidden="true" />
+				</div>
+				<h2 class="raveat-hero__titulo">{{ pedido.codigo }}</h2>
+				<p class="raveat-hero__subtitulo">{{ pedido.cliente_nombre || 'Mostrador' }} · {{ tipo_pedido(pedido.tipo).texto }}</p>
+				<p class="raveat-hero__importe">{{ formatear_importe(pedido.total) }}</p>
+			</div>
+		</template>
+
 		<comp-esqueleto v-if="!pedido" :filas="4" />
 		<template v-else>
-			<comp-detalle-seccion titulo="Pedido" :subtitulo="etiqueta(pedido.tipo)">
-				<div class="raveat-detalle-badges">
-					<ion-badge :color="color_estado(pedido.estado)">{{ etiqueta(pedido.estado) }}</ion-badge>
-					<ion-badge :color="pedido.estado_pago == 'pagado' ? 'success' : 'medium'">{{ etiqueta(pedido.estado_pago) }}</ion-badge>
-					<ion-badge v-if="pedido.sin_enviar" color="warning">Sin enviar</ion-badge>
-				</div>
+			<!-- Las mismas pildoras que la fila de la lista: el estado, el pago y, si espera en
+			     la cola, la marca de que la API todavia no lo sabe. -->
+			<div class="raveat-detalle-badges">
+				<span class="raveat-pill" :class="clase_tinte(estado_pedido(pedido.estado).color)">
+					<ion-icon :icon="estado_pedido(pedido.estado).icono" aria-hidden="true" />
+					{{ estado_pedido(pedido.estado).texto }}
+				</span>
+				<span class="raveat-pill" :class="clase_tinte(estado_pago(pedido.estado_pago).color)">
+					<ion-icon :icon="estado_pago(pedido.estado_pago).icono" aria-hidden="true" />
+					{{ estado_pago(pedido.estado_pago).texto }}
+				</span>
+				<span v-if="pedido.sin_enviar" class="raveat-pill raveat-tinte-warning">
+					<ion-icon :icon="icono_sin_enviar" aria-hidden="true" />
+					Sin enviar
+				</span>
+			</div>
+
+			<comp-detalle-seccion titulo="Pedido" :subtitulo="tipo_pedido(pedido.tipo).texto">
 				<div class="raveat-detalle-datos">
 					<comp-detalle-dato label="Cliente" :valor="pedido.cliente_nombre || 'Mostrador'" />
-					<comp-detalle-dato label="Creado" :valor="fecha_creado" />
+					<comp-detalle-dato label="Creado" :valor="formatear_fecha_larga(pedido.creado_en)" />
 					<comp-detalle-dato v-if="pedido.observaciones" label="Observaciones" :valor="pedido.observaciones" />
 				</div>
 			</comp-detalle-seccion>
@@ -27,7 +53,7 @@
 					<comp-detalle-dato v-if="pedido.descuento" label="Descuento" :valor="'- ' + formatear_importe(pedido.descuento)" />
 					<comp-detalle-dato v-if="pedido.propina_importe" label="Propina" :valor="formatear_importe(pedido.propina_importe)" />
 					<comp-detalle-dato label="Total" :valor="formatear_importe(pedido.total)" />
-					<comp-detalle-dato v-if="pedido.medio_pago" label="Medio de pago" :valor="etiqueta(pedido.medio_pago)" />
+					<comp-detalle-dato v-if="pedido.medio_pago" label="Medio de pago" :valor="medio_pago(pedido.medio_pago).texto" />
 				</div>
 			</comp-detalle-seccion>
 
@@ -61,7 +87,7 @@
 			     el comprobante y cancelar le piden a la API, y no se dibujan. -->
 			<div class="raveat-detalle-acciones">
 				<ion-button v-if="siguiente" expand="block" :disabled="guardando" @click="$emit('estado', siguiente)">
-					Pasar a {{ etiqueta(siguiente) }}
+					Pasar a {{ estado_pedido(siguiente).texto }}
 				</ion-button>
 				<ion-button v-if="puede_cobrar && !sin_conexion" expand="block" fill="outline" :disabled="guardando" @click="$emit('cobrar', 'efectivo')">
 					Cobrar en efectivo
@@ -73,6 +99,12 @@
 					<ion-icon slot="start" :icon="icono_comprobante" />
 					Comprobante
 				</ion-button>
+				<!-- Los datos como texto, para mandarlos por donde sea. No le pide nada a la API: con
+				     lo que la ficha ya tiene alcanza, asi que tambien se ofrece sin red. -->
+				<ion-button expand="block" fill="clear" @click="$emit('compartir')">
+					<ion-icon slot="start" :icon="icono_compartir" />
+					Compartir datos del pedido
+				</ion-button>
 				<ion-button v-if="puede_cancelar && !sin_conexion" expand="block" fill="clear" color="danger" :disabled="guardando" @click="$emit('cancelar')">
 					Cancelar pedido
 				</ion-button>
@@ -82,23 +114,22 @@
 </template>
 
 <script>import {
-	IonBadge,
 	IonButton,
 	IonIcon,
 	IonNote,
 	IonSpinner
 } from '@ionic/vue';
-import { documentTextOutline } from 'ionicons/icons';
+import { cloudUploadOutline, documentTextOutline, shareSocialOutline } from 'ionicons/icons';
 import comp_detalle_dato from '@/components/base/comp_detalle_dato.vue';
 import comp_detalle_seccion from '@/components/base/comp_detalle_seccion.vue';
 import comp_esqueleto from '@/components/base/comp_esqueleto.vue';
 import comp_modal_detalle from '@/components/base/comp_modal_detalle.vue';
-import { color_estado, etiqueta, siguiente_estado } from '@/utils/pedidos_presentacion';
+import { clase_tinte, estado_pago, estado_pedido, medio_pago, siguiente_estado_pedido, tipo_pedido } from '@/utils/estados';
+import { formatear_fecha_larga } from '@/utils/formato_fecha';
 import { formatear_importe } from '@/utils/formato_moneda';
 
-// La ficha del pedido: lo que antes era una hoja de acciones sin datos. Muestra el pedido entero
-// —estado, importes, items y su QR— y ofrece las mismas acciones, pero al lado de la informacion
-// con la que se deciden.
+// La ficha del pedido como hoja: el resumen sobre el fondo del color del estado y, debajo, los
+// datos, los items, el QR y las acciones, al lado de la informacion con la que se deciden.
 // No habla con la API ni con el store: recibe el pedido y emite lo que hay que hacer. La pantalla
 // orquesta, la ficha dibuja.
 export default {
@@ -108,7 +139,6 @@ export default {
 		CompDetalleSeccion: comp_detalle_seccion,
 		CompEsqueleto: comp_esqueleto,
 		CompModalDetalle: comp_modal_detalle,
-		IonBadge,
 		IonButton,
 		IonIcon,
 		IonNote,
@@ -119,6 +149,7 @@ export default {
 		'cancelar',
 		'cerrar',
 		'cobrar',
+		'compartir',
 		'comprobante',
 		'estado'
 	],
@@ -154,15 +185,12 @@ export default {
 	},
 	data(){
 		return {
-			icono_comprobante: documentTextOutline
+			icono_compartir: shareSocialOutline,
+			icono_comprobante: documentTextOutline,
+			icono_sin_enviar: cloudUploadOutline
 		};
 	},
 	computed: {
-		fecha_creado(){
-			var vm = this;
-			if(!vm.pedido || !vm.pedido.creado_en) return '';
-			return new Date(vm.pedido.creado_en).toLocaleString('es-AR');
-		},
 		puede_cancelar(){
 			var vm = this;
 			if(!vm.pedido) return false;
@@ -176,12 +204,16 @@ export default {
 		siguiente(){
 			var vm = this;
 			if(!vm.pedido) return '';
-			return siguiente_estado(vm.pedido.estado);
+			return siguiente_estado_pedido(vm.pedido.estado);
 		}
 	},
 	methods: {
-		color_estado,
-		etiqueta,
-		formatear_importe
+		clase_tinte,
+		estado_pago,
+		estado_pedido,
+		formatear_fecha_larga,
+		formatear_importe,
+		medio_pago,
+		tipo_pedido
 	}
 };</script>

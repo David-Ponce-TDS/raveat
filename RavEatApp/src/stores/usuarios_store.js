@@ -99,6 +99,25 @@ export const use_usuarios_store = defineStore('usuarios', {
 				vm.guardando = false;
 			}
 		},
+		// La baja en lote: una por una contra el mismo DELETE, y una sola recarga al final. Si
+		// alguna falla, las otras siguen: se devuelve cuantas salieron y el ultimo motivo.
+		eliminar_varios: async function(ids){
+			var vm = this;
+			vm.guardando = true;
+			let eliminados = 0;
+			let mensaje = '';
+			for(const id of ids){
+				try{
+					await eliminar_usuario(id);
+					eliminados++;
+				}catch(error){
+					mensaje = error.mensaje || 'No se pudo dar de baja a un usuario.';
+				}
+			}
+			await vm.cargar();
+			vm.guardando = false;
+			return {eliminados, fallidos: ids.length - eliminados, mensaje};
+		},
 		eliminar: async function(id){
 			var vm = this;
 			vm.guardando = true;

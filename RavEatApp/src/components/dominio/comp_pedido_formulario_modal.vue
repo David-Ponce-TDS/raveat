@@ -79,6 +79,12 @@
 						<span>{{ cliente_seleccionado.direccion_linea }}</span>
 						<span v-if="cliente_seleccionado.direccion_referencia" class="raveat-item-meta">{{ cliente_seleccionado.direccion_referencia }}</span>
 						<span class="raveat-item-meta">{{ cliente_con_punto ? coordenadas_cliente : 'Sin punto: el mapa busca por la dirección escrita.' }}</span>
+						<!-- El punto se marca desde aca y va a su ficha: mandar a Clientes en medio de
+						     un pedido es hacerle perder lo cargado. -->
+						<ion-button size="small" fill="outline" :disabled="guardando_cliente" @click="mapa_abierto = true">
+							<ion-icon slot="start" :icon="icono_mapa" />
+							{{ cliente_con_punto ? 'Corregir en el mapa' : 'Marcar en el mapa' }}
+						</ion-button>
 					</template>
 					<template v-else>
 						<strong>{{ cliente_seleccionado.nombre }} no tiene dirección cargada.</strong>
@@ -91,10 +97,17 @@
 								<ion-input v-model="direccion_nueva.direccion_referencia" label="Referencia" label-placement="stacked" placeholder="Timbre, piso, entre calles" />
 							</ion-item>
 						</ion-list>
-						<ion-button size="small" :disabled="!hay_direccion_nueva || guardando_cliente" @click="guardar_direccion_del_cliente">
-							<ion-spinner v-if="guardando_cliente" slot="start" name="crescent" />
-							Guardar en su ficha
-						</ion-button>
+						<span class="raveat-item-meta">{{ direccion_nueva_con_punto ? coordenadas_nuevas : 'El punto es opcional: sin él, el mapa busca por la dirección.' }}</span>
+						<div class="raveat-ubicacion__acciones">
+							<ion-button size="small" fill="outline" @click="mapa_abierto = true">
+								<ion-icon slot="start" :icon="icono_mapa" />
+								{{ direccion_nueva_con_punto ? 'Corregir en el mapa' : 'Marcar en el mapa' }}
+							</ion-button>
+							<ion-button size="small" :disabled="!hay_direccion_nueva || guardando_cliente" @click="guardar_direccion_del_cliente">
+								<ion-spinner v-if="guardando_cliente" slot="start" name="crescent" />
+								Guardar en su ficha
+							</ion-button>
+						</div>
 					</template>
 				</div>
 
@@ -159,6 +172,18 @@
 	</ion-modal>
 
 	<comp-producto-detalle-modal :abierto="producto_detalle_abierto" :producto="producto_detalle" @cerrar="cerrar_producto" />
+
+	<!-- Un solo mapa para los dos casos: el cliente que ya tiene direccion (el punto va directo
+	     a su ficha) y la direccion que se esta escribiendo (el punto espera al Guardar). -->
+	<comp-selector-ubicacion
+		:abierto="mapa_abierto"
+		titulo="Ubicación de la entrega"
+		:latitud="punto_para_el_mapa.latitud"
+		:longitud="punto_para_el_mapa.longitud"
+		:direccion="punto_para_el_mapa.direccion"
+		@cerrar="mapa_abierto = false"
+		@confirmar="tomar_punto_del_mapa"
+	/>
 </template>
 
 <script>import {
@@ -176,9 +201,10 @@
 	IonTitle,
 	IonToolbar
 } from '@ionic/vue';
-import { addOutline, cartOutline, removeOutline } from 'ionicons/icons';
+import { addOutline, cartOutline, mapOutline, removeOutline } from 'ionicons/icons';
 import comp_aviso from '@/components/base/comp_aviso.vue';
 import comp_buscador from '@/components/base/comp_buscador.vue';
+import comp_selector_ubicacion from '@/components/base/comp_selector_ubicacion.vue';
 import comp_estado_vacio from '@/components/base/comp_estado_vacio.vue';
 import comp_producto_detalle_modal from '@/components/dominio/comp_producto_detalle_modal.vue';
 import comp_producto_lista_item from '@/components/dominio/comp_producto_lista_item.vue';
@@ -186,6 +212,13 @@ import { formatear_coordenadas } from '@/services/geolocalizacion_service';
 import { formatear_importe } from '@/utils/formato_moneda';
 import { resolver_url_imagen } from '@/utils/imagenes';
 import { use_carrito_store } from '@/stores/carrito_store';
+
+const DIRECCION_VACIA = {
+	direccion_linea: '',
+	direccion_referencia: '',
+	direccion_latitud: null,
+	direccion_longitud: null
+};
 
 // El formulario del pedido lee el borrador del carrito_store y no de su data(): el mismo borrador
 // lo arma la vitrina y lo cierra Pedidos. Lo que si es del formulario —cliente, tipo,
@@ -198,6 +231,7 @@ export default {
 		CompEstadoVacio: comp_estado_vacio,
 		CompProductoDetalleModal: comp_producto_detalle_modal,
 		CompProductoListaItem: comp_producto_lista_item,
+		CompSelectorUbicacion: comp_selector_ubicacion,
 		IonButton,
 		IonButtons,
 		IonHeader,
@@ -248,10 +282,12 @@ export default {
 			busqueda_producto: '',
 			carrito_store: use_carrito_store(),
 			cliente_id: null,
-			direccion_nueva: {direccion_linea: '', direccion_referencia: ''},
+			direccion_nueva: {...DIRECCION_VACIA},
+			icono_mapa: mapOutline,
 			icono_mas: addOutline,
 			icono_menos: removeOutline,
 			icono_vacio: cartOutline,
+			mapa_abierto: false,
 			observaciones: '',
 			producto_detalle: null,
 			producto_detalle_abierto: false,
@@ -279,6 +315,25 @@ export default {
 			var vm = this;
 			if(!vm.cliente_con_punto) return '';
 			return formatear_coordenadas(vm.cliente_seleccionado.direccion_latitud, vm.cliente_seleccionado.direccion_longitud);
+		},
+		direccion_nueva_con_punto(){
+			var vm = this;
+			return vm.direccion_nueva.direccion_latitud != null && vm.direccion_nueva.direccion_longitud != null;
+		},
+		coordenadas_nuevas(){
+			var vm = this;
+			return formatear_coordenadas(vm.direccion_nueva.direccion_latitud, vm.direccion_nueva.direccion_longitud);
+		},
+		// Donde abre el mapa: el punto de la ficha si ya tiene direccion; si no, el que se marco
+		// para la direccion nueva, y el buscador arranca con lo que se esta escribiendo.
+		punto_para_el_mapa(){
+			var vm = this;
+			const origen = vm.cliente_tiene_direccion ? vm.cliente_seleccionado : vm.direccion_nueva;
+			return {
+				latitud: origen.direccion_latitud,
+				longitud: origen.direccion_longitud,
+				direccion: origen.direccion_linea || ''
+			};
 		},
 		hay_direccion_nueva(){
 			var vm = this;
@@ -326,8 +381,9 @@ export default {
 			vm.cliente_id = null;
 			vm.tipo = 'presencial';
 			vm.observaciones = '';
-			vm.direccion_nueva = {direccion_linea: '', direccion_referencia: ''};
+			vm.direccion_nueva = {...DIRECCION_VACIA};
 			vm.selector_abierto = false;
+			vm.mapa_abierto = false;
 		},
 		// El selector arranca siempre con la busqueda vacia: lo que se tipeo para el pedido
 		// anterior no sirve para este.
@@ -357,8 +413,8 @@ export default {
 		// llama al store. Un componente no habla con la API.
 		guardar_direccion_del_cliente: function(){
 			var vm = this;
-			// El punto no se carga acá: en el mostrador "mi ubicación" sería la del local. Se captura
-			// desde Clientes con el GPS estando ahí; sin punto, el mapa busca por la dirección escrita.
+			// El GPS no se ofrece aca: en el mostrador "mi ubicacion" seria la del local. El punto
+			// se señala en el mapa; sin punto, el mapa del repartidor busca por la direccion.
 			vm.$emit('guardar_cliente', {
 				id: vm.cliente_seleccionado.id,
 				datos: {
@@ -367,8 +423,33 @@ export default {
 					email: vm.cliente_seleccionado.email,
 					direccion_linea: vm.direccion_nueva.direccion_linea.trim(),
 					direccion_referencia: vm.direccion_nueva.direccion_referencia.trim(),
-					direccion_latitud: null,
-					direccion_longitud: null
+					direccion_latitud: vm.direccion_nueva.direccion_latitud,
+					direccion_longitud: vm.direccion_nueva.direccion_longitud
+				}
+			});
+		},
+		// Con la direccion ya cargada, el punto va directo a la ficha. Si se esta escribiendo,
+		// espera al "Guardar en su ficha", junto con la direccion.
+		tomar_punto_del_mapa: function(punto){
+			var vm = this;
+			vm.mapa_abierto = false;
+			if(!vm.cliente_tiene_direccion){
+				if(punto.direccion) vm.direccion_nueva.direccion_linea = punto.direccion;
+				vm.direccion_nueva.direccion_latitud = punto.latitud;
+				vm.direccion_nueva.direccion_longitud = punto.longitud;
+				return;
+			}
+			const cliente = vm.cliente_seleccionado;
+			vm.$emit('guardar_cliente', {
+				id: cliente.id,
+				datos: {
+					nombre: cliente.nombre,
+					telefono: cliente.telefono,
+					email: cliente.email,
+					direccion_linea: punto.direccion || cliente.direccion_linea,
+					direccion_referencia: cliente.direccion_referencia,
+					direccion_latitud: punto.latitud,
+					direccion_longitud: punto.longitud
 				}
 			});
 		},

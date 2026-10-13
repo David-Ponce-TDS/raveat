@@ -920,6 +920,103 @@ ion-menu ion-item.seleccionado ion-icon {
     color: var(--ion-color-danger);
 }
 
+/* --- mapa para marcar un punto -------------------------------------------- */
+
+/* Buscador arriba, mapa en el medio (se lleva todo el alto que sobra) y el pie con el punto. */
+.raveat-mapa {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.raveat-mapa__buscador {
+    position: relative;
+    z-index: 3;
+    padding: 4px 8px 0;
+}
+
+/* Los resultados flotan sobre el mapa: empujarlo hacia abajo lo achicaria a la mitad. */
+.raveat-mapa__resultados {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    max-height: 220px;
+    overflow-y: auto;
+    border-radius: var(--raveat-radio-chico);
+    box-shadow: var(--raveat-sombra);
+}
+
+/* touch-action: none le quita al navegador el arrastre y el pellizco: los maneja el mapa. */
+.raveat-mapa__superficie {
+    position: relative;
+    flex: 1;
+    min-height: 240px;
+    overflow: hidden;
+    background: var(--raveat-surface-strong);
+    cursor: grab;
+    touch-action: none;
+}
+
+.raveat-mapa__tile {
+    position: absolute;
+    width: 256px;
+    height: 256px;
+    user-select: none;
+    pointer-events: none;
+}
+
+.raveat-mapa__zoom {
+    position: absolute;
+    z-index: 2;
+    right: 8px;
+    bottom: 32px;
+    display: grid;
+    gap: 4px;
+}
+
+/* OpenStreetMap pide la atribucion a la vista: es la condicion para usar sus tiles gratis. */
+.raveat-mapa__atribucion {
+    position: absolute;
+    z-index: 2;
+    right: 6px;
+    bottom: 6px;
+    padding: 1px 6px;
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+    font-size: 11px;
+}
+
+/* La gota apoya la punta en el centro exacto: ese es el punto que se guarda. */
+.raveat-mapa__pin {
+    position: absolute;
+    z-index: 2;
+    left: 50%;
+    top: 50%;
+    width: 24px;
+    height: 24px;
+    margin-top: -24px;
+    border: 2px solid #fff;
+    border-radius: 50% 50% 50% 0;
+    background: var(--ion-color-danger);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+    transform: rotate(-45deg);
+    transform-origin: 0 100%;
+    pointer-events: none;
+}
+
+.raveat-mapa__pie {
+    display: grid;
+    gap: 8px;
+    padding: 12px 12px calc(12px + var(--ion-safe-area-bottom, 0px));
+    border-top: 1px solid var(--raveat-border);
+    background: var(--raveat-surface);
+}
+
+.raveat-mapa__pie p {
+    margin: 0;
+}
+
 /* --- campanita del header ------------------------------------------------ */
 
 /* El badge se apoya sobre el icono, asi que el boton tiene que dejar salir lo que desborda. */

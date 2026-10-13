@@ -26,10 +26,9 @@
 					<ion-item>
 						<ion-input v-model="formulario.direccion_referencia" label="Referencia" label-placement="stacked" placeholder="Opcional" />
 					</ion-item>
-					<!-- Las coordenadas no se tipean: se anotan ESTANDO en la puerta del cliente, que
-					     es lo unico que hoy sabe hacer la app. Por eso el boton lo ven solo delivery y
-					     administrador: al vendedor que carga un cliente desde el mostrador, "usar mi
-					     ubicacion" le guardaria la del local. Elegir el punto en un mapa es v10. -->
+					<!-- Las coordenadas no se tipean: nadie sabe su latitud. Se SEÑALAN en el mapa, que
+					     sirve desde cualquier lado, o se toman del GPS estando en la puerta; ese botón lo
+					     ven solo delivery y administrador: en el mostrador sería la ubicación del local. -->
 					<ion-item lines="none">
 						<!-- Marcada o no, de un vistazo: el texto de abajo dice cual punto o por que no hay. -->
 						<span slot="end" class="raveat-pill" :class="tiene_coordenadas ? 'raveat-tinte-success' : 'raveat-tinte-medium'">
@@ -40,13 +39,16 @@
 							<h2>Ubicación</h2>
 							<p v-if="tiene_coordenadas">{{ coordenadas_texto }}</p>
 							<p v-else>Sin punto: el mapa va a buscar por la dirección escrita.</p>
-							<p v-if="!puede_anotar_punto" class="raveat-item-meta">Lo anota el repartidor cuando llega.</p>
 							<p v-if="ubicacion_mensaje" class="raveat-ubicacion__mensaje">{{ ubicacion_mensaje }}</p>
 						</ion-label>
 					</ion-item>
 					<ion-item lines="none">
 						<div class="raveat-ubicacion__acciones">
-							<ion-button v-if="puede_anotar_punto" size="small" :disabled="capturando_ubicacion" @click="capturar_ubicacion">
+							<ion-button size="small" @click="mapa_abierto = true">
+								<ion-icon slot="start" :icon="icono_mapa" />
+								{{ tiene_coordenadas ? 'Corregir en el mapa' : 'Marcar en el mapa' }}
+							</ion-button>
+							<ion-button v-if="puede_anotar_punto" size="small" fill="outline" :disabled="capturando_ubicacion" @click="capturar_ubicacion">
 								<ion-spinner v-if="capturando_ubicacion" slot="start" name="crescent" />
 								<ion-icon v-else slot="start" :icon="icono_ubicacion" />
 								Estoy en la puerta del cliente
@@ -73,6 +75,16 @@
 			</div>
 		</div>
 	</ion-modal>
+
+	<comp-selector-ubicacion
+		:abierto="mapa_abierto"
+		titulo="Ubicación del cliente"
+		:latitud="formulario.direccion_latitud"
+		:longitud="formulario.direccion_longitud"
+		:direccion="formulario.direccion_linea"
+		@cerrar="mapa_abierto = false"
+		@confirmar="tomar_punto_del_mapa"
+	/>
 </template>
 
 <script>import {
@@ -89,8 +101,9 @@
 	IonTitle,
 	IonToolbar
 } from '@ionic/vue';
-import { checkmarkCircleOutline, locateOutline, locationOutline } from 'ionicons/icons';
+import { checkmarkCircleOutline, locateOutline, locationOutline, mapOutline } from 'ionicons/icons';
 import comp_aviso from '@/components/base/comp_aviso.vue';
+import comp_selector_ubicacion from '@/components/base/comp_selector_ubicacion.vue';
 import { formatear_coordenadas, obtener_ubicacion_actual } from '@/services/geolocalizacion_service';
 import { use_sesion_store } from '@/stores/sesion_store';
 
@@ -108,6 +121,7 @@ export default {
 	name: 'comp_cliente_formulario_modal',
 	components: {
 		CompAviso: comp_aviso,
+		CompSelectorUbicacion: comp_selector_ubicacion,
 		IonButton,
 		IonButtons,
 		IonHeader,
@@ -147,9 +161,11 @@ export default {
 		return {
 			capturando_ubicacion: false,
 			formulario: {...FORMULARIO_VACIO},
+			icono_mapa: mapOutline,
 			icono_marcada: checkmarkCircleOutline,
 			icono_sin_marcar: locationOutline,
 			icono_ubicacion: locateOutline,
+			mapa_abierto: false,
 			sesion_store: use_sesion_store(),
 			ubicacion_mensaje: ''
 		};
@@ -183,6 +199,7 @@ export default {
 		preparar_formulario: function(){
 			var vm = this;
 			vm.ubicacion_mensaje = '';
+			vm.mapa_abierto = false;
 			vm.formulario = vm.cliente
 				? {
 					nombre: vm.cliente.nombre || '',
@@ -209,6 +226,17 @@ export default {
 			}
 			vm.formulario.direccion_latitud = resultado.ubicacion.latitud;
 			vm.formulario.direccion_longitud = resultado.ubicacion.longitud;
+		},
+		// El punto del mapa se guarda tal cual: el usuario ya lo vio caer en la puerta. La
+		// direccion pasa a ser la del punto; el piso o el timbre van en la referencia. Sin red
+		// el mapa no la sabe y queda la escrita.
+		tomar_punto_del_mapa: function(punto){
+			var vm = this;
+			if(punto.direccion) vm.formulario.direccion_linea = punto.direccion;
+			vm.formulario.direccion_latitud = punto.latitud;
+			vm.formulario.direccion_longitud = punto.longitud;
+			vm.ubicacion_mensaje = '';
+			vm.mapa_abierto = false;
 		},
 		quitar_ubicacion: function(){
 			var vm = this;

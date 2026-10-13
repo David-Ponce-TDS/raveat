@@ -1017,6 +1017,22 @@ ion-menu ion-item.seleccionado ion-icon {
     margin: 0;
 }
 
+/* --- microfono de dictado ------------------------------------------------- */
+
+.raveat-dictado {
+    margin: 0;
+    align-self: center;
+}
+
+/* Mientras escucha, el icono late: sin eso no se sabe si el telefono esta oyendo. */
+.raveat-dictado--escuchando ion-icon {
+    animation: raveat-latido 1s ease-in-out infinite;
+}
+
+@keyframes raveat-latido {
+    50% { opacity: 0.4; }
+}
+
 /* --- campanita del header ------------------------------------------------ */
 
 /* El badge se apoya sobre el icono, asi que el boton tiene que dejar salir lo que desborda. */

@@ -1,10 +1,10 @@
-# Comandos · versión 9
+# Comandos · versión 10
 
 Todo lo que se tipea para poner esta versión a andar, en orden. Los comandos son para
 **PowerShell en Windows** y se ejecutan **desde la raíz del repositorio**, salvo que se indique
 otra cosa.
 
-Qué es esta versión y por qué está hecha así: [`README.unidad-09.md`](README.unidad-09.md).
+Qué es esta versión y por qué está hecha así: [`README.unidad-10.md`](README.unidad-10.md).
 
 ## 1 · Instalar
 
@@ -16,18 +16,18 @@ Set-Location ..
 dotnet tool restore
 ```
 
-Un solo paquete nuevo: `@capacitor/network`, el estado de la red. La cola offline no necesita
-paquete: es `localStorage` y un service. Para saber si ya está, desde `RavEatApp`:
+Un solo paquete nuevo: `@capacitor-community/speech-recognition`, el dictado. El mapa no necesita
+paquete: son imágenes de OpenStreetMap puestas a mano. Para saber si ya está, desde `RavEatApp`:
 
 ```powershell
-npm ls @capacitor/network
+npm ls @capacitor-community/speech-recognition
 ```
 
 En un proyecto propio se suma así — el `cap sync` registra la parte Android del plugin:
 
 ```powershell
 Set-Location .\RavEatApp
-npm install @capacitor/network
+npm install @capacitor-community/speech-recognition@7.0.1
 npm run build
 npx cap sync android
 ```
@@ -54,7 +54,7 @@ Set-Location ..
 
 ## 3 · El esquema
 
-Esta versión **no suma migraciones**: si venís de la versión 7, la base ya está al día. La API
+Esta versión **no suma migraciones**: si venís de la versión 9, la base ya está al día. La API
 aplica las migraciones sola cada vez que arranca. Para inspeccionar o reconstruir desde cero:
 
 ```powershell
@@ -359,6 +359,28 @@ pedido.
 mysql -u raveat_app -p raveat_app -e "SELECT usuario_id, LEFT(token, 20) AS token, actualizado_en FROM dispositivos_push;"
 ```
 
+## 12 · El mapa y el dictado
+
+**El mapa.** En **Clientes**, editar uno y tocar **Marcar en el mapa**. El buscador arranca con la
+dirección escrita: enviarla y tocar un resultado acerca el mapa. Arrastrar hasta que la punta del
+pin quede en la puerta y **Usar este punto**: la dirección pasa a ser la del punto. En un pedido de **Entrega** con cliente, el mismo
+botón aparece en el destino y guarda el punto en la ficha.
+
+**Sin mapa.** DevTools → Network → **Offline** y abrir el mapa: dice que no cargó, y el formulario
+se guarda igual con la dirección escrita.
+
+**El dictado.** El micrófono está en la referencia del cliente, en las observaciones del pedido y
+en la descripción del producto. En el teléfono, el primer toque pide el permiso; el icono late
+mientras escucha y se corta solo con el silencio.
+
+Para ver qué servicio de voz tiene el teléfono, y para sacarle el permiso y probar el camino del
+«no»:
+
+```powershell
+adb shell cmd package query-services -a android.speech.RecognitionService
+adb shell pm revoke app.raveat android.permission.RECORD_AUDIO
+```
+
 ## Si algo falla
 
 | Síntoma | Causa probable | Qué hacer |
@@ -383,6 +405,11 @@ mysql -u raveat_app -p raveat_app -e "SELECT usuario_id, LEFT(token, 20) AS toke
 | `dotnet publish` falla con MSB3026/3027 | La API local tiene tomados sus `.dll` | Pararla y publicar de nuevo |
 | «No se pudo conectar con la API» | La API no está levantada, o la URL apunta a otro lado | Probar `/health`; **Mi cuenta → Diagnóstico** |
 | Toqué `src/` y el teléfono muestra lo viejo | Falta el build antes de `cap sync` | Sección 7 o 9 |
+| El micrófono no aparece en el teléfono | El teléfono no tiene servicio de reconocimiento de voz | Sección 12: `query-services`; instalar o actualizar la app de Google |
+| El micrófono no aparece en la PC | El navegador no tiene Web Speech API (Firefox) | Probar en Chrome o Edge |
+| El micrófono late y no escribe nada | Sin red: el reconocimiento de Google la necesita | Volver a tener red; el campo se escribe a mano |
+| El mapa queda gris | Sin red, o el servidor de tiles no responde | El aviso lo dice: guardar con la dirección escrita |
+| El buscador del mapa no encuentra la dirección | Nominatim busca calle, número y ciudad | Escribirla completa, o arrastrar el mapa hasta la puerta |
 
 ## Datos del proyecto Android
 
@@ -396,7 +423,8 @@ mysql -u raveat_app -p raveat_app -e "SELECT usuario_id, LEFT(token, 20) AS toke
 | Origen de la app en el teléfono | `http://localhost` |
 
 Los permisos del manifiesto son los de la versión 7: esta versión no agrega ninguno a mano. El
-plugin de red declara `ACCESS_NETWORK_STATE` por fusión de manifiestos.
+plugin de red declara `ACCESS_NETWORK_STATE` y el del dictado `RECORD_AUDIO`, más la consulta del
+servicio `android.speech.RecognitionService`, por fusión de manifiestos.
 
 ### El icono de la notificación
 

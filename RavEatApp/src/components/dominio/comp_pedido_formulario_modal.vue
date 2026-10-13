@@ -65,7 +65,8 @@
 						</ion-select>
 					</ion-item>
 					<ion-item lines="none">
-						<ion-input v-model="observaciones" label="Observaciones" label-placement="stacked" placeholder="Opcional" />
+						<ion-textarea v-model="observaciones" label="Observaciones" label-placement="stacked" placeholder="Opcional" :auto-grow="true" :rows="2" />
+						<comp-dictado-boton slot="end" :valor="observaciones" @actualizar="observaciones = $event" />
 					</ion-item>
 				</ion-list>
 
@@ -94,7 +95,8 @@
 								<ion-input v-model="direccion_nueva.direccion_linea" label="Dirección" label-placement="stacked" placeholder="Calle y número" />
 							</ion-item>
 							<ion-item lines="none">
-								<ion-input v-model="direccion_nueva.direccion_referencia" label="Referencia" label-placement="stacked" placeholder="Timbre, piso, entre calles" />
+								<ion-textarea v-model="direccion_nueva.direccion_referencia" label="Referencia" label-placement="stacked" placeholder="Timbre, piso, entre calles" :auto-grow="true" :rows="2" />
+								<comp-dictado-boton slot="end" :valor="direccion_nueva.direccion_referencia" @actualizar="direccion_nueva.direccion_referencia = $event" />
 							</ion-item>
 						</ion-list>
 						<span class="raveat-item-meta">{{ direccion_nueva_con_punto ? coordenadas_nuevas : 'El punto es opcional: sin él, el mapa busca por la dirección.' }}</span>
@@ -198,12 +200,14 @@
 	IonSelect,
 	IonSelectOption,
 	IonSpinner,
+	IonTextarea,
 	IonTitle,
 	IonToolbar
 } from '@ionic/vue';
 import { addOutline, cartOutline, mapOutline, removeOutline } from 'ionicons/icons';
 import comp_aviso from '@/components/base/comp_aviso.vue';
 import comp_buscador from '@/components/base/comp_buscador.vue';
+import comp_dictado_boton from '@/components/base/comp_dictado_boton.vue';
 import comp_selector_ubicacion from '@/components/base/comp_selector_ubicacion.vue';
 import comp_estado_vacio from '@/components/base/comp_estado_vacio.vue';
 import comp_producto_detalle_modal from '@/components/dominio/comp_producto_detalle_modal.vue';
@@ -228,6 +232,7 @@ export default {
 	components: {
 		CompAviso: comp_aviso,
 		CompBuscador: comp_buscador,
+		CompDictadoBoton: comp_dictado_boton,
 		CompEstadoVacio: comp_estado_vacio,
 		CompProductoDetalleModal: comp_producto_detalle_modal,
 		CompProductoListaItem: comp_producto_lista_item,
@@ -243,6 +248,7 @@ export default {
 		IonSelect,
 		IonSelectOption,
 		IonSpinner,
+		IonTextarea,
 		IonTitle,
 		IonToolbar
 	},

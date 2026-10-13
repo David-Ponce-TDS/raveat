@@ -1,9 +1,8 @@
-# Requisitos · versión 9
+# Requisitos · versión 10
 
-**Nada nuevo que instalar en la máquina.** Entran dos paquetes y una credencial: `cropperjs`, la
-librería del recorte de la foto, que viene con `npm install`; `FirebaseAdmin`, que viene con el
-`restore` de la API; y la **cuenta de servicio** de Firebase, para que la API mande la push. Ningún
-plugin ni permiso nuevo en el teléfono.
+**Nada nuevo que instalar en la máquina.** Entra un plugin, el del dictado, con `npm install`. Lo
+nuevo está en el teléfono: el **servicio de reconocimiento de voz**, que viene con la app de Google.
+El mapa no pide nada: las tiles de OpenStreetMap no llevan clave de API.
 
 - [x] Git
 - [x] Node.js 22 o superior — trae `npm`
@@ -17,8 +16,10 @@ plugin ni permiso nuevo en el teléfono.
 - [x] Un segundo dispositivo, o una segunda sesión
 - [x] Keystore de release, generado en la versión 8
 - [x] Cuenta de MonsterASP.NET, opcional: sin ella se llega hasta el APK firmado
-- [ ] **`cropperjs`** — entra con `npm install` en `RavEatApp`. Nuevo en esta versión
-- [ ] **Cuenta de servicio de Firebase** — el JSON con clave privada, cargado en User Secrets. Nuevo en esta versión
+- [x] `cropperjs` — entra con `npm install` en `RavEatApp`
+- [x] Cuenta de servicio de Firebase — el JSON con clave privada, cargado en User Secrets
+- [ ] **`@capacitor-community/speech-recognition`** — entra con `npm install` en `RavEatApp`. Nuevo en esta versión
+- [ ] **Reconocimiento de voz en el teléfono** — la app de Google, con el idioma español. Nuevo en esta versión
 
 ## Comprobarlo
 
@@ -48,7 +49,7 @@ if (Test-Path .\RavEatApp\android\keystore.properties) { 'keystore.properties ok
 
 Cómo se generan: [`README.comandos.md`](README.comandos.md), sección 8.
 
-Y la cuenta de servicio, que es lo nuevo:
+La cuenta de servicio, de la versión 9:
 
 ```powershell
 $ruta = dotnet user-secrets list --project .\RavEat.Api | Select-String 'Firebase:CuentaDeServicio' | ForEach-Object { ($_ -split ' = ', 2)[1] }
@@ -56,6 +57,17 @@ if ($ruta -and (Test-Path $ruta)) { 'cuenta de servicio  ok' } else { 'cuenta de
 ```
 
 Cómo se baja y se carga: [`README.comandos.md`](README.comandos.md), sección 11.
+
+Y lo nuevo: el plugin, desde `RavEatApp`, y el servicio de voz del teléfono, con el teléfono
+conectado. Si la segunda línea no lista ningún servicio, el micrófono no va a aparecer.
+
+```powershell
+npm ls @capacitor-community/speech-recognition
+adb shell cmd package query-services -a android.speech.RecognitionService
+```
+
+Si falta el servicio, se instala o se actualiza **Google** desde Play Store. En el navegador de la
+PC, el dictado anda en Chrome y en Edge; en Firefox el micrófono no aparece, y es lo esperado.
 
 ## La cuenta de esta versión
 

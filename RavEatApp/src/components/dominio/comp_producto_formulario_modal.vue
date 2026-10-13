@@ -60,8 +60,11 @@
 					<ion-item>
 						<ion-input v-model="formulario.nombre" label="Nombre *" label-placement="stacked" placeholder="Nombre del producto" />
 					</ion-item>
+					<!-- La descripcion es el texto libre del plato: el unico campo del producto donde
+					     dictar ayuda. El nombre y el precio se tipean. -->
 					<ion-item>
 						<ion-textarea v-model="formulario.descripcion" label="Descripción" label-placement="stacked" :auto-grow="true" placeholder="Opcional" />
+						<comp-dictado-boton slot="end" :valor="formulario.descripcion" @actualizar="formulario.descripcion = $event" />
 					</ion-item>
 					<ion-item>
 						<ion-input v-model="formulario.precio" type="number" inputmode="decimal" label="Precio *" label-placement="stacked" placeholder="0" />
@@ -139,6 +142,7 @@ import {
 import { nextTick } from 'vue';
 import { addOutline, cameraOutline, closeOutline, imageOutline, imagesOutline, trashOutline } from 'ionicons/icons';
 import comp_aviso from '@/components/base/comp_aviso.vue';
+import comp_dictado_boton from '@/components/base/comp_dictado_boton.vue';
 import { camara_disponible, tomar_foto } from '@/services/camara_service';
 import { avisar_exito } from '@/services/avisos_service';
 import { canvas_a_archivo, cargar_imagen_archivo, resolver_url_imagen } from '@/utils/imagenes';
@@ -153,6 +157,7 @@ export default {
 	name: 'comp_producto_formulario_modal',
 	components: {
 		CompAviso: comp_aviso,
+		CompDictadoBoton: comp_dictado_boton,
 		IonButton,
 		IonButtons,
 		IonHeader,

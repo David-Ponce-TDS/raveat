@@ -23,8 +23,11 @@
 					<ion-item>
 						<ion-input v-model="formulario.direccion_linea" label="Dirección" label-placement="stacked" placeholder="Opcional" />
 					</ion-item>
+					<!-- La referencia es texto libre y largo ("portón verde, timbre roto"): ahí el
+					     dictado ayuda. En un nombre o una altura estorba: corregirlo cuesta más que tipearlo. -->
 					<ion-item>
-						<ion-input v-model="formulario.direccion_referencia" label="Referencia" label-placement="stacked" placeholder="Opcional" />
+						<ion-textarea v-model="formulario.direccion_referencia" label="Referencia" label-placement="stacked" placeholder="Opcional" :auto-grow="true" :rows="2" />
+						<comp-dictado-boton slot="end" :valor="formulario.direccion_referencia" @actualizar="formulario.direccion_referencia = $event" />
 					</ion-item>
 					<!-- Las coordenadas no se tipean: nadie sabe su latitud. Se SEÑALAN en el mapa, que
 					     sirve desde cualquier lado, o se toman del GPS estando en la puerta; ese botón lo
@@ -98,11 +101,13 @@
 	IonList,
 	IonModal,
 	IonSpinner,
+	IonTextarea,
 	IonTitle,
 	IonToolbar
 } from '@ionic/vue';
 import { checkmarkCircleOutline, locateOutline, locationOutline, mapOutline } from 'ionicons/icons';
 import comp_aviso from '@/components/base/comp_aviso.vue';
+import comp_dictado_boton from '@/components/base/comp_dictado_boton.vue';
 import comp_selector_ubicacion from '@/components/base/comp_selector_ubicacion.vue';
 import { formatear_coordenadas, obtener_ubicacion_actual } from '@/services/geolocalizacion_service';
 import { use_sesion_store } from '@/stores/sesion_store';
@@ -121,6 +126,7 @@ export default {
 	name: 'comp_cliente_formulario_modal',
 	components: {
 		CompAviso: comp_aviso,
+		CompDictadoBoton: comp_dictado_boton,
 		CompSelectorUbicacion: comp_selector_ubicacion,
 		IonButton,
 		IonButtons,
@@ -132,6 +138,7 @@ export default {
 		IonList,
 		IonModal,
 		IonSpinner,
+		IonTextarea,
 		IonTitle,
 		IonToolbar
 	},

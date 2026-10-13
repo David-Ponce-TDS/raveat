@@ -1,7 +1,7 @@
 <template>
 	<ion-page>
 		<ion-content>
-			<div class="ion-padding raveat-page-stack raveat-login">
+			<div class="ion-padding raveat-page-stack raveat-sin-header raveat-login">
 				<!-- El logo vuelve a la vitrina: el que llego hasta aca sin querer entrar tiene
 				     que poder volver a mirar la carta sin cerrar la app. -->
 				<comp-vidriera

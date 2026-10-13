@@ -5,7 +5,7 @@
 				<ion-refresher-content pulling-text="Desliza para actualizar" refreshing-text="Actualizando..." />
 			</ion-refresher>
 
-			<div class="ion-padding raveat-page-stack">
+			<div class="ion-padding raveat-page-stack raveat-sin-header">
 				<!-- El acceso al login es el icono de la esquina; el logo del login es el camino
 				     de vuelta. Un solo gesto en cada sentido y ningun boton grande que compita
 				     con la carta, que es lo que se viene a ver. -->

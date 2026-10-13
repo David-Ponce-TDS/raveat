@@ -35,6 +35,14 @@
     gap: 14px;
 }
 
+/* La vitrina y el login no tienen header, y la app se dibuja de borde a borde: sin esto, la
+   barra de estado tapa el principio de la pantalla y la de gestos, el final. El header de
+   Ionic ya suma esos altos en las demas pantallas; aca se suman a mano. */
+.ion-padding.raveat-sin-header {
+    padding-top: calc(var(--ion-safe-area-top, 0px) + var(--ion-padding, 16px));
+    padding-bottom: calc(var(--ion-safe-area-bottom, 0px) + var(--ion-padding, 16px));
+}
+
 .raveat-panel {
     overflow: hidden;
     margin: 0;

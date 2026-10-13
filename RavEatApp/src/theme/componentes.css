@@ -903,11 +903,16 @@ ion-menu ion-item.seleccionado ion-icon {
 
 /* --- ubicacion del cliente ----------------------------------------------- */
 
+/* Uno debajo del otro y todos del mismo largo: con el ancho del texto, cada boton media distinto. */
 .raveat-ubicacion__acciones {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
     gap: 6px;
+    width: 100%;
     padding-bottom: 8px;
+}
+
+.raveat-ubicacion__acciones ion-button {
+    margin: 0;
 }
 
 /* Mismo criterio que la foto: el permiso denegado se muestra donde se pidio. */

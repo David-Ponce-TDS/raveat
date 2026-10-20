@@ -1,8 +1,8 @@
-# Requisitos · versión 10
+# Requisitos · versión 11
 
-**Nada nuevo que instalar en la máquina.** Entra un plugin, el del dictado, con `npm install`. Lo
-nuevo está en el teléfono: el **servicio de reconocimiento de voz**, que viene con la app de Google.
-El mapa no pide nada: las tiles de OpenStreetMap no llevan clave de API.
+**Nada nuevo que instalar**: ni programa ni plugin. La preparación y el historial son pantallas y
+endpoints nuevos sobre lo que ya está, y la firma es un `<canvas>` del navegador. La base suma tres
+migraciones, que la API aplica sola al arrancar.
 
 - [x] Git
 - [x] Node.js 22 o superior — trae `npm`
@@ -18,8 +18,8 @@ El mapa no pide nada: las tiles de OpenStreetMap no llevan clave de API.
 - [x] Cuenta de MonsterASP.NET, opcional: sin ella se llega hasta el APK firmado
 - [x] `cropperjs` — entra con `npm install` en `RavEatApp`
 - [x] Cuenta de servicio de Firebase — el JSON con clave privada, cargado en User Secrets
-- [ ] **`@capacitor-community/speech-recognition`** — entra con `npm install` en `RavEatApp`. Nuevo en esta versión
-- [ ] **Reconocimiento de voz en el teléfono** — la app de Google, con el idioma español. Nuevo en esta versión
+- [x] `@capacitor-community/speech-recognition` — entra con `npm install` en `RavEatApp`
+- [x] Reconocimiento de voz en el teléfono — la app de Google, con el idioma español
 
 ## Comprobarlo
 
@@ -58,8 +58,8 @@ if ($ruta -and (Test-Path $ruta)) { 'cuenta de servicio  ok' } else { 'cuenta de
 
 Cómo se baja y se carga: [`README.comandos.md`](README.comandos.md), sección 11.
 
-Y lo nuevo: el plugin, desde `RavEatApp`, y el servicio de voz del teléfono, con el teléfono
-conectado. Si la segunda línea no lista ningún servicio, el micrófono no va a aparecer.
+El dictado, de la versión 10: el plugin, desde `RavEatApp`, y el servicio de voz del teléfono, con
+el teléfono conectado. Si la segunda línea no lista ningún servicio, el micrófono no va a aparecer.
 
 ```powershell
 npm ls @capacitor-community/speech-recognition

@@ -13,7 +13,7 @@ namespace RavEat.Api.Controllers;
 [ApiController]
 [Authorize(Roles = RolesOperativos)]
 [Route("api/entregas")]
-public sealed class EntregasController(RavEatDbContext db) : ControllerBase {
+public sealed class EntregasController(RavEatDbContext db, IWebHostEnvironment env) : ControllerBase {
     private const string RolesOperativos = $"{RolCodigos.Admin},{RolCodigos.Vendedor},{RolCodigos.Proceso},{RolCodigos.Caja},{RolCodigos.Delivery}";
 
     // Mismo patron que el pedido: las transiciones en un diccionario, no en ifs. Asignada no
@@ -80,6 +80,7 @@ public sealed class EntregasController(RavEatDbContext db) : ControllerBase {
                 entrega.DireccionLongitud,
                 entrega.Estado,
                 entrega.Observaciones,
+                entrega.FirmaUrl,
                 entrega.CreadoEn
             )
         ).PaginarAsync(PaginaConsulta.Desde(pagina, tamano), cancellationToken);
@@ -167,6 +168,43 @@ public sealed class EntregasController(RavEatDbContext db) : ControllerBase {
         return Ok(new {estado = entrega.Estado});
     }
 
+    // La conformidad de quien recibio, dibujada en pantalla. Viaja como imagen (multipart), no como
+    // una lista de coordenadas: lo que hay que poder mostrar despues es el trazo, y guardar puntos
+    // obligaria a redibujarlos en cada pantalla que quiera verlo.
+    //
+    // Igual que la foto del producto: el nombre del archivo lo decide el servidor. El del cliente
+    // no es confiable — uno con "../" escribiria fuera de la carpeta.
+    [HttpPut("{id:long}/firma")]
+    [RequestSizeLimit(2_000_000)]
+    public async Task<IActionResult> GuardarFirma(long id, [FromForm] GuardarFirmaRequest request, CancellationToken cancellationToken) {
+        var entrega = await db.Entregas.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if(entrega is null) return NotFound(new {codigo = "entrega_no_encontrada", mensaje = "La entrega no existe."});
+
+        if(entrega.RepartidorId != User.UsuarioId() && !User.EsAdmin()) {
+            return StatusCode(403, new {codigo = "sin_permiso", mensaje = "La firma la toma el repartidor asignado."});
+        }
+        // Una entrega que todavia no salio no puede tener conformidad de recepcion, y una cancelada
+        // nunca la va a tener.
+        if(entrega.Estado is not (EstadoEntrega.EnCamino or EstadoEntrega.Entregada)) {
+            return BadRequest(new {codigo = "entrega_sin_recepcion", mensaje = $"Una entrega en '{entrega.Estado.Texto()}' no se puede firmar: solo en camino o entregada."});
+        }
+        if(request.Firma is null || request.Firma.Length == 0) return BadRequest(new {codigo = "firma_requerida", mensaje = "Falta la firma."});
+        if(request.Firma.ContentType != "image/png") return BadRequest(new {codigo = "firma_invalida", mensaje = "La firma tiene que ser una imagen PNG."});
+
+        var webRoot = env.WebRootPath ?? Path.Combine(env.ContentRootPath, "wwwroot");
+        var carpeta = Path.Combine(webRoot, "uploads", "firmas");
+        Directory.CreateDirectory(carpeta);
+        var nombreArchivo = $"{Guid.NewGuid():N}.png";
+        await using(var stream = System.IO.File.Create(Path.Combine(carpeta, nombreArchivo))) {
+            await request.Firma.CopyToAsync(stream, cancellationToken);
+        }
+
+        entrega.FirmaUrl = $"/uploads/firmas/{nombreArchivo}";
+        db.RegistrarEntrega(User.UsuarioId(), entrega.Id, entrega.Estado.ToString(), entrega.Estado.ToString(), "Se registró la firma de recepción.");
+        await db.SaveChangesAsync(cancellationToken);
+        return Ok(new {firma_url = entrega.FirmaUrl});
+    }
+
     // El nombre del que ejecuta sale de la base: el token lleva id, email y rol, no el nombre.
     private Task<string> NombreDeQuienEjecuta(CancellationToken cancellationToken) =>
         db.Usuarios.AsNoTracking().Where(x => x.Id == User.UsuarioId()).Select(x => x.Nombre).FirstAsync(cancellationToken);
@@ -187,8 +225,16 @@ public sealed record EntregaResumenResponse(
     decimal? DireccionLongitud,
     EstadoEntrega Estado,
     string? Observaciones,
+    string? FirmaUrl,
     DateTimeOffset CreadoEn
 );
 
 public sealed record AsignarEntregaRequest(long? RepartidorId);
 public sealed record CambiarEstadoEntregaRequest(EstadoEntrega Estado);
+
+// El binding de formularios NO aplica la politica snake_case del JSON: sin [FromForm(Name=...)]
+// el archivo llega en null y el error aparece recien al guardar.
+public sealed class GuardarFirmaRequest {
+    [FromForm(Name = "firma")]
+    public IFormFile? Firma { get; set; }
+}

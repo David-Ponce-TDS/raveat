@@ -222,6 +222,11 @@ namespace RavEat.Api.Migrations
                         .HasColumnType("varchar(30)")
                         .HasColumnName("estado");
 
+                    b.Property<string>("FirmaUrl")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasColumnName("firma_url");
+
                     b.Property<string>("Observaciones")
                         .HasMaxLength(1000)
                         .HasColumnType("varchar(1000)")

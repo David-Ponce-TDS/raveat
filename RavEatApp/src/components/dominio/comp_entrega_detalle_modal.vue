@@ -64,6 +64,23 @@
 				</div>
 			</comp-detalle-seccion>
 
+			<!-- La conformidad de quien recibe. Aparece recién con la entrega en camino: antes no
+			     hay a quién pedirle que firme. Una vez guardada se muestra, no se vuelve a pedir:
+			     rehacer una firma la convertiría en un dibujo cualquiera. -->
+			<comp-detalle-seccion v-if="entrega.firma_url" titulo="Firma de recepción" subtitulo="Conformidad de quien recibió el pedido.">
+				<img class="raveat-firma__imagen" :src="resolver_url_imagen(entrega.firma_url)" alt="Firma de recepción" />
+			</comp-detalle-seccion>
+			<comp-detalle-seccion v-else-if="puede_firmar" titulo="Firma de recepción" subtitulo="Que firme quien recibe, antes de cerrar la entrega.">
+				<!-- Un botón, no el lienzo suelto: el lienzo ocupa media pantalla y en la calle se
+				     firma una vez. Se abre a pedido y se cierra al terminar. -->
+				<div class="raveat-detalle-acciones">
+					<ion-button expand="block" fill="outline" :disabled="guardando" @click="abrir_firma">
+						<ion-icon slot="start" :icon="icono_firma" />
+						Firmar recepción
+					</ion-button>
+				</div>
+			</comp-detalle-seccion>
+
 			<!-- Designar a otro es del admin: el listado de usuarios es solo suyo. Un delivery no
 			     designa a nadie, la toma para si con el boton de arriba. -->
 			<comp-detalle-seccion
@@ -132,27 +149,56 @@
 					Cancelar entrega
 				</ion-button>
 			</div>
+
+			<!-- El lienzo vive en su propio modal: se monta al abrirlo y se destruye al cerrarlo,
+			     así cada firma empieza en blanco sin tener que limpiar nada a mano. -->
+			<ion-modal :is-open="firma_abierta" class="raveat-modal-flotante" @didDismiss="firma_abierta = false">
+				<ion-header>
+					<ion-toolbar>
+						<ion-title>Firma de recepción</ion-title>
+						<ion-buttons slot="end">
+							<ion-button @click="firma_abierta = false">Cerrar</ion-button>
+						</ion-buttons>
+					</ion-toolbar>
+				</ion-header>
+				<div class="raveat-modal-flotante__cuerpo">
+					<div class="ion-padding raveat-page-stack">
+						<p class="raveat-item-meta">Que firme quien recibe el pedido. Se guarda como imagen junto a la entrega.</p>
+						<comp-firma-entrega-canvas v-if="firma_abierta" ref="firma" :alto="240" @cambiar="hay_firma = $event" />
+						<ion-button expand="block" :disabled="!hay_firma || guardando" @click="guardar_firma">
+							Guardar firma
+						</ion-button>
+					</div>
+				</div>
+			</ion-modal>
 		</template>
 	</comp-modal-detalle>
 </template>
 
 <script>import {
 	IonButton,
+	IonButtons,
+	IonHeader,
 	IonIcon,
 	IonItem,
+	IonModal,
 	IonNote,
 	IonSelect,
-	IonSelectOption
+	IonSelectOption,
+	IonTitle,
+	IonToolbar
 } from '@ionic/vue';
-import { mapOutline, navigateOutline } from 'ionicons/icons';
+import { createOutline, mapOutline, navigateOutline } from 'ionicons/icons';
 import comp_contacto_botones from '@/components/base/comp_contacto_botones.vue';
 import comp_detalle_dato from '@/components/base/comp_detalle_dato.vue';
 import comp_detalle_seccion from '@/components/base/comp_detalle_seccion.vue';
+import comp_firma_entrega_canvas from '@/components/base/comp_firma_entrega_canvas.vue';
 import comp_modal_detalle from '@/components/base/comp_modal_detalle.vue';
 import { formatear_coordenadas, url_mapa, url_ruta } from '@/services/geolocalizacion_service';
 import { clase_tinte, estado_entrega, siguiente_estado_entrega } from '@/utils/estados';
 import { formatear_fecha_larga } from '@/utils/formato_fecha';
 import { formatear_importe } from '@/utils/formato_moneda';
+import { resolver_url_imagen } from '@/utils/imagenes';
 
 // Que le pasa al pedido segun el estado de su entrega, en castellano y antes de decidir.
 const ESTADO_PEDIDO_ENTREGA = {
@@ -169,19 +215,26 @@ export default {
 		CompContactoBotones: comp_contacto_botones,
 		CompDetalleDato: comp_detalle_dato,
 		CompDetalleSeccion: comp_detalle_seccion,
+		CompFirmaEntregaCanvas: comp_firma_entrega_canvas,
 		CompModalDetalle: comp_modal_detalle,
 		IonButton,
+		IonButtons,
+		IonHeader,
 		IonIcon,
 		IonItem,
+		IonModal,
 		IonNote,
 		IonSelect,
-		IonSelectOption
+		IonSelectOption,
+		IonTitle,
+		IonToolbar
 	},
 	emits: [
 		'asignar',
 		'cancelar',
 		'cerrar',
 		'estado',
+		'firmar',
 		'tomar'
 	],
 	props: {
@@ -206,6 +259,10 @@ export default {
 			type: Boolean,
 			default: false
 		},
+		puede_firmar: {
+			type: Boolean,
+			default: false
+		},
 		puede_tomar: {
 			type: Boolean,
 			default: false
@@ -219,6 +276,9 @@ export default {
 	},
 	data(){
 		return {
+			firma_abierta: false,
+			hay_firma: false,
+			icono_firma: createOutline,
 			icono_mapa: mapOutline,
 			icono_ruta: navigateOutline
 		};
@@ -267,7 +327,29 @@ export default {
 			}));
 		}
 	},
+	watch: {
+		// La firma nunca queda abierta de una ficha a la siguiente.
+		abierto(valor){
+			var vm = this;
+			if(valor) vm.firma_abierta = false;
+		}
+	},
 	methods: {
+		abrir_firma: function(){
+			var vm = this;
+			vm.hay_firma = false;
+			vm.firma_abierta = true;
+		},
+		// El lienzo entrega el PNG; quien lo sube es la pantalla. El componente de firma no sabe
+		// de la API, y esta ficha tampoco: solo avisa.
+		guardar_firma: async function(){
+			var vm = this;
+			if(!vm.$refs.firma) return;
+			const archivo = await vm.$refs.firma.obtener_archivo();
+			if(!archivo) return;
+			vm.$emit('firmar', archivo);
+			vm.firma_abierta = false;
+		},
 		elegir_repartidor: function(evento){
 			var vm = this;
 			if(!evento.detail.value) return;
@@ -281,6 +363,7 @@ export default {
 		formatear_coordenadas,
 		formatear_fecha_larga,
 		formatear_importe,
+		resolver_url_imagen,
 		url_mapa,
 		url_ruta
 	}

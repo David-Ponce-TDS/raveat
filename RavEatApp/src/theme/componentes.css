@@ -1643,3 +1643,39 @@ ion-action-sheet .action-sheet-group:focus-visible {
     --padding-start: 0;
     --padding-end: 0;
 }
+
+/* --- firma de recepcion ------------------------------------------------------------ */
+
+.raveat-firma {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* Fondo blanco fijo: la firma es un trazo oscuro sobre PNG con transparencia, y en modo oscuro
+   sin fondo propio quedaria negro sobre negro. */
+.raveat-firma__lienzo {
+    width: 100%;
+    background: #ffffff;
+    border: 1px dashed var(--raveat-border);
+    border-radius: var(--raveat-radio-chico);
+    /* Sin esto, arrastrar el dedo desplaza la pantalla en vez de dibujar. */
+    touch-action: none;
+}
+
+.raveat-firma__acciones {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+/* La firma ya guardada: la misma imagen, sobre el mismo fondo blanco. */
+.raveat-firma__imagen {
+    width: 100%;
+    max-height: 180px;
+    object-fit: contain;
+    background: #ffffff;
+    border: 1px solid var(--raveat-border);
+    border-radius: var(--raveat-radio-chico);
+}

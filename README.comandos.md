@@ -1,10 +1,10 @@
-# Comandos · versión 10
+# Comandos · versión 11
 
 Todo lo que se tipea para poner esta versión a andar, en orden. Los comandos son para
 **PowerShell en Windows** y se ejecutan **desde la raíz del repositorio**, salvo que se indique
 otra cosa.
 
-Qué es esta versión y por qué está hecha así: [`README.unidad-10.md`](README.unidad-10.md).
+Qué es esta versión y por qué está hecha así: [`README.unidad-11.md`](README.unidad-11.md).
 
 ## 1 · Instalar
 
@@ -16,21 +16,8 @@ Set-Location ..
 dotnet tool restore
 ```
 
-Un solo paquete nuevo: `@capacitor-community/speech-recognition`, el dictado. El mapa no necesita
-paquete: son imágenes de OpenStreetMap puestas a mano. Para saber si ya está, desde `RavEatApp`:
-
-```powershell
-npm ls @capacitor-community/speech-recognition
-```
-
-En un proyecto propio se suma así — el `cap sync` registra la parte Android del plugin:
-
-```powershell
-Set-Location .\RavEatApp
-npm install @capacitor-community/speech-recognition@7.0.1
-npm run build
-npx cap sync android
-```
+Esta versión **no suma paquetes**: la firma es un `<canvas>` del navegador y lo demás son pantallas
+y endpoints sobre lo que ya estaba.
 
 ## 2 · Crear la base y el usuario
 
@@ -54,8 +41,9 @@ Set-Location ..
 
 ## 3 · El esquema
 
-Esta versión **no suma migraciones**: si venís de la versión 9, la base ya está al día. La API
-aplica las migraciones sola cada vez que arranca. Para inspeccionar o reconstruir desde cero:
+Esta versión **suma tres migraciones**: `Comandas` (el estado de cada ítem), `Historial` (la tabla
+`historiales`) y `FirmaEntrega` (la columna `firma_url`). La API las aplica sola cada vez que
+arranca. Para inspeccionar o reconstruir desde cero:
 
 ```powershell
 Set-Location .\RavEat.Api
@@ -108,7 +96,8 @@ sigue; en la última página el sensor se apaga y queda «Mostrando N de N».
 ### Volver a empezar
 
 El administrador tiene en **Mi cuenta → Herramientas de prueba** el botón que borra todos los
-pedidos, sus ítems, entregas y notificaciones, y deja la numeración en `PED-0001`. La carta, los
+pedidos, sus ítems, entregas, el historial, las notificaciones y las firmas guardadas, y deja la
+numeración en `PED-0001`. La carta, los
 clientes y los usuarios no se tocan. Pide escribir `BORRAR`.
 
 ## 6 · Probar el offline sin salir a la calle
@@ -381,6 +370,29 @@ adb shell cmd package query-services -a android.speech.RecognitionService
 adb shell pm revoke app.raveat android.permission.RECORD_AUDIO
 ```
 
+## 13 · La preparación, el historial y la firma
+
+**La preparación.** Con dos sesiones —el administrador en la PC y `proceso@raveat.local` en el
+teléfono, por ejemplo—: crear un pedido y confirmarlo desde **Pedidos**. En **Preparación** aparece
+primero el más viejo. Abrirlo, tocar ▶ en un ítem —el pedido pasa a **En preparación**— y ✓ en el
+último: queda **Listo**, y al que lo creó le llega el aviso.
+
+**El historial.** **Historial**, en el menú. El administrador ve todo el local y puede acotarlo con
+**Ver solo lo mío**; con `proceso@raveat.local` se ven solo sus movimientos de preparación. Para ver que
+el cambio y su fila se guardaron juntos, la misma hora en las dos tablas:
+
+```powershell
+mysql -u raveat_app -p raveat_app -e "SELECT p.codigo, p.estado, p.actualizado_en, h.estado_anterior, h.estado_nuevo, h.creado_en FROM pedidos p JOIN historiales h ON h.pedido_id = p.id ORDER BY h.id DESC LIMIT 5;"
+```
+
+**La firma.** Con `delivery@raveat.local`, tomar una entrega y pasarla a **En camino**. En la ficha
+aparece **Firmar recepción**: firmar con el dedo y **Guardar firma**. La ficha muestra la imagen,
+que queda en `RavEat.Api\wwwroot\uploads\firmas`:
+
+```powershell
+Get-ChildItem .\RavEat.Api\wwwroot\uploads\firmas
+```
+
 ## Si algo falla
 
 | Síntoma | Causa probable | Qué hacer |
@@ -410,6 +422,11 @@ adb shell pm revoke app.raveat android.permission.RECORD_AUDIO
 | El micrófono late y no escribe nada | Sin red: el reconocimiento de Google la necesita | Volver a tener red; el campo se escribe a mano |
 | El mapa queda gris | Sin red, o el servidor de tiles no responde | El aviso lo dice: guardar con la dirección escrita |
 | El buscador del mapa no encuentra la dirección | Nominatim busca calle, número y ciudad | Escribirla completa, o arrastrar el mapa hasta la puerta |
+| **Preparación** no aparece en el menú | El rol no es administrador ni proceso | Entrar con `proceso@raveat.local` |
+| Un pedido confirmado no aparece en Preparación | Sigue en borrador, o ya se entregó | Confirmarlo desde Pedidos; Preparación muestra confirmados, en preparación y listos |
+| El historial de un usuario está vacío | Cada rol ve solo lo suyo, y todavía no movió nada | Es lo esperado; el administrador ve el del local |
+| **Firmar recepción** no aparece | La entrega no está en camino, o la lleva otro repartidor | Pasarla a En camino con el repartidor que la tomó |
+| Guardar la firma dice que no hay conexión | Sin red la firma no se encola | Volver a tener red y firmar de nuevo |
 
 ## Datos del proyecto Android
 
@@ -422,7 +439,8 @@ adb shell pm revoke app.raveat android.permission.RECORD_AUDIO
 | Capacitor | 8.4.1 |
 | Origen de la app en el teléfono | `http://localhost` |
 
-Los permisos del manifiesto son los de la versión 7: esta versión no agrega ninguno a mano. El
+Los permisos del manifiesto son los de la versión 7: ni esta versión ni la anterior agregan
+ninguno a mano. El
 plugin de red declara `ACCESS_NETWORK_STATE` y el del dictado `RECORD_AUDIO`, más la consulta del
 servicio `android.speech.RecognitionService`, por fusión de manifiestos.
 

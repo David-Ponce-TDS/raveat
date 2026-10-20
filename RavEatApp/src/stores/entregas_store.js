@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import {
 	asignar_entrega,
 	cambiar_estado_entrega,
+	guardar_firma_entrega,
 	obtener_entregas
 } from '@/services/entregas_service';
 
@@ -81,6 +82,23 @@ export const use_entregas_store = defineStore('entregas', {
 				return true;
 			}catch(error){
 				vm.error = error.mensaje || 'No se pudo asignar la entrega.';
+				return false;
+			}finally{
+				vm.guardando = false;
+			}
+		},
+		// La firma no se encola sin red: un FormData no sobrevive guardado y llegaria vacio. Es la
+		// misma razon por la que el alta de producto con foto tampoco se encola.
+		guardar_firma: async function(id, archivo){
+			var vm = this;
+			vm.guardando = true;
+			vm.error = null;
+			try{
+				await guardar_firma_entrega(id, archivo);
+				await vm.cargar();
+				return true;
+			}catch(error){
+				vm.error = error.mensaje || 'No se pudo guardar la firma.';
 				return false;
 			}finally{
 				vm.guardando = false;

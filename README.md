@@ -4,11 +4,11 @@
 
 # RavEat
 
-### U10 · Entrada de datos sin teclado
+### U11 · Preparación, historial y firma
 
-*El dato correcto no siempre se escribe: el punto se señala en un mapa y el texto libre se dicta. Y cada entrada tiene su camino manual.*
+*Lo que se registra va en el mismo guardado que la acción: quien prepara marca ítem por ítem, el historial lo escribe quien actúa y la entrega se firma en pantalla.*
 
-`version-10` &nbsp;·&nbsp; Ionic Vue 3 &nbsp;·&nbsp; Capacitor 8 &nbsp;·&nbsp; ASP.NET Core (.NET 10) &nbsp;·&nbsp; EF Core 9 &nbsp;·&nbsp; MySQL 8
+`version-11` &nbsp;·&nbsp; Ionic Vue 3 &nbsp;·&nbsp; Capacitor 8 &nbsp;·&nbsp; ASP.NET Core (.NET 10) &nbsp;·&nbsp; EF Core 9 &nbsp;·&nbsp; MySQL 8
 
 </div>
 
@@ -22,7 +22,7 @@ Tres documentos, en este orden:
 |---|---|---|
 | 1 | [**Requisitos**](README.requisitos.md) | qué tiene que estar instalado, cómo saber qué te falta y cómo dejarlo listo |
 | 2 | [**Comandos**](README.comandos.md) | todo lo que se tipea para poner la app a andar, en orden, con su «si algo falla» |
-| 3 | [**La unidad**](README.unidad-10.md) | qué es esta versión, qué cambia desde la anterior y por qué está hecha así |
+| 3 | [**La unidad**](README.unidad-11.md) | qué es esta versión, qué cambia desde la anterior y por qué está hecha así |
 
 Los dos primeros te dejan **corriendo**; el tercero te deja **entendiendo**.
 

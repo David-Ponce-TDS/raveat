@@ -16,5 +16,8 @@ public sealed class Entrega : EntityBase {
     public EstadoEntrega Estado { get; set; } = EstadoEntrega.Pendiente;
     public DateTimeOffset? AsignadaEn { get; set; }
     public DateTimeOffset? EntregadaEn { get; set; }
+    // La conformidad de quien recibio: se dibuja en pantalla y se sube como imagen. Guarda la
+    // ruta, no el trazo ni el binario — mismo criterio que la foto del producto.
+    public string? FirmaUrl { get; set; }
     public string? Observaciones { get; set; }
 }

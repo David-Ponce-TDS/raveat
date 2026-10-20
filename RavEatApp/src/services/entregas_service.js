@@ -20,3 +20,11 @@ export function asignar_entrega(id, repartidor_id = null){
 export function cambiar_estado_entrega(id, estado){
 	return ajax_request({endpoint: `/api/entregas/${id}/estado`, metodo: 'PUT', datos: {estado}});
 }
+
+// La firma viaja como FormData (multipart): un JSON no puede llevar un archivo. `ajax_service` lo
+// detecta solo y no le pone Content-Type — el boundary lo arma el navegador.
+export function guardar_firma_entrega(id, archivo){
+	const datos = new FormData();
+	datos.append('firma', archivo);
+	return ajax_request({endpoint: `/api/entregas/${id}/firma`, metodo: 'PUT', datos});
+}

@@ -89,12 +89,14 @@
 			:error="store.error || ''"
 			:guardando="store.guardando"
 			:puede_asignar="puede_asignar"
+			:puede_firmar="puede_firmar"
 			:puede_tomar="puede_tomar"
 			:repartidores="repartidores"
 			@asignar="asignar"
 			@cancelar="confirmar_cancelacion"
 			@cerrar="cerrar_detalle"
 			@estado="cambiar_estado"
+			@firmar="firmar"
 			@tomar="tomar"
 		/>
 	</comp-page>
@@ -201,6 +203,15 @@ export default {
 			if(!vm.entrega_detalle) return false;
 			return vm.entrega_detalle.estado == 'pendiente' && (vm.es_delivery || vm.es_admin);
 		},
+		// Firma el repartidor que la lleva (o el admin), con la entrega en camino o ya entregada:
+		// antes no hay a quién pedirle conformidad. El servidor valida lo mismo.
+		puede_firmar(){
+			var vm = this;
+			if(!vm.entrega_detalle) return false;
+			const en_destino = vm.entrega_detalle.estado == 'en_camino' || vm.entrega_detalle.estado == 'entregada';
+			const es_suya = Boolean(vm.sesion_store.usuario) && vm.entrega_detalle.repartidor_id == vm.sesion_store.usuario.id;
+			return en_destino && (es_suya || vm.es_admin);
+		},
 		puede_asignar(){
 			var vm = this;
 			if(!vm.entrega_detalle) return false;
@@ -279,6 +290,13 @@ export default {
 			if(!await vm.store.cambiar_estado(entrega.id, estado)) return;
 			vm.refrescar_detalle();
 			avisar_exito(`${entrega.pedido_codigo}: ${estado_entrega(estado).texto.toLowerCase()}.`);
+		},
+		firmar: async function(archivo){
+			var vm = this;
+			const entrega = vm.entrega_detalle;
+			if(!await vm.store.guardar_firma(entrega.id, archivo)) return;
+			vm.refrescar_detalle();
+			avisar_exito(`Firma de ${entrega.pedido_codigo} guardada.`);
 		},
 		confirmar_cancelacion: async function(){
 			var vm = this;

@@ -75,3 +75,9 @@ public sealed class NotificacionConfiguration : IEntityTypeConfiguration<Notific
     // usuario y contar las no leidas. Cascade: la bandeja no sobrevive al usuario.
     public void Configure(EntityTypeBuilder<Notificacion> b){ ConfigurationExtensions.Base(b, "notificaciones"); b.Property(x => x.Titulo).HasMaxLength(160).IsRequired(); b.Property(x => x.Mensaje).HasMaxLength(500).IsRequired(); b.Property(x => x.Tipo).EnumTexto(); b.HasIndex(x => new {x.UsuarioId, x.LeidaEn}); b.HasOne<Usuario>().WithMany().HasForeignKey(x => x.UsuarioId).OnDelete(DeleteBehavior.Cascade); }
 }
+
+public sealed class HistorialConfiguration : IEntityTypeConfiguration<Historial> {
+    // Restrict contra el usuario, al reves que la bandeja: dar de baja a alguien no puede borrar
+    // lo que hizo. El historial vale justamente por eso.
+    public void Configure(EntityTypeBuilder<Historial> b){ ConfigurationExtensions.Base(b, "historiales"); b.Property(x => x.EstadoAnterior).HasMaxLength(40); b.Property(x => x.EstadoNuevo).HasMaxLength(40).IsRequired(); b.Property(x => x.Observacion).HasMaxLength(500); b.HasIndex(x => new {x.UsuarioId, x.CreadoEn}); b.HasIndex(x => x.PedidoId); b.HasOne<Pedido>().WithMany().HasForeignKey(x => x.PedidoId).OnDelete(DeleteBehavior.Cascade); b.HasOne<Entrega>().WithMany().HasForeignKey(x => x.EntregaId).OnDelete(DeleteBehavior.Cascade); b.HasOne<Usuario>().WithMany().HasForeignKey(x => x.UsuarioId).OnDelete(DeleteBehavior.Restrict); }
+}

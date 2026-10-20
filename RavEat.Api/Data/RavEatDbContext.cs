@@ -15,6 +15,7 @@ public sealed class RavEatDbContext(DbContextOptions<RavEatDbContext> options) :
     public DbSet<Entrega> Entregas => Set<Entrega>();
     public DbSet<Notificacion> Notificaciones => Set<Notificacion>();
     public DbSet<DispositivoPush> DispositivosPush => Set<DispositivoPush>();
+    public DbSet<Historial> Historiales => Set<Historial>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder){
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(RavEatDbContext).Assembly);

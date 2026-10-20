@@ -248,6 +248,66 @@ namespace RavEat.Api.Migrations
                     b.ToTable("entregas", (string)null);
                 });
 
+            modelBuilder.Entity("RavEat.Api.Domain.Entities.Historial", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTimeOffset>("ActualizadoEn")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("actualizado_en");
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("creado_en");
+
+                    b.Property<long?>("EntregaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("entrega_id");
+
+                    b.Property<string>("EstadoAnterior")
+                        .HasMaxLength(40)
+                        .HasColumnType("varchar(40)")
+                        .HasColumnName("estado_anterior");
+
+                    b.Property<string>("EstadoNuevo")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("varchar(40)")
+                        .HasColumnName("estado_nuevo");
+
+                    b.Property<string>("Observacion")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)")
+                        .HasColumnName("observacion");
+
+                    b.Property<long?>("PedidoId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("pedido_id");
+
+                    b.Property<long>("UsuarioId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("usuario_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_historiales");
+
+                    b.HasIndex("EntregaId")
+                        .HasDatabaseName("ix_historiales_entrega_id");
+
+                    b.HasIndex("PedidoId")
+                        .HasDatabaseName("ix_historiales_pedido_id");
+
+                    b.HasIndex("UsuarioId", "CreadoEn")
+                        .HasDatabaseName("ix_historiales_usuario_id_creado_en");
+
+                    b.ToTable("historiales", (string)null);
+                });
+
             modelBuilder.Entity("RavEat.Api.Domain.Entities.Notificacion", b =>
                 {
                     b.Property<long>("Id")
@@ -709,6 +769,28 @@ namespace RavEat.Api.Migrations
                         .HasForeignKey("RepartidorId")
                         .OnDelete(DeleteBehavior.SetNull)
                         .HasConstraintName("fk_entregas_usuarios_repartidor_id");
+                });
+
+            modelBuilder.Entity("RavEat.Api.Domain.Entities.Historial", b =>
+                {
+                    b.HasOne("RavEat.Api.Domain.Entities.Entrega", null)
+                        .WithMany()
+                        .HasForeignKey("EntregaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_historiales_entregas_entrega_id");
+
+                    b.HasOne("RavEat.Api.Domain.Entities.Pedido", null)
+                        .WithMany()
+                        .HasForeignKey("PedidoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_historiales_pedidos_pedido_id");
+
+                    b.HasOne("RavEat.Api.Domain.Entities.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_historiales_usuarios_usuario_id");
                 });
 
             modelBuilder.Entity("RavEat.Api.Domain.Entities.Notificacion", b =>

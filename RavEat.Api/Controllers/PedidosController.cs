@@ -220,6 +220,8 @@ public sealed class PedidosController(RavEatDbContext db) : ControllerBase {
             });
         }
 
+        // Al mismo SaveChanges que el cambio: el historial no se escribe "despues", se escribe con.
+        db.RegistrarPedido(User.UsuarioId(), pedido.Id, pedido.Estado.ToString(), request.Estado.ToString());
         pedido.Estado = request.Estado;
         if(request.Estado == EstadoPedido.Confirmado) pedido.ConfirmadoEn = DateTimeOffset.UtcNow;
         if(request.Estado == EstadoPedido.Cerrado) pedido.CerradoEn = DateTimeOffset.UtcNow;
@@ -242,6 +244,7 @@ public sealed class PedidosController(RavEatDbContext db) : ControllerBase {
         pedido.PropinaImporte = request.PropinaImporte;
         pedido.PagadoEn = DateTimeOffset.UtcNow;
         await NotificarCreadorAsync(pedido, $"registró el pago ({request.MedioPago.Texto()}).", cancellationToken);
+        db.RegistrarPedido(User.UsuarioId(), pedido.Id, EstadoPago.Pendiente.ToString(), pedido.EstadoPago.ToString(), $"Cobro con {request.MedioPago.Texto()}.");
         await db.SaveChangesAsync(cancellationToken);
         return Ok(new {estado_pago = pedido.EstadoPago, total = pedido.Total, propina_importe = pedido.PropinaImporte});
     }
@@ -256,6 +259,7 @@ public sealed class PedidosController(RavEatDbContext db) : ControllerBase {
         if(!TransicionesValidas[pedido.Estado].Contains(EstadoPedido.Cancelado)) {
             return BadRequest(new {codigo = "transicion_invalida", mensaje = $"Un pedido en '{pedido.Estado.Texto()}' ya no se puede cancelar."});
         }
+        db.RegistrarPedido(User.UsuarioId(), pedido.Id, pedido.Estado.ToString(), EstadoPedido.Cancelado.ToString(), "Cancelación del pedido.");
         pedido.Estado = EstadoPedido.Cancelado;
         if(pedido.EstadoPago == EstadoPago.Pendiente) pedido.EstadoPago = EstadoPago.Anulado;
         await NotificarCreadorAsync(pedido, "canceló el pedido.", cancellationToken);

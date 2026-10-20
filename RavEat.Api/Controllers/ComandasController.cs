@@ -138,6 +138,7 @@ public sealed class ComandasController(RavEatDbContext db) : ControllerBase {
             : EstadoPedido.EnPreparacion;
         if(nuevoEstado == pedido.Estado) return;
 
+        db.RegistrarPedido(User.UsuarioId(), pedido.Id, pedido.Estado.ToString(), nuevoEstado.ToString(), "Movimiento de preparación.");
         pedido.Estado = nuevoEstado;
         if(nuevoEstado == EstadoPedido.Listo && pedido.UsuarioCreadorId != User.UsuarioId()) {
             db.Notificaciones.Add(new Notificacion {

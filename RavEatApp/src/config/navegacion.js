@@ -7,7 +7,8 @@ import {
 	peopleCircleOutline,
 	personCircleOutline,
 	pricetagsOutline,
-	receiptOutline
+	receiptOutline,
+	timeOutline
 } from 'ionicons/icons';
 
 // Fuente de verdad unica de la navegacion. De aca salen cuatro cosas que antes se escribian
@@ -127,6 +128,20 @@ export const navegacion = [
 		grupo_menu: 'operacion',
 		orden: 50,
 		componente: () => import('@/views/entregas_page.vue')
+	},
+	{
+		id: 'historial',
+		titulo: 'Historial',
+		ruta: '/app/historial',
+		icono: timeOutline,
+		roles: ['administrador', 'vendedor', 'proceso', 'caja', 'delivery'],
+		menu_roles: ['administrador', 'vendedor', 'proceso', 'caja', 'delivery'],
+		// Sin tab: se consulta cuando hay una duda, no todo el dia. Cada uno ve lo suyo y el
+		// administrador ve el movimiento del local; eso lo decide la API con el token.
+		tab_roles: [],
+		grupo_menu: 'operacion',
+		orden: 55,
+		componente: () => import('@/views/historial_page.vue')
 	},
 	{
 		id: 'notificaciones',

@@ -110,6 +110,7 @@ public sealed class EntregasController(RavEatDbContext db) : ControllerBase {
         ).AnyAsync(cancellationToken);
         if(!repartidorValido) return BadRequest(new {codigo = "repartidor_invalido", mensaje = "El repartidor indicado no existe o su rol no es de delivery."});
 
+        db.RegistrarEntrega(User.UsuarioId(), entrega.Id, entrega.Estado.ToString(), EstadoEntrega.Asignada.ToString(), esParaOtro ? "Asignada a otro repartidor." : "Tomada por el repartidor.");
         entrega.RepartidorId = repartidorId;
         entrega.Estado = EstadoEntrega.Asignada;
         entrega.AsignadaEn = DateTimeOffset.UtcNow;
@@ -144,6 +145,7 @@ public sealed class EntregasController(RavEatDbContext db) : ControllerBase {
             return BadRequest(new {codigo = "transicion_invalida", mensaje = $"Una entrega en '{entrega.Estado.Texto()}' no puede pasar a '{request.Estado.Texto()}'."});
         }
 
+        db.RegistrarEntrega(User.UsuarioId(), entrega.Id, entrega.Estado.ToString(), request.Estado.ToString());
         entrega.Estado = request.Estado;
         if(request.Estado == EstadoEntrega.Entregada) entrega.EntregadaEn = DateTimeOffset.UtcNow;
 

@@ -1,3 +1,5 @@
+using RavEat.Api.Domain.Enums;
+
 namespace RavEat.Api.Domain.Entities;
 
 // El nombre y el precio se copian al crear el item, no se leen del producto al mostrar el pedido.
@@ -10,5 +12,7 @@ public sealed class PedidoItem : EntityBase {
     public decimal PrecioUnitario { get; set; }
     public int Cantidad { get; set; }
     public decimal Subtotal { get; set; }
+    // Lo que agrega la comanda: cada item avanza por su cuenta en cocina.
+    public EstadoItemPedido Estado { get; set; } = EstadoItemPedido.Pendiente;
     public string? Observaciones { get; set; }
 }

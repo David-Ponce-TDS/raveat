@@ -28,3 +28,13 @@ export function formatear_fecha_larga(valor){
 	if(!valor) return '';
 	return formateador_fecha_larga.format(new Date(valor));
 }
+
+// "12 min", "1 h 5 min", "3 d": en cocina no importa la hora exacta sino cuanto lleva esperando.
+// Pasado un dia, las horas sueltas ya no dicen nada.
+export function formatear_espera(valor){
+	if(!valor) return '';
+	const minutos = Math.max(0, Math.round((Date.now() - new Date(valor).getTime()) / 60000));
+	if(minutos < 60) return `${minutos} min`;
+	if(minutos < 1440) return `${Math.floor(minutos / 60)} h ${minutos % 60} min`;
+	return `${Math.floor(minutos / 1440)} d`;
+}

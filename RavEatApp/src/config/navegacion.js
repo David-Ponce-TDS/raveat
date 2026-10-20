@@ -1,5 +1,6 @@
 import {
 	bicycleOutline,
+	clipboardOutline,
 	homeOutline,
 	notificationsOutline,
 	peopleOutline,
@@ -98,6 +99,20 @@ export const navegacion = [
 		grupo_menu: 'operacion',
 		orden: 40,
 		componente: () => import('@/views/pedidos_page.vue')
+	},
+	{
+		id: 'comandas',
+		titulo: 'Preparación',
+		ruta: '/app/comandas',
+		icono: clipboardOutline,
+		roles: ['administrador', 'proceso'],
+		menu_roles: ['administrador', 'proceso'],
+		// En tabs solo para proceso: es SU pantalla, la unica que mira en todo el turno. El admin
+		// ya tiene los cinco tabs ocupados y para el la preparacion es supervision, no rutina.
+		tab_roles: ['proceso'],
+		grupo_menu: 'operacion',
+		orden: 45,
+		componente: () => import('@/views/comandas_page.vue')
 	},
 	{
 		id: 'entregas',

@@ -42,6 +42,13 @@ const SIGUIENTE_ESTADO_PEDIDO = {
 	entregado: 'cerrado'
 };
 
+// El estado de un item en cocina. El del pedido se deduce de estos: lo calcula el servidor.
+const ESTADO_ITEM = {
+	pendiente: {texto: 'Sin empezar', color: 'medium', icono: timeOutline},
+	en_preparacion: {texto: 'Preparando', color: 'warning', icono: flameOutline},
+	listo: {texto: 'Listo', color: 'success', icono: checkboxOutline}
+};
+
 const TIPO_PEDIDO = {
 	presencial: {texto: 'Presencial', color: 'medium', icono: storefrontOutline},
 	retiro: {texto: 'Retiro', color: 'medium', icono: bagHandleOutline},
@@ -90,6 +97,10 @@ export function estado_pedido(estado){
 
 export function siguiente_estado_pedido(estado){
 	return SIGUIENTE_ESTADO_PEDIDO[estado] || '';
+}
+
+export function estado_item(estado){
+	return leer(ESTADO_ITEM, estado);
 }
 
 export function tipo_pedido(tipo){

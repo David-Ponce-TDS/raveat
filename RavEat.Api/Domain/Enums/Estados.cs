@@ -18,6 +18,16 @@ public enum EstadoPedido {
     Cancelado
 }
 
+// El estado de cocina, pero por ITEM. Un pedido no se prepara entero de una vez: la ensalada sale
+// antes que el guiso, y la comanda tiene que poder decirlo. El estado del PEDIDO se deduce de sus
+// items (alguno en preparacion => el pedido esta en preparacion; todos listos => listo), asi que
+// no hay dos verdades que mantener sincronizadas.
+public enum EstadoItemPedido {
+    Pendiente,
+    EnPreparacion,
+    Listo
+}
+
 // El pago vive dentro del pedido y no en una tabla aparte: para el alcance del taller, un pedido
 // tiene un solo cobro.
 public enum EstadoPago {

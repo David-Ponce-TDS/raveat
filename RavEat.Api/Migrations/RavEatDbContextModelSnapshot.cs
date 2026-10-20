@@ -431,6 +431,12 @@ namespace RavEat.Api.Migrations
                         .HasColumnType("datetime(6)")
                         .HasColumnName("creado_en");
 
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)")
+                        .HasColumnName("estado");
+
                     b.Property<string>("Observaciones")
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)")

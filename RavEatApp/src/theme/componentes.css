@@ -1623,3 +1623,23 @@ ion-action-sheet .action-sheet-group:focus-visible {
     --background: rgba(var(--ion-color-primary-rgb), 0.08);
     border-color: var(--ion-color-primary);
 }
+
+/* --- cocina -------------------------------------------------------------------- */
+
+/* El estado del item y su boton, juntos a la derecha de la fila. */
+.raveat-comanda-item__acciones {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Redondo de verdad: ancho y alto iguales y el radio al 50 %. El shape de Ionic solo redondea
+   las puntas de una pastilla. */
+.raveat-comanda-item__boton {
+    margin: 0;
+    width: 40px;
+    height: 40px;
+    --border-radius: 50%;
+    --padding-start: 0;
+    --padding-end: 0;
+}

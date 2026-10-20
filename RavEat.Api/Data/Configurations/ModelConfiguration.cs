@@ -55,7 +55,7 @@ public sealed class PedidoConfiguration : IEntityTypeConfiguration<Pedido> {
 public sealed class PedidoItemConfiguration : IEntityTypeConfiguration<PedidoItem> {
     // Cascade contra el pedido: borrar un pedido se lleva sus items, que no existen sin el.
     // Restrict contra el producto: un producto usado en un pedido no se puede borrar.
-    public void Configure(EntityTypeBuilder<PedidoItem> b){ ConfigurationExtensions.Base(b, "pedidos_items"); b.Property(x => x.ProductoNombre).HasMaxLength(160).IsRequired(); b.Property(x => x.PrecioUnitario).HasPrecision(12, 2); b.Property(x => x.Subtotal).HasPrecision(12, 2); b.Property(x => x.Observaciones).HasMaxLength(500); b.HasIndex(x => x.PedidoId); b.HasOne<Pedido>().WithMany().HasForeignKey(x => x.PedidoId).OnDelete(DeleteBehavior.Cascade); b.HasOne<Producto>().WithMany().HasForeignKey(x => x.ProductoId).OnDelete(DeleteBehavior.Restrict); }
+    public void Configure(EntityTypeBuilder<PedidoItem> b){ ConfigurationExtensions.Base(b, "pedidos_items"); b.Property(x => x.ProductoNombre).HasMaxLength(160).IsRequired(); b.Property(x => x.PrecioUnitario).HasPrecision(12, 2); b.Property(x => x.Subtotal).HasPrecision(12, 2); b.Property(x => x.Estado).EnumTexto(); b.Property(x => x.Observaciones).HasMaxLength(500); b.HasIndex(x => x.PedidoId); b.HasOne<Pedido>().WithMany().HasForeignKey(x => x.PedidoId).OnDelete(DeleteBehavior.Cascade); b.HasOne<Producto>().WithMany().HasForeignKey(x => x.ProductoId).OnDelete(DeleteBehavior.Restrict); }
 }
 
 public sealed class EntregaConfiguration : IEntityTypeConfiguration<Entrega> {

@@ -121,7 +121,7 @@ public sealed class PedidosController(RavEatDbContext db) : ControllerBase {
         var items = await db.PedidosItems.AsNoTracking()
             .Where(x => x.PedidoId == id)
             .OrderBy(x => x.Id)
-            .Select(x => new PedidoItemResponse(x.Id, x.ProductoId, x.ProductoNombre, x.PrecioUnitario, x.Cantidad, x.Subtotal, x.Observaciones))
+            .Select(x => new PedidoItemResponse(x.Id, x.ProductoId, x.ProductoNombre, x.PrecioUnitario, x.Cantidad, x.Subtotal, x.Estado, x.Observaciones))
             .ToListAsync(cancellationToken);
 
         return Ok(new {pedido, items});
@@ -404,6 +404,7 @@ public sealed record PedidoItemResponse(
     decimal PrecioUnitario,
     int Cantidad,
     decimal Subtotal,
+    EstadoItemPedido Estado,
     string? Observaciones
 );
 

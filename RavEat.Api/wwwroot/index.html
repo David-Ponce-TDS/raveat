@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RavEat &middot; La carta</title>
+<meta name="description" content="La carta de RavEat y el seguimiento de tu pedido.">
+<meta name="theme-color" content="#3880ff">
+<link rel="icon" href="/marca/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="96x96" href="/marca/favicon-96x96.png">
+<link rel="apple-touch-icon" href="/marca/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<!--
+	La cara publica del local: la carta y el puente hacia la app, vistos desde el navegador y sin
+	cuenta.
+
+	Es un archivo estatico a proposito, y esa es toda la diferencia con la pagina del pedido (que la
+	genera `PublicoController` en C#). Esta se edita y se sube; aquella se compila. El criterio:
+	la del pedido depende de datos que hay que buscar en la base con un token, esta depende de un
+	endpoint que ya era anonimo — el mismo que ve la app antes de que alguien inicie sesion.
+
+	Sin frameworks y sin build: unas 80 lineas de JavaScript. Meter Vue aca obligaria a compilar el
+	sitio para cambiar un titulo.
+
+	>>> LO UNICO QUE HAY QUE EDITAR PARA PUBLICAR ESTA EN `DISTRIBUCION`, unas lineas mas abajo. <<<
+-->
+<style>
+:root { color-scheme: dark; }
+* { box-sizing: border-box; }
+/* Tipografía y aire con clamp(): crecen con la pantalla sin una sola media query. */
+body { margin: 0; padding: clamp(20px, 4vw, 44px) clamp(14px, 3vw, 24px) 64px; background: #12141a;
+       color: #f4f5f7; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+       line-height: 1.45; -webkit-font-smoothing: antialiased; }
+main { max-width: 760px; margin: 0 auto; }
+header { text-align: center; margin-bottom: clamp(22px, 4vw, 34px); }
+header img { width: clamp(150px, 30vw, 200px); max-width: 62%; height: auto; }
+header p { margin: 4px 0 0; color: #8b93a7; font-size: .92rem; }
+header .lema { margin: 10px 0 0; color: #f4f5f7; font-size: clamp(1.15rem, 3vw, 1.4rem); font-weight: 600; }
+h2 { margin: clamp(28px, 5vw, 40px) 0 12px; font-size: 1.02rem; letter-spacing: 2px;
+     text-transform: uppercase; color: #6ea8ff; border-bottom: 1px solid #2a2e38; padding-bottom: 8px; }
+
+.boton { display: block; margin-top: 10px; padding: 14px; border-radius: 12px; text-decoration: none;
+         font-weight: 600; background: #3880ff; color: #fff; }
+.boton.secundario { background: transparent; color: #6ea8ff; border: 1px solid #33506f; }
+.pie_legal { margin: clamp(26px, 5vw, 36px) 0 0; text-align: center; font-size: .78rem; }
+.pie_legal a { color: #6f7686; }
+
+/* La misma vitrina que la app: una grilla que se acomoda sola —dos columnas en un teléfono, más en
+   una pantalla ancha— sin una sola media query. El min(44vw) garantiza dos columnas también en un
+   teléfono angosto. La foto manda; el texto va debajo. */
+.grilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(155px, 44vw), 1fr));
+          gap: clamp(10px, 2.2vw, 16px); }
+.plato { overflow: hidden; background: #1b1e26; border: 1px solid #2a2e38; border-radius: 16px;
+         box-shadow: 0 6px 18px rgba(0,0,0,.12); transition: transform .18s ease, box-shadow .18s ease; }
+.plato:hover { transform: translateY(-3px); box-shadow: 0 14px 30px rgba(0,0,0,.3); }
+/* Cuadrada siempre: con fotos de distinta proporción la grilla queda despareja. */
+.plato_foto { position: relative; aspect-ratio: 1 / 1; background: #000; }
+.plato_foto img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.plato_foto .sin_foto { display: flex; width: 100%; height: 100%; align-items: center;
+                        justify-content: center; font-size: 2rem; opacity: .35; }
+/* El precio va SOBRE la foto, como en la app: en una tarjeta angosta, una fila más lo empuja todo. */
+.precio { position: absolute; right: 8px; bottom: 8px; padding: 4px 10px; border-radius: 999px;
+          background: rgba(0,0,0,.65); color: #fff; font-size: .9rem; font-weight: 700;
+          font-variant-numeric: tabular-nums; }
+.marca_agotado { position: absolute; left: 8px; top: 8px; padding: 3px 8px; border-radius: 8px;
+                 background: #6f7686; color: #fff; font-size: .7rem; }
+.plato_texto { padding: 10px 12px 12px; }
+.plato_texto h3 { margin: 0 0 2px; font-size: .98rem; font-weight: 600; }
+/* Dos líneas y corta: sin el tope, las tarjetas de una misma fila quedan de alturas distintas. */
+.plato_texto p { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+                 overflow: hidden; margin: 0; color: #8b93a7; font-size: .8rem; }
+/* Un producto no disponible sigue en la carta: hoy no se puede pedir, pero existe. Borrarlo de la
+   vista haria pensar que el local no lo hace. */
+.agotado { opacity: .55; }
+/* Ocupa el ancho completo debajo de la grilla: es el final de la sección, no un control más. */
+.ver_mas { display: block; width: 100%; margin-top: 12px; padding: 12px; border-radius: 12px;
+           border: 1px solid #33506f; background: transparent; color: #6ea8ff; font: inherit;
+           font-weight: 600; cursor: pointer; }
+.ver_mas:hover { background: rgba(56,128,255,.08); }
+.ver_mas span { color: #6f7686; font-weight: 400; font-size: .85em; }
+
+/* El QR del pie, como tarjeta azul de tienda: a la izquierda el ícono de la app, el título y
+   la insignia de Play; a la derecha el código sobre blanco — un QR necesita fondo claro y
+   margen propio, o el lector no lo engancha. El brillo sale de gradientes, sin imágenes, y el
+   flex con wrap lo vuelve una columna en pantallas angostas. */
+.qr_panel { display: flex; flex-wrap: wrap; align-items: center; gap: 28px; margin-top: 40px;
+            padding: 28px; border: 1px solid rgba(110,168,255,.28); border-radius: 24px; color: #fff;
+            background: radial-gradient(120% 170% at 100% 100%, rgba(56,128,255,.38) 0%, rgba(56,128,255,0) 60%),
+                        linear-gradient(135deg, #0a2f6e 0%, #123f96 55%, #0b2a66 100%);
+            box-shadow: 0 18px 44px rgba(4,20,50,.45); }
+.qr_info { flex: 1 1 260px; min-width: 240px; }
+.qr_icono { width: 84px; height: 84px; margin-bottom: 14px; border-radius: 20px;
+            box-shadow: 0 10px 24px rgba(0,0,0,.35); }
+.qr_info h2 { margin: 0 0 6px; border: 0; padding: 0; color: #fff; font-size: 1.55rem;
+              line-height: 1.15; letter-spacing: 0; text-transform: none; }
+.qr_sub { margin: 0 0 16px; color: rgba(233,240,255,.85); font-size: .95rem; }
+.qr_detalle_linea { display: flex; align-items: center; gap: 10px; margin: 0 0 18px;
+                    color: rgba(233,240,255,.92); font-size: .9rem; }
+.qr_detalle_linea svg { flex: none; width: 22px; height: 22px; }
+/* La insignia de la tienda, al estilo del badge oficial: fondo negro, logo y dos líneas. El texto
+   chico lo escribe el script según lo que haya en `distribucion.json`: la ficha publicada, la
+   prueba abierta, o ninguna de las dos. */
+.qr_play { display: inline-flex; align-items: center; gap: 9px; padding: 8px 14px;
+           border-radius: 12px; background: #05070b; border: 1px solid rgba(255,255,255,.22); color: #fff; }
+.qr_play svg { width: 20px; height: 20px; }
+.qr_play small { display: block; font-size: .6rem; letter-spacing: 1.2px; color: #9aa3b5; }
+.qr_play b { display: block; font-size: .95rem; line-height: 1.15; }
+.qr_marco { flex: 0 1 auto; margin-inline: auto; padding: 14px; background: #fff; border-radius: 18px;
+            line-height: 0; box-shadow: 0 0 0 8px rgba(255,255,255,.08), 0 14px 34px rgba(0,0,0,.4); }
+.qr_marco img { display: block; width: min(200px, 62vw); height: auto; }
+/* La invitación al grupo: el segundo piso del mismo bloque, no una tarjeta aparte. Se conecta con
+   el panel azul de arriba —sin separación, esquinas rectas en la junta y el mismo color de borde—
+   porque las dos cosas son un solo recorrido: el grupo habilita, el código descarga. Va debajo y
+   no adentro porque Google Play solo abre la prueba cerrada a quien está en la lista, así que es
+   el paso PREVIO al QR y no otra forma de bajar la app.
+
+   El triángulo es de ESTA tarjeta, no del panel: sale de su borde superior, apunta hacia arriba y
+   lleva su mismo color. Mide lo mismo que la separación, así la cruza entera y las dos se leen
+   como una sola cosa sin tener que pegarlas. Son dos triángulos superpuestos y no uno: el de
+   atrás va en el color del borde y el de adelante, un pixel más abajo, en el del fondo — así la
+   punta continúa la línea del borde en lugar de cortarla. Es la única forma de que un triángulo
+   de CSS (que no es una forma, sino tres bordes) tenga contorno. */
+.grupo { position: relative; margin-top: 16px; padding: 32px 26px 28px; text-align: center;
+         background: #191d26; border: 1px solid #2a2e38; border-radius: 22px; }
+.grupo::before, .grupo::after { content: ""; position: absolute; left: 50%; width: 0; height: 0;
+                                transform: translateX(-50%); border-left: 16px solid transparent;
+                                border-right: 16px solid transparent; }
+.grupo::before { top: -16px; border-bottom: 16px solid #2a2e38; }
+.grupo::after { top: -15px; border-bottom: 16px solid #191d26; }
+.grupo_icono { display: inline-flex; align-items: center; justify-content: center; width: 88px;
+               height: 88px; margin-bottom: 16px; border-radius: 50%; background: #1d55c4;
+               box-shadow: 0 12px 30px rgba(29,85,196,.42); }
+.grupo_icono svg { width: 50px; height: 50px; }
+.grupo h2 { margin: 0 0 8px; border: 0; padding: 0; color: #f4f5f7; font-size: 1.3rem;
+            letter-spacing: 0; text-transform: none; }
+.grupo p { margin: 0 0 20px; color: #8b93a7; font-size: .92rem; }
+.grupo .boton { margin-top: 0; }
+
+.aviso { padding: 20px; text-align: center; color: #8b93a7; background: #1b1e26;
+         border: 1px solid #2a2e38; border-radius: 14px; }
+.aviso button { margin-top: 12px; padding: 10px 18px; border: 0; border-radius: 10px;
+                background: #3880ff; color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+
+/* El esqueleto de carga, igual que en la app: tarjetas fantasma con un destello que las
+   recorre, en lugar de un texto que avisa. */
+.esqueleto { position: relative; overflow: hidden; background: #262b38; border-radius: 8px; }
+.esqueleto::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%);
+                    background: linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent);
+                    animation: esqueleto_barrido 1.6s ease-in-out infinite; }
+.esqueleto_foto { aspect-ratio: 1 / 1; border-radius: 0; }
+.esqueleto_linea { height: 12px; margin-bottom: 8px; }
+.esqueleto_linea.corta { width: 60%; margin-bottom: 0; }
+@keyframes esqueleto_barrido { 100% { transform: translateX(100%); } }
+
+/* El movimiento es decorativo: si el sistema pide menos, todo quieto. */
+@media (prefers-reduced-motion: reduce) {
+	.esqueleto::after { animation: none; }
+	.plato, .plato:hover { transform: none; transition: none; }
+}
+</style>
+</head>
+<body>
+<main>
+	<header>
+		<img src="/marca/logo-raveat.png" alt="RavEat">
+		<p class="lema">Comer nunca sonó tan bien...</p>
+		<p>Explorá la carta y seguí tu pedido</p>
+	</header>
+
+	<h2>La carta de hoy</h2>
+	<!-- Lo llena el script apenas arranca: primero el esqueleto, despues la carta. -->
+	<div id="carta"></div>
+
+	<!-- El QR del pie. El PNG lo genera la API con el mismo generador que el comprobante, y el logo
+	     de Play va como SVG embebido: la página no baja ninguna librería de afuera. Las fotos de la
+	     carta son la única excepción — vienen de donde diga su imagen_url, que puede ser el almacén
+	     externo de imágenes. -->
+
+	<section class="qr_panel">
+		<div class="qr_info">
+			<img class="qr_icono" src="/marca/web-app-manifest-192x192.png" alt="">
+			<h2>Escaneá y llevate la app</h2>
+			<p class="qr_sub">Pedí y seguí tu pedido desde el teléfono.</p>
+			<!-- El texto vive en un span propio: el script lo pisa con textContent y un ícono
+			     adentro no sobreviviría al cambio. -->
+			<p class="qr_detalle_linea"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h2.2l1.4-2h8.8l1.4 2H20a1.6 1.6 0 0 1 1.6 1.6V18A1.6 1.6 0 0 1 20 19.6H4A1.6 1.6 0 0 1 2.4 18V9.6A1.6 1.6 0 0 1 4 8z"/><circle cx="12" cy="13.4" r="3.4"/></svg><span id="qr_detalle">Apuntá con la cámara del teléfono.</span></p>
+			<span class="qr_play"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#00c4ff" d="M3.6 1.8c-.4.3-.6.8-.6 1.4v17.6c0 .6.2 1.1.6 1.4l.1.1L13.8 12v-.2L3.7 1.7l-.1.1z"/><path fill="#ffce00" d="M17.1 15.5 13.8 12v-.2l3.3-3.4.1.1 4 2.3c1.1.6 1.1 1.7 0 2.3l-4 2.3-.1.1z"/><path fill="#f43249" d="M17.2 15.4 13.8 12 3.6 22.2c.4.4 1 .4 1.7.1l11.9-6.9"/><path fill="#00e076" d="M17.2 8.5 5.3 1.7c-.7-.4-1.3-.3-1.7.1L13.8 12l3.4-3.5z"/></svg><span><small id="qr_insignia">MUY PRONTO EN</small><b>Google Play</b></span></span>
+		</div>
+		<div class="qr_marco"><img src="/api/publico/qr-descarga" alt="Código QR para descargar RavEat" width="168" height="168"></div>
+	</section>
+
+	<!-- La invitación al grupo de prueba. Nace oculta y la muestra el script solo si
+	     `distribucion.json` trae la línea `grupo`: el día que la prueba cerrada termine se vacía
+	     esa línea y la tarjeta desaparece, sin tocar el HTML. -->
+	<section class="grupo" id="grupo" hidden>
+		<span class="grupo_icono"><svg viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><circle cx="5.3" cy="10.1" r="2.3"/><path d="M5.3 13.2c-2.1 0-3.9 1.1-3.9 2.7v1.4h4.3v-.8c0-1.2.5-2.3 1.4-3.1-.6-.1-1.2-.2-1.8-.2z"/><circle cx="18.7" cy="10.1" r="2.3"/><path d="M18.7 13.2c-.6 0-1.2.1-1.8.2.9.8 1.4 1.9 1.4 3.1v.8h4.3v-1.4c0-1.6-1.8-2.7-3.9-2.7z"/><circle cx="12" cy="8.4" r="3.1"/><path d="M12 12.5c-2.8 0-5.1 1.4-5.1 3.3v2.3h10.2v-2.3c0-1.9-2.3-3.3-5.1-3.3z"/></svg></span>
+		<h2>Unite a la prueba cerrada</h2>
+		<p>Sumate al grupo de prueba y volvé para escanear el código.</p>
+		<a class="boton secundario" id="grupo_enlace" href="#" rel="noopener" target="_blank">Sumarme al grupo</a>
+	</section>
+
+	<!-- Google Play exige que la politica de privacidad este publicada y sea alcanzable; el enlace
+	     desde la cara publica del sitio es lo que hace que no dependa de la ficha de la tienda. -->
+	<p class="pie_legal"><a href="/privacidad.html">Política de privacidad</a></p>
+</main>
+
+<script>
+(function(){
+	// De a diez, y con boton para pedir mas. La carta entera llega en una sola respuesta —la vitrina
+	// no pagina en la API—, asi que esto no oculta resultados de una busqueda: recorta el DIBUJO.
+	// Sin el tope, una categoria de quince productos empuja las demas fuera de la pantalla y hay que
+	// scrollear a ciegas para saber que mas hay.
+	var POR_TANDA = 10;
+
+	var carta = document.getElementById('carta');
+	// Cuantos se muestran de cada categoria. Vive fuera del dibujado porque tiene que sobrevivir a
+	// que se redibuje la carta.
+	var visibles = {};
+	var pesos = new Intl.NumberFormat('es-AR', {style: 'currency', currency: 'ARS', maximumFractionDigits: 0});
+
+	function escapar(texto){
+		// El nombre y la descripcion los escribe alguien desde la app: van al DOM como texto, nunca
+		// como HTML. Sin esto, un producto llamado `<img onerror=...>` ejecutaria su script aca.
+		var div = document.createElement('div');
+		div.textContent = texto == null ? '' : String(texto);
+		return div.innerHTML;
+	}
+
+	// Los enlaces viven en `distribucion.json`, NO en este archivo: la pagina del pedido (que la
+	// genera la API en C#) lee el mismo archivo, y asi las dos ofrecen exactamente lo mismo. Tenerlo
+	// escrito en dos lados era garantizar que algun dia dijeran cosas distintas.
+	function dibujar_distribucion(distribucion){
+		// La insignia no promete una tienda que todavia no esta: dice "disponible" con la ficha
+		// publicada, "en prueba" mientras el unico camino sea la prueba abierta, y "muy pronto"
+		// cuando no hay ninguno de los dos.
+		document.getElementById('qr_insignia').textContent =
+			distribucion.play ? 'DISPONIBLE EN' : distribucion.prueba ? 'EN PRUEBA EN' : 'MUY PRONTO EN';
+		if(distribucion.play || distribucion.prueba){
+			document.getElementById('qr_detalle').textContent = 'Apuntá con la cámara del teléfono y bajá la app.';
+		}
+		// Play habilita la prueba cerrada SOLO a quien esta en la lista: sin el grupo, el enlace del
+		// QR le contesta "no disponible" al que escanea. Por eso la tarjeta va debajo del panel y no
+		// adentro — es el paso previo al codigo, no otro camino para bajar la app.
+		if(!distribucion.grupo) return;
+		// El destino se asigna a la propiedad `href` y no concatenando HTML: asi la URL no puede
+		// romper el marcado, que es lo que `escapar` cuida en la carta.
+		document.getElementById('grupo_enlace').href = distribucion.grupo;
+		document.getElementById('grupo').hidden = false;
+	}
+
+	function cargar_distribucion(){
+		fetch('/distribucion.json')
+			.then(function(respuesta){ return respuesta.ok ? respuesta.json() : {}; })
+			.catch(function(){ return {}; })
+			.then(function(distribucion){ dibujar_distribucion(distribucion || {}); });
+	}
+
+	function tarjeta(producto){
+		return '<article class="plato' + (producto.disponible ? '' : ' agotado') + '">' +
+			'<div class="plato_foto">' +
+			(producto.imagen_url
+				? '<img src="' + escapar(producto.imagen_url) + '" alt="" loading="lazy">'
+				: '<div class="sin_foto">&#127860;</div>') +
+			(producto.disponible ? '' : '<span class="marca_agotado">No disponible</span>') +
+			'<span class="precio">' + pesos.format(producto.precio) + '</span></div>' +
+			'<div class="plato_texto"><h3>' + escapar(producto.nombre) + '</h3>' +
+			(producto.descripcion ? '<p>' + escapar(producto.descripcion) + '</p>' : '') +
+			'</div></article>';
+	}
+
+	function dibujar_carta(datos){
+		var productos = datos.productos || [];
+		if(productos.length == 0){
+			// Vacio NO es lo mismo que error: la carta cargo bien y hoy no hay nada publicado.
+			carta.innerHTML = '<p class="aviso">Todavía no hay productos publicados.</p>';
+			return;
+		}
+		var html = (datos.categorias || []).map(function(categoria){
+			var suyos = productos.filter(function(producto){ return producto.categoria_id == categoria.id; });
+			if(suyos.length == 0) return '';
+			var tope = visibles[categoria.id] || POR_TANDA;
+			var restantes = suyos.length - tope;
+			// El boton dice CUANTAS faltan: "ver mas" a secas no deja saber si queda una o cuarenta.
+			var boton = restantes > 0
+				? '<button type="button" class="ver_mas" data-categoria="' + categoria.id + '">Ver ' +
+					Math.min(POR_TANDA, restantes) + ' más <span>(' + restantes + ' sin mostrar)</span></button>'
+				: '';
+			return '<section><h2>' + escapar(categoria.nombre) + '</h2><div class="grilla">' +
+				suyos.slice(0, tope).map(tarjeta).join('') + '</div>' + boton + '</section>';
+		}).join('');
+		carta.innerHTML = html;
+		Array.prototype.forEach.call(carta.querySelectorAll('.ver_mas'), function(boton){
+			boton.addEventListener('click', function(){
+				var id = Number(boton.getAttribute('data-categoria'));
+				visibles[id] = (visibles[id] || POR_TANDA) + POR_TANDA;
+				// Se redibuja con los datos que ya estan en memoria: pedir otra vez la carta entera
+				// para mostrar diez tarjetas mas seria gastar una consulta de mas.
+				dibujar_carta(datos);
+			});
+		});
+	}
+
+	// Mientras la carta viene en camino se dibujan tarjetas fantasma, no un cartel: la pagina ya
+	// muestra la forma de lo que va a llegar, igual que la app.
+	function esqueleto_carta(){
+		var tarjeta = '<article class="plato"><div class="plato_foto esqueleto esqueleto_foto"></div>' +
+			'<div class="plato_texto"><div class="esqueleto esqueleto_linea"></div>' +
+			'<div class="esqueleto esqueleto_linea corta"></div></div></article>';
+		return '<div class="grilla">' + tarjeta.repeat(6) + '</div>';
+	}
+
+	function cargar(){
+		carta.innerHTML = esqueleto_carta();
+		// Ruta relativa: la pagina la sirve la misma API que responde el endpoint, asi que funciona
+		// igual en localhost que publicada, sin configurar un dominio en ningun lado.
+		fetch('/api/productos/resumen')
+			.then(function(respuesta){
+				if(!respuesta.ok) throw new Error('respuesta ' + respuesta.status);
+				return respuesta.json();
+			})
+			.then(dibujar_carta)
+			.catch(function(){
+				// Con reintento: una carta que no cargo no es una carta vacia, y decir "no hay
+				// productos" mandaria a buscar el problema donde no esta.
+				carta.innerHTML = '<div class="aviso">No se pudo cargar la carta.<br><button type="button" id="reintentar">Reintentar</button></div>';
+				document.getElementById('reintentar').addEventListener('click', cargar);
+			});
+	}
+
+	cargar_distribucion();
+	cargar();
+})();
+</script>
+</body>
+</html>

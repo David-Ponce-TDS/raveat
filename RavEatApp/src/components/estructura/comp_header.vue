@@ -1,7 +1,7 @@
 <template>
 	<ion-header>
 		<ion-toolbar>
-			<ion-buttons slot="start">
+			<ion-buttons v-if="con_menu" slot="start">
 				<ion-menu-button />
 			</ion-buttons>
 			<ion-title>{{ titulo }}</ion-title>
@@ -44,6 +44,10 @@ export default {
 		IonToolbar
 	},
 	props: {
+		con_menu: {
+			type: Boolean,
+			default: true
+		},
 		titulo: {
 			type: String,
 			required: true

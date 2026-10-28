@@ -1,6 +1,6 @@
 <template>
 	<ion-page>
-		<comp-header :titulo="titulo">
+		<comp-header :titulo="titulo" :con_menu="con_menu">
 			<template #acciones>
 				<slot name="acciones" />
 			</template>
@@ -36,6 +36,11 @@ export default {
 		'actualizar'
 	],
 	props: {
+		// Fuera de /app no hay menu lateral: la vista publica del pedido lo apaga.
+		con_menu: {
+			type: Boolean,
+			default: true
+		},
 		mostrar_actualizar: {
 			type: Boolean,
 			default: false

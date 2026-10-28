@@ -47,6 +47,11 @@ export function descargar_comprobante_pedido(id){
 
 // El QR tambien es binario (PNG). No se puede poner la URL en un <img src>: el endpoint pide
 // token y una imagen no manda encabezados.
+// La vista publica del pedido, sin sesion: el token sale del QR y lo genero la API.
+export function obtener_pedido_publico(token){
+	return ajax_request({endpoint: `/api/publico/pedidos/${token}`, metodo: 'GET'});
+}
+
 export function obtener_qr_pedido(id){
 	return ajax_binario({endpoint: `/api/pedidos/${id}/qr`, metodo: 'GET'});
 }

@@ -149,7 +149,8 @@ import comp_pedido_formulario_modal from '@/components/dominio/comp_pedido_formu
 import { avisar_error, avisar_exito } from '@/services/avisos_service';
 import { compartir_archivo, compartir_texto } from '@/services/compartir_service';
 import { notificar_evento_local } from '@/services/notificaciones_nativas_service';
-import { descargar_comprobante_pedido } from '@/services/pedidos_service';
+import { token_de_enlace } from '@/services/deep_links_service';
+import { descargar_comprobante_pedido, obtener_pedido_publico } from '@/services/pedidos_service';
 import { escanear_qr } from '@/services/qr_service';
 import { clase_tinte, estado_pago, estado_pedido, medio_pago, tipo_pedido } from '@/utils/estados';
 import { formatear_hora_corta } from '@/utils/formato_fecha';
@@ -428,7 +429,9 @@ export default {
 				`Estado: ${estado_pedido(pedido.estado).texto}`,
 				`Pago: ${estado_pago(pedido.estado_pago).texto}`,
 				...vm.store.detalle_items.map(item => `${item.cantidad} × ${item.producto_nombre}`),
-				`Total: ${formatear_importe(pedido.total)}`
+				`Total: ${formatear_importe(pedido.total)}`,
+				// El enlace va al final: es lo que el cliente toca para seguir el pedido sin la app.
+				...(vm.store.detalle_enlace ? ['', `Seguilo acá: ${vm.store.detalle_enlace}`] : [])
 			].join('\n');
 			const resultado = await compartir_texto({titulo: `Pedido ${pedido.codigo}`, texto, dialogo: 'Compartir pedido'});
 			if(resultado.mensaje){
@@ -436,8 +439,9 @@ export default {
 				else avisar_error(resultado.mensaje);
 			}
 		},
-		// El QR trae el codigo del pedido: escanear es tipearlo en el buscador. Si hay uno solo,
-		// se abre su ficha.
+		// El QR trae la URL publica del pedido: el token se cambia por el codigo y escanear queda
+		// en tipearlo en el buscador. Un ticket viejo trae el codigo suelto, y se busca tal cual.
+		// Si hay uno solo, se abre su ficha.
 		escanear: async function(){
 			var vm = this;
 			const resultado = await escanear_qr();
@@ -445,9 +449,22 @@ export default {
 				if(resultado.mensaje) avisar_error(resultado.mensaje);
 				return;
 			}
-			vm.busqueda = resultado.contenido;
-			await vm.store.cargar({busqueda: resultado.contenido});
+			const codigo = await vm.codigo_del_escaneo(resultado.contenido);
+			if(!codigo) return;
+			vm.busqueda = codigo;
+			await vm.store.cargar({busqueda: codigo});
 			if(vm.store.pedidos.length == 1) vm.abrir_detalle(vm.store.pedidos[0]);
+		},
+		codigo_del_escaneo: async function(contenido){
+			const token = token_de_enlace(contenido);
+			if(!token) return contenido;
+			try{
+				const publico = await obtener_pedido_publico(token);
+				return publico.codigo;
+			}catch(error){
+				avisar_error(error.mensaje || 'Ese código no corresponde a un pedido de RavEat.');
+				return null;
+			}
 		},
 		clase_tinte,
 		estado_pago,

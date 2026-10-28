@@ -447,6 +447,12 @@ namespace RavEat.Api.Migrations
                         .HasColumnType("varchar(30)")
                         .HasColumnName("tipo");
 
+                    b.Property<string>("TokenPublico")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("varchar(32)")
+                        .HasColumnName("token_publico");
+
                     b.Property<decimal>("Total")
                         .HasPrecision(12, 2)
                         .HasColumnType("decimal(12,2)")
@@ -465,6 +471,10 @@ namespace RavEat.Api.Migrations
                     b.HasIndex("Codigo")
                         .IsUnique()
                         .HasDatabaseName("ix_pedidos_codigo");
+
+                    b.HasIndex("TokenPublico")
+                        .IsUnique()
+                        .HasDatabaseName("ix_pedidos_token_publico");
 
                     b.HasIndex("UsuarioCreadorId")
                         .HasDatabaseName("ix_pedidos_usuario_creador_id");

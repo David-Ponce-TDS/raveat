@@ -20,6 +20,20 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- App Link verificado: lo que lleva el QR del pedido. Es una URL https comun, y esa es
+                 la gracia: la camara del sistema, WhatsApp o el navegador la abren igual.
+                 `autoVerify` hace que Android baje https://<host>/.well-known/assetlinks.json al
+                 instalar y compare la huella del certificado que firmo el APK: si coincide, el
+                 enlace abre la app sin preguntar; si no (APK de debug, huella sin publicar), abre
+                 el navegador, que muestra la misma pagina. Los dos caminos terminan en el pedido.
+                 El host va escrito aca y no en una variable: es parte de la identidad de la app
+                 publicada, y cambiarlo obliga a republicar el APK. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="raveat.tryasp.net" android:pathPrefix="/p/" />
+            </intent-filter>
         </activity>
         <!-- La camara entrega la foto a la webview por este proveedor: sin el, falla al sacarla. -->
         <!-- Icono y color de las push de FCM: sin el icono chico (silueta blanca sobre fondo

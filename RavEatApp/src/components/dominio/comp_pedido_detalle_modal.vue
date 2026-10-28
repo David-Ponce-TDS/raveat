@@ -70,11 +70,11 @@
 				</ul>
 			</comp-detalle-seccion>
 
-			<!-- El QR lleva el codigo del pedido, el mismo que imprime el comprobante: escanearlo
-			     desde la pantalla de pedidos lo encuentra. Llega como Blob y no como <img src> a
+			<!-- El QR lleva la direccion publica del pedido, la misma que imprime el comprobante:
+			     cualquier camara la abre, y escanearlo desde Pedidos lo encuentra. Llega como Blob y no como <img src> a
 			     la API, porque el endpoint pide token y una imagen no lo manda.
 			     Sin red no se puede pedir: la sección no se dibuja, en vez de quedar cargando. -->
-			<comp-detalle-seccion v-if="!sin_conexion" titulo="QR" subtitulo="Escanealo para encontrar este pedido">
+			<comp-detalle-seccion v-if="!sin_conexion" titulo="QR" subtitulo="Con cualquier cámara abre el estado del pedido">
 				<div class="raveat-detalle-qr">
 					<img v-if="qr" :src="qr" :alt="`QR del pedido ${pedido.codigo}`" />
 					<ion-spinner v-else name="crescent" />

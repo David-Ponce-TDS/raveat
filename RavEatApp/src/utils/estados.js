@@ -95,6 +95,13 @@ export function estado_pedido(estado){
 	return leer(ESTADO_PEDIDO, estado);
 }
 
+// El pedido visto por el comensal: «borrador» es lenguaje del mostrador, y para quien escaneo el
+// QR su pedido ya fue tomado. El resto de los estados se nombra igual que adentro.
+export function estado_pedido_publico(estado){
+	if(estado == 'borrador') return {...leer(ESTADO_PEDIDO, estado), texto: 'Tomado'};
+	return leer(ESTADO_PEDIDO, estado);
+}
+
 export function siguiente_estado_pedido(estado){
 	return SIGUIENTE_ESTADO_PEDIDO[estado] || '';
 }

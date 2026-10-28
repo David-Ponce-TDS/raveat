@@ -114,7 +114,10 @@ else if(corsAllowedOrigins.Length > 0) {
 var app = builder.Build();
 
 if(app.Environment.IsDevelopment() || corsAllowedOrigins.Length > 0) app.UseCors(corsPolicy);
-// Las imagenes de la carta se sirven desde wwwroot/seed/productos.
+// Las imagenes de la carta se sirven desde wwwroot/seed/productos, y desde la version 12 tambien la
+// carta publica (wwwroot/index.html). `UseDefaultFiles` hace que la raiz del sitio busque el index:
+// sin el, "/" devuelve 404. Va ANTES, porque reescribe la URL para que el siguiente la encuentre.
+app.UseDefaultFiles();
 app.UseStaticFiles();
 // El orden importa: autenticacion (quien sos) antes que autorizacion (que podes hacer).
 app.UseAuthentication();

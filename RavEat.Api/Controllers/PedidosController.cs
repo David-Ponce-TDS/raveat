@@ -22,7 +22,7 @@ namespace RavEat.Api.Controllers;
 [ApiController]
 [Authorize(Roles = RolesOperativos)]
 [Route("api/pedidos")]
-public sealed class PedidosController(RavEatDbContext db) : ControllerBase {
+public sealed class PedidosController(RavEatDbContext db, IConfiguration configuration) : ControllerBase {
     // Los roles van en constantes y no escritos a mano en cada atributo: `[Authorize(Roles = ...)]`
     // exige una constante en tiempo de compilacion, y un error de tipeo ahi no falla el build,
     // simplemente deja el endpoint inalcanzable para todos.
@@ -124,7 +124,10 @@ public sealed class PedidosController(RavEatDbContext db) : ControllerBase {
             .Select(x => new PedidoItemResponse(x.Id, x.ProductoId, x.ProductoNombre, x.PrecioUnitario, x.Cantidad, x.Subtotal, x.Estado, x.Observaciones))
             .ToListAsync(cancellationToken);
 
-        return Ok(new {pedido, items});
+        // El enlace publico viaja con el detalle: compartir el pedido es mandar una URL y no un PDF,
+        // y quien la recibe ve el estado sin instalar nada.
+        var tokenPublico = await db.Pedidos.AsNoTracking().Where(x => x.Id == id).Select(x => x.TokenPublico).FirstAsync(cancellationToken);
+        return Ok(new {pedido, items, enlace_publico = PublicoController.UrlPedido(Request, configuration, tokenPublico)});
     }
 
     [Authorize(Roles = RolesQueVenden)]
@@ -162,6 +165,9 @@ public sealed class PedidosController(RavEatDbContext db) : ControllerBase {
             // tiene un campo para mandarlo: si no existe, no se puede falsificar.
             UsuarioCreadorId = User.UsuarioId(),
             Codigo = await GenerarCodigoAsync(cancellationToken),
+            // El codigo lo lee una persona en el mostrador; el token lo lee una camara. Son dos
+            // identificadores del mismo pedido con publicos distintos: uno correlativo, otro al azar.
+            TokenPublico = PublicoController.GenerarToken(),
             Tipo = request.Tipo,
             Estado = EstadoPedido.Borrador,
             Descuento = descuento,
@@ -281,17 +287,20 @@ public sealed class PedidosController(RavEatDbContext db) : ControllerBase {
             ? await db.Clientes.AsNoTracking().Where(x => x.Id == pedido.ClienteId.Value).Select(x => x.Nombre).FirstOrDefaultAsync(cancellationToken)
             : null;
         var usuarioNombre = await db.Usuarios.AsNoTracking().Where(x => x.Id == pedido.UsuarioCreadorId).Select(x => x.Nombre).FirstOrDefaultAsync(cancellationToken);
-        var pdf = GenerarComprobantePdf(pedido, items, clienteNombre, usuarioNombre ?? "Sin usuario");
+        var pdf = GenerarComprobantePdf(pedido, items, clienteNombre, usuarioNombre ?? "Sin usuario", PublicoController.UrlPedido(Request, configuration, pedido.TokenPublico));
         return File(pdf, "application/pdf", $"{pedido.Codigo}.pdf");
     }
 
-    // Un QR es texto en una imagen: este lleva el codigo del pedido, el mismo que va impreso en el
-    // comprobante. Escanearlo desde la app es buscar ese codigo.
+    // Un QR es texto en una imagen, y lo que lleva decide a quien le sirve. Con el codigo
+    // (`PED-0042`) servia solo a quien tenia la app y la sesion abierta: cualquier otra camara
+    // mostraba un texto suelto. Ahora lleva la URL publica del pedido: con la app instalada la abre
+    // (App Links), y sin ella abre la pagina en el navegador.
     [HttpGet("{id:long}/qr")]
     public async Task<IActionResult> Qr(long id, CancellationToken cancellationToken) {
-        var codigo = await db.Pedidos.AsNoTracking().Where(x => x.Id == id).Select(x => x.Codigo).FirstOrDefaultAsync(cancellationToken);
-        if(codigo is null) return NotFound(new {codigo = "pedido_no_encontrado", mensaje = "El pedido no existe."});
-        return File(GenerarQrPedido(codigo), "image/png", $"{codigo}-qr.png");
+        var pedido = await db.Pedidos.AsNoTracking().Where(x => x.Id == id).Select(x => new {x.Codigo, x.TokenPublico}).FirstOrDefaultAsync(cancellationToken);
+        if(pedido is null) return NotFound(new {codigo = "pedido_no_encontrado", mensaje = "El pedido no existe."});
+        var enlace = PublicoController.UrlPedido(Request, configuration, pedido.TokenPublico);
+        return File(GenerarQrPedido(enlace), "image/png", $"{pedido.Codigo}-qr.png");
     }
 
     // El codigo lo genera el servidor: identifica al pedido en el mostrador (y en el QR), y no
@@ -321,7 +330,7 @@ public sealed class PedidosController(RavEatDbContext db) : ControllerBase {
     }
 
     // A6, de mostrador, armado en memoria: nunca toca el disco y no hay nada que limpiar.
-    private static byte[] GenerarComprobantePdf(Pedido pedido, IReadOnlyCollection<ComprobanteItem> items, string? clienteNombre, string usuarioNombre) {
+    private static byte[] GenerarComprobantePdf(Pedido pedido, IReadOnlyCollection<ComprobanteItem> items, string? clienteNombre, string usuarioNombre, string enlacePublico) {
         var totalConPropina = pedido.Total + pedido.PropinaImporte;
         var documento = Document.Create(container => {
             container.Page(page => {
@@ -366,10 +375,12 @@ public sealed class PedidosController(RavEatDbContext db) : ControllerBase {
                     });
                     column.Item().PaddingTop(6).Text($"Pago: {pedido.EstadoPago.Texto()}{(pedido.MedioPago.HasValue ? $" - {pedido.MedioPago.Value.Texto()}" : string.Empty)}");
                 });
-                // El mismo QR de /qr, impreso: escanear el papel encuentra el pedido en la app.
+                // El mismo QR de /qr, impreso: el ticket sigue sirviendo despues de salir del local,
+                // porque lleva a la pagina del pedido se abra desde donde se abra.
                 page.Footer().AlignCenter().Column(column => {
-                    column.Item().AlignCenter().Width(70).Image(GenerarQrPedido(pedido.Codigo));
+                    column.Item().AlignCenter().Width(70).Image(GenerarQrPedido(enlacePublico));
                     column.Item().AlignCenter().Text(pedido.Codigo).FontSize(8);
+                    column.Item().AlignCenter().Text("Escaneá el código para seguir tu pedido.").FontSize(7);
                     column.Item().AlignCenter().PaddingTop(4).Text("Gracias por su compra.");
                 });
             });
@@ -377,9 +388,11 @@ public sealed class PedidosController(RavEatDbContext db) : ControllerBase {
         return documento.GeneratePdf();
     }
 
-    private static byte[] GenerarQrPedido(string codigo) {
+    // Nivel de correccion M (recupera hasta un 15% del codigo dañado): la URL ocupa mas modulos que
+    // el codigo, y un QR impreso en un ticket termina doblado o manchado.
+    private static byte[] GenerarQrPedido(string contenido) {
         using var generador = new QRCodeGenerator();
-        using var datos = generador.CreateQrCode(codigo, QRCodeGenerator.ECCLevel.M);
+        using var datos = generador.CreateQrCode(contenido, QRCodeGenerator.ECCLevel.M);
         return new PngByteQRCode(datos).GetGraphic(8);
     }
 }

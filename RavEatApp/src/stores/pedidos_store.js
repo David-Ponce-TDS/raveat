@@ -32,6 +32,9 @@ export const use_pedidos_store = defineStore('pedidos', {
 		error: null,
 		detalle: null,
 		detalle_items: [],
+		// La direccion publica del pedido, la misma que lleva el QR: compartirla es mandar un
+		// enlace que cualquiera abre, con la app o sin ella.
+		detalle_enlace: '',
 		// URL temporal del PNG del QR, creada con createObjectURL. Es del navegador, no del
 		// servidor: hay que devolverla al cerrar la ficha o el Blob queda en memoria.
 		detalle_qr: ''
@@ -99,6 +102,7 @@ export const use_pedidos_store = defineStore('pedidos', {
 				const respuesta = await obtener_pedido(id);
 				vm.detalle = respuesta && respuesta.pedido ? con_cambios_sin_enviar(respuesta.pedido) : null;
 				vm.detalle_items = (respuesta && respuesta.items) || [];
+				vm.detalle_enlace = (respuesta && respuesta.enlace_publico) || '';
 				return vm.detalle;
 			}catch(error){
 				// La ficha se queda con lo que trajo la lista: sin red, y sin copia de este pedido,
@@ -126,6 +130,7 @@ export const use_pedidos_store = defineStore('pedidos', {
 			var vm = this;
 			vm.detalle = null;
 			vm.detalle_items = [];
+			vm.detalle_enlace = '';
 			vm.soltar_qr();
 		},
 		soltar_qr: function(){

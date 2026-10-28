@@ -10,6 +10,10 @@ public sealed class Pedido : EntityBase {
     public long? ClienteId { get; set; }
     public long UsuarioCreadorId { get; set; }
     public string Codigo { get; set; } = string.Empty;
+    // El identificador que viaja en el QR, y a proposito NO es el codigo: `PED-0042` se adivina
+    // sumando uno, y quien lo adivina mira el pedido de otro. Este es aleatorio, no dice nada del
+    // pedido y no se puede recorrer. Es lo unico que hace segura una pagina sin login.
+    public string TokenPublico { get; set; } = string.Empty;
     public TipoPedido Tipo { get; set; }
     public EstadoPedido Estado { get; set; } = EstadoPedido.Borrador;
     public decimal Subtotal { get; set; }

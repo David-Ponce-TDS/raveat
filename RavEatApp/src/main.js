@@ -2,6 +2,7 @@ import { createApp } from 'vue';
 import { IonicVue } from '@ionic/vue';
 import App from './App.vue';
 import router from './router';
+import { iniciar_deep_links } from './services/deep_links_service';
 import { inicializar_notificaciones_nativas } from './services/notificaciones_nativas_service';
 import { obtener_navegacion_rol } from './config/navegacion';
 import pinia from './stores/pinia';
@@ -58,5 +59,7 @@ use_sesion_store().iniciar().finally(function(){
 		});
 		// El monitor de red arranca con la app: si quedo algo encolado y hay red, sale solo.
 		use_offline_store().iniciar();
+		// Despues del router: el enlace que abrio la app se traduce a una ruta y se navega.
+		iniciar_deep_links(router);
 	});
 });

@@ -44,6 +44,19 @@ const routes = [
 		}
 	},
 	{
+		// La vista publica del pedido. Comparte la ruta con la pagina que sirve la API
+		// (https://dominio/p/<token>) a proposito: es la MISMA direccion abierta en los dos lados,
+		// y por eso el QR no necesita saber si la app esta instalada.
+		// No es `publica` como el login, que rebota al que ya entro: es abierta, se ve igual con
+		// sesion y sin ella.
+		path: '/p/:token',
+		name: 'pedido_publico',
+		component: () => import('@/views/pedido_publico_page.vue'),
+		meta: {
+			abierta: true
+		}
+	},
+	{
 		path: '/app',
 		component: main_layout,
 		children: [
@@ -87,6 +100,10 @@ router.beforeEach(to =>{
 	// Mientras se restaura la sesion guardada no se puede decidir nada: rebotar al login aca haria
 	// que la app mande al login en cada arranque, incluso teniendo sesion valida.
 	if(sesion.restaurando) return true;
+
+	// Abierta = entra cualquiera, con sesion o sin ella. Mandar al que ya entro de vuelta a la app,
+	// como hace `publica`, romperia el enlace justo para el que tiene cuenta.
+	if(to.meta.abierta) return true;
 
 	if(to.meta.publica){
 		// Las publicas son las de afuera: la vitrina y el login. Al que ya entro no le sirven —

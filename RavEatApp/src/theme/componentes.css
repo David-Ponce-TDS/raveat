@@ -1704,3 +1704,31 @@ ion-action-sheet .action-sheet-group:focus-visible {
     display: flex;
     justify-content: center;
 }
+
+/* --- el pedido publico ------------------------------------------------------------- */
+
+.raveat-publico {
+    padding: 18px;
+    text-align: center;
+}
+
+.raveat-publico__codigo {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.raveat-publico__estados {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.raveat-publico__meta {
+    margin: 10px 0 0;
+    color: var(--raveat-muted);
+    font-size: 0.85rem;
+}

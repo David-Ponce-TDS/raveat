@@ -103,6 +103,10 @@ builder.Services.ConfigureHttpJsonOptions(options => ConfigurarJson(options.Seri
 // dispara al guardar es uno por DbContext, porque junta las notificaciones de ese guardado.
 builder.Services.AddSingleton<EnvioPush>();
 builder.Services.AddScoped<PushAlGuardar>();
+// Donde terminan las fotos que se suben: con Supabase configurado (Supabase:Url y
+// Supabase:ServiceKey) van al bucket; sin configurar, a wwwroot/uploads como siempre.
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton<AlmacenArchivos>();
 builder.Services.AddDbContext<RavEatDbContext>((servicios, options) => options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 0))).UseSnakeCaseNamingConvention().AddInterceptors(servicios.GetRequiredService<PushAlGuardar>()));
 if(builder.Environment.IsDevelopment()) {
     builder.Services.AddCors(options => options.AddPolicy(corsPolicy, policy => policy.SetIsOriginAllowed(EsOrigenDesarrolloPermitido).AllowAnyHeader().AllowAnyMethod()));

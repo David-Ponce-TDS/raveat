@@ -12,7 +12,7 @@ namespace RavEat.Api.Controllers;
 [ApiController]
 [Authorize(Roles = RolCodigos.Admin)]
 [Route("api/productos")]
-public sealed class ProductosController(RavEatDbContext db, IWebHostEnvironment env) : ControllerBase {
+public sealed class ProductosController(RavEatDbContext db, AlmacenArchivos almacen) : ControllerBase {
     // La vitrina: la carta entera con sus categorias y los contadores del encabezado.
     // Devuelve todo de una sola vez, que alcanza para una carta de restaurante. El catalogo de
     // gestion, que si puede crecer sin limite, va por "listado" y esta paginado.
@@ -147,7 +147,14 @@ public sealed class ProductosController(RavEatDbContext db, IWebHostEnvironment 
 
         var producto = new Producto();
         Aplicar(producto, request);
-        producto.ImagenUrl = await GuardarImagenAsync(request.Imagen, cancellationToken);
+        // La imagen se guarda ANTES del SaveChanges: si el almacen falla, el producto no se crea
+        // sin foto en silencio, la operacion entera falla con su mensaje.
+        try {
+            producto.ImagenUrl = await GuardarImagenAsync(request.Imagen, cancellationToken);
+        }
+        catch(AlmacenArchivosException excepcion) {
+            return StatusCode(502, new {codigo = "imagen_no_guardada", mensaje = excepcion.Message});
+        }
         db.Productos.Add(producto);
         await db.SaveChangesAsync(cancellationToken);
         return Ok(new {producto = await ProyectarAsync(producto, cancellationToken)});
@@ -168,7 +175,12 @@ public sealed class ProductosController(RavEatDbContext db, IWebHostEnvironment 
 
         Aplicar(producto, request);
         // Editar sin adjuntar foto conserva la que estaba.
-        if(request.Imagen is not null) producto.ImagenUrl = await GuardarImagenAsync(request.Imagen, cancellationToken);
+        try {
+            if(request.Imagen is not null) producto.ImagenUrl = await GuardarImagenAsync(request.Imagen, cancellationToken);
+        }
+        catch(AlmacenArchivosException excepcion) {
+            return StatusCode(502, new {codigo = "imagen_no_guardada", mensaje = excepcion.Message});
+        }
         await db.SaveChangesAsync(cancellationToken);
         return Ok(new {producto = await ProyectarAsync(producto, cancellationToken)});
     }
@@ -201,20 +213,12 @@ public sealed class ProductosController(RavEatDbContext db, IWebHostEnvironment 
         producto.Disponible = request.Disponible;
     }
 
-    // La ruta la decide el servidor, igual que los precios. El nombre es un GUID porque el original
-    // no es confiable: uno con "../" escribiria fuera de la carpeta, y dos "pizza.jpg" se pisarian.
+    // La ruta la decide el servidor, igual que los precios: el cliente manda el archivo y nada
+    // mas. Donde termina (el disco o el bucket de Supabase) lo resuelve AlmacenArchivos segun la
+    // configuracion; este controller no lo sabe.
     private async Task<string?> GuardarImagenAsync(IFormFile? imagen, CancellationToken cancellationToken) {
         if(imagen is null || imagen.Length == 0) return null;
-        var extension = Path.GetExtension(imagen.FileName).ToLowerInvariant();
-        var webRoot = env.WebRootPath ?? Path.Combine(env.ContentRootPath, "wwwroot");
-        var carpeta = Path.Combine(webRoot, "uploads", "productos");
-        Directory.CreateDirectory(carpeta);
-        var nombreArchivo = $"{Guid.NewGuid():N}{extension}";
-        var ruta = Path.Combine(carpeta, nombreArchivo);
-        await using var stream = System.IO.File.Create(ruta);
-        await imagen.CopyToAsync(stream, cancellationToken);
-        // Ruta relativa, sin host: el frontend la completa en utils/imagenes.js.
-        return $"/uploads/productos/{nombreArchivo}";
+        return await almacen.GuardarImagenAsync(imagen, "productos", cancellationToken);
     }
 
     private static bool EsImagenValida(IFormFile imagen) {

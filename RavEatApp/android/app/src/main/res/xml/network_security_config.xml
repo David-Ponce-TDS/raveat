@@ -1,4 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Que puede viajar sin cifrar. El default de Capacitor permite HTTP a cualquier destino, y eso es
+    lo que mira un revisor de Google Play cuando en "Seguridad de los datos" se declara que todo se
+    cifra en transito: la declaracion tiene que coincidir con el artefacto, no con la intencion.
+
+    Aca se niega por defecto y se abre la excepcion minima: `localhost`, que NO es la red. Con
+    `androidScheme: "http"` en capacitor.config.json el HTML de la app se sirve desde
+    `http://localhost`; negarlo a secas deja la app en blanco, aunque esas requests nunca salgan
+    del telefono.
+
+    La IP de la LAN (`http://192.168.x.x:5080`) vive en la variante debug: `src/debug/res/xml/`
+    pisa este archivo al compilar en debug. Depurar contra la API local sigue andando; el APK
+    firmado que se publica ya no puede hablar en claro con nadie.
+-->
 <network-security-config>
-    <base-config cleartextTrafficPermitted="true" />
+    <base-config cleartextTrafficPermitted="false" />
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">localhost</domain>
+        <domain includeSubdomains="false">127.0.0.1</domain>
+    </domain-config>
 </network-security-config>

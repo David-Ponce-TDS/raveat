@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RavEat &middot; Política de privacidad</title>
+<meta name="description" content="Qué datos trata la app RavEat, para qué y con quién se comparten.">
+<meta name="theme-color" content="#3880ff">
+<link rel="icon" href="/marca/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="96x96" href="/marca/favicon-96x96.png">
+<link rel="apple-touch-icon" href="/marca/apple-touch-icon.png">
+<!--
+	La politica de privacidad, exigida por Google Play para publicar (su URL va en la ficha de la
+	tienda y en "Contenido de la app").
+
+	Es la tercera pagina publica del sitio y se hace como la carta: un estatico sin frameworks, que
+	se edita y se sube en el zip sin recompilar la API. Sirve tambien de material del taller: cada
+	permiso que pide el manifiesto tiene aca su parrafo, y esa correspondencia es la que Play
+	revisa. Si se agrega un permiso o un tercero, se agrega aca — declarar de menos es lo que hace
+	que rechacen la app.
+
+	El contenido describe lo que el codigo HACE hoy. No prometer nada que la app no cumpla.
+-->
+<style>
+:root { color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; padding: clamp(20px, 4vw, 44px) clamp(14px, 3vw, 24px) 64px; background: #12141a;
+       color: #f4f5f7; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+       line-height: 1.55; -webkit-font-smoothing: antialiased; }
+main { max-width: 760px; margin: 0 auto; }
+header { text-align: center; margin-bottom: clamp(22px, 4vw, 34px); }
+header img { width: clamp(130px, 26vw, 170px); max-width: 55%; height: auto; }
+header h1 { margin: 14px 0 4px; font-size: clamp(1.35rem, 4vw, 1.7rem); }
+header p { margin: 0; color: #8b93a7; font-size: .86rem; }
+h2 { margin: clamp(26px, 5vw, 36px) 0 10px; font-size: 1rem; letter-spacing: 2px;
+     text-transform: uppercase; color: #6ea8ff; border-bottom: 1px solid #2a2e38; padding-bottom: 8px; }
+h3 { margin: 20px 0 6px; font-size: .98rem; color: #f4f5f7; }
+p, li { color: #c8cdd8; font-size: .94rem; }
+ul { padding-left: 20px; }
+li { margin-bottom: 6px; }
+b { color: #f4f5f7; }
+a { color: #6ea8ff; }
+.resumen { padding: 18px 20px; background: #1b1e26; border: 1px solid #2a2e38; border-radius: 16px; }
+.resumen p:first-child { margin-top: 0; }
+.resumen p:last-child { margin-bottom: 0; }
+table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: .88rem; }
+th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid #2a2e38; vertical-align: top; }
+th { color: #8b93a7; font-weight: 600; }
+td { color: #c8cdd8; }
+.tabla_scroll { overflow-x: auto; }
+.pie { margin-top: 36px; padding-top: 18px; border-top: 1px solid #2a2e38; color: #6f7686;
+       font-size: .8rem; text-align: center; }
+</style>
+</head>
+<body>
+<main>
+	<header>
+		<img src="/marca/logo-raveat.png" alt="RavEat">
+		<h1>Política de privacidad</h1>
+		<p>Última actualización: 18 de octubre de 2026</p>
+	</header>
+
+	<section class="resumen">
+		<p><b>RavEat</b> (paquete <b>app.raveat</b>) es la aplicación con la que el personal de un
+		restaurante toma pedidos, los cobra y los reparte. No es una app para el público general:
+		se entra con una cuenta que crea el administrador del local, no hay registro abierto y sin
+		esa cuenta no hay nada que usar.</p>
+		<p>RavEat <b>no muestra publicidad, no usa analítica, no perfila a nadie y no vende ni cede
+		datos personales a terceros</b>. Los datos que trata son los que hacen falta para que el
+		local trabaje.</p>
+	</section>
+
+	<h2>Quién es responsable</h2>
+	<p>RavEat es un proyecto educativo desarrollado y publicado por <b>David Ponce</b> como
+	aplicación de referencia de un taller de desarrollo de aplicaciones móviles. Consultas sobre
+	privacidad o pedidos de eliminación de datos:
+	<a href="mailto:david9.dev@gmail.com">david9.dev@gmail.com</a>.</p>
+
+	<h2>Qué datos se tratan</h2>
+
+	<h3>De quien usa la app (personal del local)</h3>
+	<ul>
+		<li><b>Nombre, correo electrónico y rol.</b> Los carga el administrador del local al dar de
+		alta la cuenta.</li>
+		<li><b>Contraseña.</b> No se guarda: se guarda su huella criptográfica (PBKDF2 con sal por
+		usuario). Nadie —tampoco quien administra— puede leerla.</li>
+		<li><b>Ingreso con Google.</b> Si se usa ese botón, Google entrega un identificador firmado
+		del que la app <b>solo lee el correo</b>, para encontrar la cuenta que ya existe. Si ese
+		correo no está dado de alta, no se crea ninguna cuenta y no se guarda nada.</li>
+	</ul>
+
+	<h3>De los clientes del restaurante</h3>
+	<p>Los carga el personal para poder despachar el pedido; el cliente no usa esta app.</p>
+	<ul>
+		<li>Nombre, teléfono y, opcionalmente, correo electrónico.</li>
+		<li>Dirección de entrega, una referencia en texto libre y las <b>coordenadas del punto de
+		entrega</b>, marcadas en un mapa o tomadas del GPS estando en el lugar.</li>
+	</ul>
+
+	<h3>De la operación del local</h3>
+	<ul>
+		<li>Pedidos, productos, cantidades, importes y estados; entregas, quién las llevó y cuándo.</li>
+		<li><b>Firma de conformidad</b> de la entrega: se dibuja en la pantalla y se guarda como
+		imagen.</li>
+		<li><b>Historial de acciones</b>: qué cuenta hizo qué cambio y cuándo, para poder auditarlo.</li>
+	</ul>
+
+	<h3>Permisos del teléfono y para qué se usan</h3>
+	<div class="tabla_scroll">
+	<table>
+		<tr><th>Permiso</th><th>Cuándo se pide</th><th>Qué pasa con el dato</th></tr>
+		<tr>
+			<td><b>Cámara</b> y acceso a fotos</td>
+			<td>Solo al tomar o elegir la foto de un producto, o al escanear el código QR de un pedido.</td>
+			<td>La foto del producto se sube al almacenamiento de la app. El QR se lee en el teléfono
+			y no se guarda ninguna imagen.</td>
+		</tr>
+		<tr>
+			<td><b>Ubicación</b> (aproximada o precisa)</td>
+			<td>Solo al tocar &laquo;usar mi ubicación&raquo; mientras se marca una dirección de entrega.</td>
+			<td>Se guarda ese punto junto a la dirección del cliente. <b>No hay seguimiento en segundo
+			plano</b>: la app no consulta la ubicación si no está abierta y no la pide nadie.</td>
+		</tr>
+		<tr>
+			<td><b>Micrófono</b></td>
+			<td>Solo al tocar el botón de dictado en una descripción o una observación.</td>
+			<td>El audio lo procesa el servicio de reconocimiento de voz del sistema Android. La app
+			<b>recibe únicamente el texto</b>: no graba, no guarda ni envía audio.</td>
+		</tr>
+		<tr>
+			<td><b>Huella o rostro</b></td>
+			<td>Solo si se activa el desbloqueo biométrico, y para reabrir una sesión ya iniciada.</td>
+			<td>Lo verifica Android; la app recibe apenas un sí o un no. <b>El dato biométrico nunca
+			sale del teléfono</b> ni llega al servidor. La biometría no reemplaza al inicio de sesión
+			con correo y contraseña, que sigue disponible.</td>
+		</tr>
+		<tr>
+			<td><b>Notificaciones</b></td>
+			<td>Al arrancar, para avisar cambios de estado de los pedidos.</td>
+			<td>Firebase Cloud Messaging asigna un identificador al dispositivo. Los avisos los envía
+			el servidor de la app cuando cambia algo que le toca a esa cuenta.</td>
+		</tr>
+		<tr>
+			<td><b>Vibración</b>, <b>estado de la red</b></td>
+			<td>Sin diálogo: los concede el sistema.</td>
+			<td>La vibración avisa errores y se puede apagar desde la app. El estado de la red decide
+			cuándo reenviar lo que quedó pendiente.</td>
+		</tr>
+	</table>
+	</div>
+
+	<h3>Qué queda guardado en el teléfono</h3>
+	<ul>
+		<li>La <b>sesión</b> (los identificadores que mantienen abierta la cuenta), en el
+		almacenamiento seguro del sistema. Se borra al cerrar sesión.</li>
+		<li>Las <b>preferencias</b> de tema y vibración.</li>
+		<li>La <b>cola de envíos pendientes</b>: si algo se carga sin señal, queda esperando en el
+		teléfono y se envía solo al volver la conexión. Nunca se guardan ahí contraseñas.</li>
+	</ul>
+
+	<h2>Con quién se comparten</h2>
+	<p>No se venden ni se ceden datos personales. Se usan estos servicios para que la app funcione:</p>
+	<div class="tabla_scroll">
+	<table>
+		<tr><th>Servicio</th><th>Qué recibe</th></tr>
+		<tr><td><b>MonsterASP.NET</b> (hosting)</td><td>Aloja el servidor y la base de datos de la app: ahí viven los pedidos, los clientes y las cuentas.</td></tr>
+		<tr><td><b>Supabase Storage</b></td><td>Las imágenes de los productos.</td></tr>
+		<tr><td><b>Google Firebase Cloud Messaging</b></td><td>El identificador del dispositivo, para poder entregarle una notificación.</td></tr>
+		<tr><td><b>Google</b> (ingreso con Google y reconocimiento de voz)</td><td>El correo de la cuenta elegida al ingresar; el audio del dictado, cuando se usa esa función.</td></tr>
+		<tr><td><b>OpenStreetMap</b></td><td>Al abrir el mapa se descargan sus imágenes, lo que le revela la dirección IP del teléfono y la zona que se está mirando. No se le envía ningún dato del cliente ni del pedido.</td></tr>
+	</table>
+	</div>
+	<p>Los datos también pueden entregarse a una autoridad cuando la ley lo exija.</p>
+
+	<h2>La página pública de un pedido</h2>
+	<p>El comprobante lleva un código QR que abre una página sin necesidad de tener cuenta. Esa
+	página muestra <b>solo</b> el código del pedido, su estado, los productos y el total: nunca el
+	nombre, el teléfono, la dirección ni las coordenadas del cliente. La dirección es imposible de
+	adivinar (lleva un identificador aleatorio, no un número correlativo) y deja de funcionar si el
+	pedido se cancela.</p>
+
+	<h2>Cuánto se conservan y cómo se borran</h2>
+	<p>Los pedidos y las entregas se conservan mientras el local los necesite como registro de su
+	actividad. Las cuentas y los clientes que se dan de baja dejan de poder usarse y de aparecer en
+	la app, pero se conservan para que los pedidos anteriores sigan siendo legibles.</p>
+	<p>Para pedir la eliminación de tus datos, escribí a
+	<a href="mailto:david9.dev@gmail.com">david9.dev@gmail.com</a> desde la dirección involucrada,
+	o pedíselo al administrador del local. El pedido se atiende dentro de los <b>30 días</b>. Se
+	eliminan los datos personales; los importes de pedidos ya cerrados pueden conservarse sin datos
+	que identifiquen a nadie.</p>
+
+	<h2>Cómo se protegen</h2>
+	<ul>
+		<li>Todo el tráfico entre la app y el servidor viaja <b>cifrado con HTTPS</b>.</li>
+		<li>Las contraseñas se guardan hasheadas; nunca en texto plano.</li>
+		<li>La sesión caduca y se renueva con un identificador que <b>cambia en cada uso</b>: si se
+		filtrara uno viejo, ya no sirve.</li>
+		<li>Dar de baja una cuenta cierra sus sesiones abiertas.</li>
+		<li>Cada cuenta ve únicamente lo que su rol permite, y eso lo decide el servidor.</li>
+	</ul>
+
+	<h2>Menores</h2>
+	<p>RavEat es una herramienta de trabajo para personas mayores de 18 años. No está dirigida a
+	menores y no se recogen datos de menores a sabiendas.</p>
+
+	<h2>Cambios</h2>
+	<p>Si esta política cambia, se publica acá con una fecha nueva. Un cambio que afecte cómo se
+	tratan los datos se avisa además dentro de la app.</p>
+
+	<p class="pie"><a href="/">Volver a la carta de RavEat</a></p>
+</main>
+</body>
+</html>

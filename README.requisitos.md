@@ -1,8 +1,9 @@
-# Requisitos · versión 11
+# Requisitos · versión 12
 
-**Nada nuevo que instalar**: ni programa ni plugin. La preparación y el historial son pantallas y
-endpoints nuevos sobre lo que ya está, y la firma es un `<canvas>` del navegador. La base suma tres
-migraciones, que la API aplica sola al arrancar.
+**Nada nuevo que instalar en la máquina.** Lo nuevo de esta versión son **credenciales**, no
+programas: dos clientes OAuth de Google y, opcional, un proyecto de Supabase. El único paquete
+nuevo, `@capacitor/app`, entra con `npm install`. La base suma una migración, que la API aplica sola
+al arrancar.
 
 - [x] Git
 - [x] Node.js 22 o superior — trae `npm`
@@ -20,6 +21,10 @@ migraciones, que la API aplica sola al arrancar.
 - [x] Cuenta de servicio de Firebase — el JSON con clave privada, cargado en User Secrets
 - [x] `@capacitor-community/speech-recognition` — entra con `npm install` en `RavEatApp`
 - [x] Reconocimiento de voz en el teléfono — la app de Google, con el idioma español
+- [ ] `@capacitor/app` — entra con `npm install` en `RavEatApp`
+- [ ] **Dos clientes OAuth de Google**, uno **web** y uno **Android** — antes del martes
+- [ ] Proyecto de Supabase con un bucket público `raveat`, opcional: sin él las fotos siguen en `wwwroot/uploads`
+- [ ] Cuenta de desarrollador de Google Play, para subir el AAB a la prueba
 
 ## Comprobarlo
 
@@ -69,13 +74,38 @@ adb shell cmd package query-services -a android.speech.RecognitionService
 Si falta el servicio, se instala o se actualiza **Google** desde Play Store. En el navegador de la
 PC, el dictado anda en Chrome y en Edge; en Firefox el micrófono no aparece, y es lo esperado.
 
-## La cuenta de esta versión
+Lo de esta versión: el paquete, desde `RavEatApp`, y los dos lugares donde va el web client id.
+
+```powershell
+npm ls @capacitor/app
+if (Select-String -Path .\RavEatApp\.env -Pattern '^VITE_GOOGLE_WEB_CLIENT_ID=' -Quiet) { 'client id en .env    ok' } else { 'client id en .env    FALTA' }
+if (dotnet user-secrets list --project .\RavEat.Api | Select-String 'GoogleAuth:WebClientId') { 'client id en la API  ok' } else { 'client id en la API  FALTA' }
+```
+
+## Las credenciales de Google
+
+En Google Cloud → APIs y servicios → Credenciales hacen falta **dos** clientes OAuth, del mismo
+proyecto:
+
+| Cliente | Para qué | Dónde va su id |
+|---|---|---|
+| **Aplicación web** | es la audiencia del `id_token` que valida la API | `VITE_GOOGLE_WEB_CLIENT_ID` en `.env` y `GoogleAuth:WebClientId` en User Secrets |
+| **Android** (`app.raveat` + huella SHA-1) | habilita la pantalla de cuentas en el teléfono | no se copia a ningún lado: vive en la consola |
+
+Debug, release y Play firman distinto: cada huella que vaya a entrar con Google necesita su
+cliente Android. Cómo se sacan las huellas: [`README.comandos.md`](README.comandos.md), sección 14.
+
+## Las cuentas de esta versión
 
 | Cuenta | Para qué | Costo |
 |---|---|---|
 | MonsterASP.NET | publicar la API y MySQL | gratis |
+| Google Cloud | los dos clientes OAuth | gratis |
+| Supabase | el almacén de fotos, opcional | gratis |
+| Google Play Console | publicar el AAB | pago único |
 
-Los pasos están en [`README.comandos.md`](README.comandos.md), sección 10.
+Los pasos de MonsterASP están en la sección 10 de [`README.comandos.md`](README.comandos.md); los
+de esta versión, en la 14.
 
 ## Si algo dice FALTA
 

@@ -15,8 +15,10 @@ android {
         applicationId "app.raveat"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        // Cada AAB que se sube a Play necesita un versionCode mayor que el anterior: Play rechaza
+        // un numero repetido. versionName es el texto que ve la gente en la ficha.
+        versionCode 2
+        versionName "1.0.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

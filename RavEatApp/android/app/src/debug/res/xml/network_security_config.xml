@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Solo para el build de debug. Pisa al de `src/main/` por prioridad de source set y devuelve el
+    permiso amplio que hace falta para trabajar contra la PC (`http://TU_IP_LAN:5080` y el vite con
+    live reload): esa API no tiene certificado y nunca lo va a tener.
+
+    El release no lo lleva, y esa es la idea: el permiso existe donde se necesita y no viaja a
+    Google Play.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

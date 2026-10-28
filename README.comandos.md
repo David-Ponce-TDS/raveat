@@ -1,10 +1,10 @@
-# Comandos · versión 11
+# Comandos · versión 12
 
 Todo lo que se tipea para poner esta versión a andar, en orden. Los comandos son para
 **PowerShell en Windows** y se ejecutan **desde la raíz del repositorio**, salvo que se indique
 otra cosa.
 
-Qué es esta versión y por qué está hecha así: [`README.unidad-11.md`](README.unidad-11.md).
+Qué es esta versión y por qué está hecha así: [`README.unidad-12.md`](README.unidad-12.md).
 
 ## 1 · Instalar
 
@@ -193,7 +193,7 @@ Set-Location .\android
 ```
 
 El APK firmado queda en `app\build\outputs\apk\release\app-release.apk`. El AAB, que es el
-formato que pide Google Play, se genera en la versión 12.
+formato que pide Google Play, está en la sección 14.
 
 `build:release` compila con `--mode release`: `.env.release`, que está versionado, apaga el modo
 debug y vacía las dos URL. La app queda apuntando a la URL de producción de
@@ -393,6 +393,86 @@ que queda en `RavEat.Api\wwwroot\uploads\firmas`:
 Get-ChildItem .\RavEat.Api\wwwroot\uploads\firmas
 ```
 
+## 14 · Google, el pedido público y la tienda
+
+**Entrar con Google.** El web client id va en los dos lados: en `RavEatApp\.env` y en la API.
+Después se reinicia `npm run dev` (Vite lee el `.env` al arrancar) y la API.
+
+```powershell
+Add-Content .\RavEatApp\.env 'VITE_GOOGLE_WEB_CLIENT_ID=TU_CLIENTE_WEB.apps.googleusercontent.com'
+dotnet user-secrets set "GoogleAuth:WebClientId" "TU_CLIENTE_WEB.apps.googleusercontent.com" --project .\RavEat.Api
+```
+
+En MonsterASP, la misma clave como variable del panel, con doble guion bajo, y Restart:
+`GoogleAuth__WebClientId`. El email con el que se prueba tiene que estar dado de alta en
+**Usuarios**: Google autentica, pero el alta la sigue haciendo el administrador.
+
+Las huellas SHA-1 y SHA-256 de debug y de release, para el cliente Android de Google Cloud y para
+los App Links:
+
+```powershell
+Set-Location .\RavEatApp\android
+.\gradlew signingReport
+```
+
+La de Play está en Play Console → la app → Prueba y lanzamiento → Configuración → **Integridad de
+la app** → Firma de apps.
+
+**El pedido público.** Abrir la ficha de un pedido: el QR lleva su URL pública. Para mirar la
+página sin crear nada, el token de muestra:
+
+```powershell
+Start-Process http://localhost:5080/p/ejemplo
+```
+
+Con la API publicada, el QR apunta a su dominio. Para que lo haga aunque la request llegue por
+otra dirección, y para declarar las huellas de los App Links, en el panel de MonsterASP:
+`Publico__BaseUrl` = `https://raveat.tryasp.net` y una variable por huella,
+`Publico__HuellasSha256__0`, `Publico__HuellasSha256__1`, con el formato `AA:BB:...` que da
+`signingReport`. Lo que publica la API:
+
+```powershell
+Invoke-RestMethod https://raveat.tryasp.net/.well-known/assetlinks.json | ConvertTo-Json -Depth 5
+```
+
+Con la app instalada, si Android verificó el dominio, dice `verified`:
+
+```powershell
+adb shell pm get-app-links app.raveat
+```
+
+En un proyecto propio, el host del `intent-filter` de `AndroidManifest.xml` es el de tu API.
+
+**Las fotos en Supabase.** En supabase.com → tu proyecto: Storage → New bucket `raveat`, marcado
+**Public**. La URL y la clave `service_role` salen de Project Settings → API. En local:
+
+```powershell
+dotnet user-secrets set "Supabase:Url" "https://TU_PROYECTO.supabase.co" --project .\RavEat.Api
+dotnet user-secrets set "Supabase:ServiceKey" "TU_SERVICE_ROLE" --project .\RavEat.Api
+```
+
+En el panel de MonsterASP: `Supabase__Url` y `Supabase__ServiceKey`. La `service_role` firma como
+administrador: nunca en el APK ni en una variable `VITE_`. Sin las dos, las fotos van a
+`wwwroot/uploads` como antes.
+
+**El AAB para Play.** Con el keystore de la sección 8:
+
+```powershell
+Set-Location .\RavEatApp
+npm run build:release
+npx cap sync android
+
+Set-Location .\android
+.\gradlew bundleRelease
+```
+
+Queda en `app\build\outputs\bundle\release\app-release.aab`. Cada subida necesita un
+`versionCode` mayor que la anterior, en `android\app\build.gradle`. La política de privacidad que
+pide la ficha es `https://raveat.tryasp.net/privacidad.html`, y los caminos de descarga que
+muestran la carta y la página del pedido se editan en `RavEat.Api\wwwroot\distribucion.json`, sin
+recompilar. Ahí está también el switch `appEnPedido`: en `false` la página del pedido no ofrece
+abrir ni bajar la app; el día que esté publicada se pone en `true` y se sube solo ese archivo.
+
 ## Si algo falla
 
 | Síntoma | Causa probable | Qué hacer |
@@ -427,6 +507,17 @@ Get-ChildItem .\RavEat.Api\wwwroot\uploads\firmas
 | El historial de un usuario está vacío | Cada rol ve solo lo suyo, y todavía no movió nada | Es lo esperado; el administrador ve el del local |
 | **Firmar recepción** no aparece | La entrega no está en camino, o la lleva otro repartidor | Pasarla a En camino con el repartidor que la tomó |
 | Guardar la firma dice que no hay conexión | Sin red la firma no se encola | Volver a tener red y firmar de nuevo |
+| No aparece **Entrar con Google** | Falta `VITE_GOOGLE_WEB_CLIENT_ID`, o Vite no se reinició | Sección 14 y reiniciar `npm run dev` |
+| `DEVELOPER_ERROR (10)` | El client id es el de Android, o falta el cliente Android con la SHA-1 de este APK | Sección 14: el web en el `.env`, y un cliente Android por huella |
+| `SIGN_IN_FAILED (12500)` | Falta la pantalla de consentimiento, o en modo prueba tu cuenta no está en Usuarios de prueba | Completarla en Google Cloud |
+| «El ingreso con Google no está configurado en el servidor» | Falta `GoogleAuth:WebClientId` en la API | User Secrets, o la variable del panel |
+| «Esa cuenta no está habilitada» | El email no está dado de alta, o está inactivo | Darlo de alta en **Usuarios** |
+| Anda con el APK propio y falla en el de Play | Play refirma: la huella es otra | Cliente Android y `assetlinks` con la huella de Play |
+| El QR abre el navegador y no la app | La huella no está en `assetlinks.json`, o el APK es de debug | `pm get-app-links`; cargar la huella y reinstalar |
+| El QR apunta a la IP de la PC | Se generó contra la API local | Es lo esperado; publicada, `Publico__BaseUrl` |
+| La foto nueva da 502 «imagen_no_guardada» | Supabase rechazó el archivo: bucket inexistente, o la clave no es `service_role` | Revisar el bucket y la clave, o borrar las dos variables |
+| El APK de release no conecta con tu PC por HTTP | El release solo habla HTTPS | Para desarrollo, el de debug |
+| Play rechaza el AAB por el `versionCode` | Ya se subió uno con ese número | Subirlo en `build.gradle` |
 
 ## Datos del proyecto Android
 

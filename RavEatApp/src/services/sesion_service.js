@@ -4,6 +4,12 @@ export function iniciar_sesion(email, password){
 	return ajax_request({endpoint: '/api/sesion/login', metodo: 'POST', datos: {email, password}, renovar: false});
 }
 
+// Google no entrega una sesion de RavEat: entrega un id_token que la API valida, y recien ahi emite
+// la sesion propia. El resto de la app no se entera de por donde entro el usuario.
+export function iniciar_sesion_google(id_token){
+	return ajax_request({endpoint: '/api/sesion/login-google', metodo: 'POST', datos: {id_token}, renovar: false});
+}
+
 // El token de FCM viaja con el logout: es cuando el telefono deja de ser de este usuario, y la API
 // lo da de baja en el mismo paso, sin un endpoint aparte.
 export function cerrar_sesion(refresh_token, todos = false, token_push = null){

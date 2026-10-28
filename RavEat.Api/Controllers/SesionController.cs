@@ -1,3 +1,4 @@
+using Google.Apis.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -15,7 +16,7 @@ namespace RavEat.Api.Controllers;
 // que administrar los usuarios del local.
 [ApiController]
 [Route("api/sesion")]
-public sealed class SesionController(RavEatDbContext db, TokenService tokens) : ControllerBase {
+public sealed class SesionController(RavEatDbContext db, TokenService tokens, IConfiguration configuration) : ControllerBase {
     private static readonly PasswordHasher<Usuario> Hasher = new();
 
     [AllowAnonymous]
@@ -29,6 +30,43 @@ public sealed class SesionController(RavEatDbContext db, TokenService tokens) : 
         if(usuario is null || !usuario.Activo) return Unauthorized(new {codigo = "credenciales_invalidas", mensaje = "Email o contraseña incorrectos."});
         var verificacion = Hasher.VerifyHashedPassword(usuario, usuario.PasswordHash, request.Password ?? string.Empty);
         if(verificacion == PasswordVerificationResult.Failed) return Unauthorized(new {codigo = "credenciales_invalidas", mensaje = "Email o contraseña incorrectos."});
+
+        return Ok(new {sesion = await EmitirSesionAsync(usuario, cancellationToken)});
+    }
+
+    // Entrar con Google. Lo que llega es un `id_token`: un JWT que firmo Google y dice quien es el
+    // usuario. La API no le cree sin mas: verifica la firma contra las claves publicas de Google y,
+    // ademas, que el token haya sido emitido PARA nosotros (`Audience`, el web client id que usa la
+    // app). Sin ese segundo control, un id_token valido de cualquier otra app entraria igual.
+    //
+    // Google autentica; no habilita. Si el email no esta dado de alta, no se crea nada: el alta la
+    // sigue haciendo un administrador, igual que desde la version 5.
+    [AllowAnonymous]
+    [HttpPost("login-google")]
+    public async Task<IActionResult> LoginGoogle(LoginGoogleRequest request, CancellationToken cancellationToken) {
+        if(string.IsNullOrWhiteSpace(request.IdToken)) return BadRequest(new {codigo = "token_requerido", mensaje = "Falta el token de Google."});
+
+        var webClientId = configuration["GoogleAuth:WebClientId"];
+        if(string.IsNullOrWhiteSpace(webClientId)) return StatusCode(503, new {codigo = "google_no_configurado", mensaje = "El ingreso con Google no está configurado en el servidor."});
+
+        GoogleJsonWebSignature.Payload payload;
+        try {
+            payload = await GoogleJsonWebSignature.ValidateAsync(request.IdToken, new GoogleJsonWebSignature.ValidationSettings {
+                Audience = [webClientId]
+            });
+        }
+        catch(InvalidJwtException) {
+            return Unauthorized(new {codigo = "google_invalido", mensaje = "El ingreso con Google no se pudo verificar."});
+        }
+
+        // Un email sin verificar en Google es un email que alguien pudo haber escrito a mano.
+        if(!payload.EmailVerified) return Unauthorized(new {codigo = "google_email_sin_verificar", mensaje = "Google no confirmó el email de esa cuenta."});
+
+        var email = (payload.Email ?? string.Empty).Trim().ToLowerInvariant();
+        var usuario = await db.Usuarios.FirstOrDefaultAsync(x => x.Email == email, cancellationToken);
+        if(usuario is null || !usuario.Activo) {
+            return StatusCode(403, new {codigo = "usuario_no_habilitado", mensaje = "Esa cuenta no está habilitada. Pedile a un administrador que te dé de alta."});
+        }
 
         return Ok(new {sesion = await EmitirSesionAsync(usuario, cancellationToken)});
     }
@@ -119,5 +157,6 @@ public sealed class SesionController(RavEatDbContext db, TokenService tokens) : 
 
 public sealed record SesionResponse(string Token, DateTimeOffset ExpiraEn, string RefreshToken, DateTimeOffset RefreshExpiraEn, UsuarioResponse Usuario);
 public sealed record LoginRequest(string Email, string Password);
+public sealed record LoginGoogleRequest(string IdToken);
 public sealed record RefreshRequest(string RefreshToken);
 public sealed record LogoutRequest(string RefreshToken, bool Todos, string? TokenPush);

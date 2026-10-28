@@ -58,6 +58,21 @@
 					<ion-icon slot="start" :icon="icono_huella" />
 					Entrar con huella
 				</ion-button>
+
+				<!-- Google solo aparece con el client id configurado: sin credencial no se muestra un
+				     botón que no puede funcionar. En el teléfono es un botón nuestro (la pantalla de
+				     cuentas la abre el plugin); en el navegador lo dibuja el propio Google. -->
+				<template v-if="google_habilitado">
+					<div class="raveat-login-separador">o</div>
+					<!-- Fijo y no un aviso que se va solo: los dos errores que aparecen de verdad (la
+					     configuración de Google Cloud y el email sin alta) son largos. -->
+					<comp-aviso v-if="error_google" tono="error" :mensaje="error_google" />
+					<ion-button v-if="google_es_nativo" expand="block" fill="outline" :disabled="sesion_store.cargando" @click="entrar_con_google">
+						<ion-icon slot="start" :icon="icono_google" />
+						{{ error_google ? 'Probar con otra cuenta' : 'Entrar con Google' }}
+					</ion-button>
+					<div v-show="!google_es_nativo" ref="boton_google" class="raveat-login-google" />
+				</template>
 			</div>
 		</ion-content>
 	</ion-page>
@@ -73,10 +88,16 @@
 	IonPage,
 	IonSpinner
 } from '@ionic/vue';
-import { fingerPrintOutline } from 'ionicons/icons';
+import { fingerPrintOutline, logoGoogle } from 'ionicons/icons';
 import comp_aviso from '@/components/base/comp_aviso.vue';
 import comp_vidriera from '@/components/estructura/comp_vidriera.vue';
 import { biometria_disponible, verificar_identidad } from '@/services/biometria_service';
+import {
+	entrar_con_google_nativo,
+	google_es_nativo,
+	google_habilitado,
+	renderizar_boton_google
+} from '@/services/google_auth_service';
 import { restaurar_sesion } from '@/services/token_service';
 import { use_sesion_store } from '@/stores/sesion_store';
 
@@ -99,6 +120,12 @@ export default {
 	data(){
 		return {
 			email: '',
+			// El error de Google vive en la pantalla y no en el store: puede venir del plugin
+			// (configuracion, cuenta) sin que la sesion haya llegado a intentarse.
+			error_google: null,
+			google_es_nativo: google_es_nativo(),
+			google_habilitado: google_habilitado(),
+			icono_google: logoGoogle,
 			icono_huella: fingerPrintOutline,
 			password: '',
 			puede_biometria: false,
@@ -111,12 +138,40 @@ export default {
 		// una sesion guardada para desbloquear. Sin login previo no hay nada que desbloquear.
 		const hay_sesion_guardada = Boolean(await restaurar_sesion());
 		vm.puede_biometria = hay_sesion_guardada && await biometria_disponible();
+		if(vm.google_habilitado && !vm.google_es_nativo) renderizar_boton_google(vm.$refs.boton_google, vm.canjear_token_google);
 	},
 	methods: {
 		entrar: async function(){
 			var vm = this;
+			vm.error_google = null;
 			const entro = await vm.sesion_store.entrar(vm.email.trim(), vm.password);
 			if(entro) vm.$router.replace('/app/inicio');
+		},
+		entrar_con_google: async function(){
+			var vm = this;
+			// Se limpia ANTES: si no, el error del intento anterior sigue en pantalla mientras se
+			// elige la cuenta nueva y parece que ya fallo otra vez.
+			vm.error_google = null;
+			vm.sesion_store.error = null;
+			const resultado = await entrar_con_google_nativo();
+			if(!resultado.ok){
+				// Sin mensaje = se cerro la pantalla de cuentas. No se avisa nada.
+				vm.error_google = resultado.mensaje;
+				return;
+			}
+			await vm.canjear_token_google(resultado.id_token);
+		},
+		// El paso que comparten los dos caminos: el token de Google se cambia por la sesion de
+		// RavEat. Si el canje falla, el store ya solto la cuenta y el boton ofrece probar con otra.
+		canjear_token_google: async function(id_token){
+			var vm = this;
+			const entro = await vm.sesion_store.entrar_con_google(id_token);
+			if(entro){
+				vm.$router.replace('/app/inicio');
+				return;
+			}
+			vm.error_google = vm.sesion_store.error;
+			vm.sesion_store.error = null;
 		},
 		entrar_con_biometria: async function(){
 			var vm = this;

@@ -1679,3 +1679,28 @@ ion-action-sheet .action-sheet-group:focus-visible {
     border: 1px solid var(--raveat-border);
     border-radius: var(--raveat-radio-chico);
 }
+
+/* --- ingreso con Google ------------------------------------------------------------ */
+
+/* El "o" entre los dos ingresos. Las rayas son pseudoelementos: separan, no son contenido. */
+.raveat-login-separador {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--raveat-muted);
+    font-size: 0.85rem;
+}
+
+.raveat-login-separador::before,
+.raveat-login-separador::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--raveat-border);
+}
+
+/* El boton que dibuja Google en el navegador tiene ancho propio: se centra. */
+.raveat-login-google {
+    display: flex;
+    justify-content: center;
+}

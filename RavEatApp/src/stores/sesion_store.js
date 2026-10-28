@@ -3,7 +3,8 @@ import { obtener_rol_por_codigo } from '@/config/roles';
 import { borrar_copias, guardar_copia } from '@/services/copia_local_service';
 import { registrar_dispositivo } from '@/services/dispositivos_service';
 import { obtener_token_push } from '@/services/notificaciones_nativas_service';
-import { cerrar_sesion, iniciar_sesion, obtener_mi_usuario } from '@/services/sesion_service';
+import { olvidar_cuenta_google } from '@/services/google_auth_service';
+import { cerrar_sesion, iniciar_sesion, iniciar_sesion_google, obtener_mi_usuario } from '@/services/sesion_service';
 import { use_offline_store } from '@/stores/offline_store';
 import {
 	al_expirar,
@@ -87,24 +88,51 @@ export const use_sesion_store = defineStore('sesion', {
 			vm.error = null;
 			try{
 				const respuesta = await iniciar_sesion(email, password);
-				const sesion = (respuesta && respuesta.sesion) || null;
-				if(!(sesion && sesion.token)){
-					vm.error = 'No se pudo iniciar sesión.';
-					return false;
-				}
-				await guardar_sesion(sesion.token, sesion.expira_en, sesion.refresh_token, sesion.refresh_expira_en);
-				vm.usuario = sesion.usuario;
-				// El login ya trae al usuario: se guarda como la copia de "quien soy", asi la app
-				// puede arrancar sin red desde la primera vez.
-				guardar_copia('/api/sesion/yo', {usuario: sesion.usuario});
-				vm.vincular_dispositivo();
-				return true;
+				return await vm.abrir_sesion(respuesta, 'No se pudo iniciar sesión.');
 			}catch(error){
 				vm.error = error.mensaje || 'No se pudo iniciar sesión.';
 				return false;
 			}finally{
 				vm.cargando = false;
 			}
+		},
+		// El id_token ya lo consiguio la pantalla (nativo o web): aca se canjea por la sesion propia.
+		// Desde ahi la app queda igual que con el login normal: mismo token, mismo refresh, mismo store.
+		entrar_con_google: async function(id_token){
+			var vm = this;
+			vm.cargando = true;
+			vm.error = null;
+			try{
+				const respuesta = await iniciar_sesion_google(id_token);
+				const entro = await vm.abrir_sesion(respuesta, 'No se pudo entrar con Google.');
+				if(!entro) await olvidar_cuenta_google();
+				return entro;
+			}catch(error){
+				vm.error = error.mensaje || 'No se pudo entrar con Google.';
+				// El token de Google era valido; fallo el canje (el email no esta dado de alta, o el
+				// usuario esta inactivo). Si la cuenta queda elegida, el siguiente intento repite el
+				// mismo error sin dejar cambiarla, que es lo unico que puede arreglarlo.
+				await olvidar_cuenta_google();
+				return false;
+			}finally{
+				vm.cargando = false;
+			}
+		},
+		// Lo que comparten los dos ingresos: guardar la sesion que emitio la API.
+		abrir_sesion: async function(respuesta, mensaje_error){
+			var vm = this;
+			const sesion = (respuesta && respuesta.sesion) || null;
+			if(!(sesion && sesion.token)){
+				vm.error = mensaje_error;
+				return false;
+			}
+			await guardar_sesion(sesion.token, sesion.expira_en, sesion.refresh_token, sesion.refresh_expira_en);
+			vm.usuario = sesion.usuario;
+			// El login ya trae al usuario: se guarda como la copia de "quien soy", asi la app
+			// puede arrancar sin red desde la primera vez.
+			guardar_copia('/api/sesion/yo', {usuario: sesion.usuario});
+			vm.vincular_dispositivo();
+			return true;
 		},
 		// Anota este telefono en la API para que le lleguen las push del usuario. Se llama al entrar,
 		// al restaurar la sesion y cuando FCM entrega el token, porque cualquiera de las tres cosas
@@ -127,6 +155,9 @@ export const use_sesion_store = defineStore('sesion', {
 			}catch{
 				// Sin conexion no hay nada que hacer del lado del servidor.
 			}
+			// Si entro con Google, cerrar solo del lado de RavEat deja la cuenta elegida pegada: el
+			// proximo ingreso entraria con la misma sin preguntar.
+			await olvidar_cuenta_google();
 			await vm.limpiar();
 		},
 		limpiar: async function(){

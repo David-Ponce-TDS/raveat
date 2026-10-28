@@ -14,6 +14,9 @@
     <!-- 3.5.0 y no la ultima: desde la 3.6 el token de registro figura obsoleto a favor del Fid,
          pero el plugin de Capacitor entrega el token de registro y FCM lo sigue aceptando. -->
     <PackageReference Include="FirebaseAdmin" Version="3.5.0" />
+    <!-- Valida el id_token de Google contra sus claves publicas: es la unica forma de creerle a un
+         token que llego del cliente. Sin verificar la firma, cualquiera manda el email de otro. -->
+    <PackageReference Include="Google.Apis.Auth" Version="1.73.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.17" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.17">

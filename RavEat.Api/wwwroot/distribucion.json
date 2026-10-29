@@ -1,8 +1,8 @@
 {
-	"_comentario": "Los caminos para bajar la app. Lo lee la carta (/) con fetch y tambien la pagina del pedido (/p/{token}), asi las dos ofrecen lo mismo sin repetir la configuracion en dos lados. El que quede VACIO no dibuja su boton: la pagina se puede publicar hoy, sin ficha en Play, y el dia que exista se completa la linea y se vuelve a subir SOLO este archivo — no hay que recompilar ni redesplegar la API. El QR del pie apunta a `play`; si esta vacio, a `prueba`; si tampoco hay, a esta misma pagina. `grupo` es la lista de correo desde donde Play habilita la prueba: sin estar adentro, el enlace de prueba muestra 'no disponible'. `appEnPedido` es el switch de la pagina del pedido: en false no muestra ni abrir la app, ni los botones de descarga, ni el panel 'Llevate la app RavEat'; el dia que la app este lista se pone en true y se sube este archivo.",
+	"_comentario": "Los caminos para bajar la app. Lo lee la carta (/) con fetch y tambien la pagina del pedido (/p/{token}), asi las dos ofrecen lo mismo sin repetir la configuracion en dos lados. El que quede VACIO no dibuja su boton: la pagina se puede publicar hoy, sin ficha en Play, y el dia que exista se completa la linea y se vuelve a subir SOLO este archivo — no hay que recompilar ni redesplegar la API. El QR del pie apunta a `play`; si esta vacio, a `prueba`; si tampoco hay, a esta misma pagina. `grupo` es la lista de correo desde donde Play habilita la prueba: sin estar adentro, el enlace de prueba muestra 'no disponible'. `appEnPedido` es el switch de la pagina del pedido: en false no muestra ni abrir la app, ni los botones de descarga, ni el panel 'Llevate la app RavEat'; el dia que la app este lista se pone en true y se sube este archivo. Mientras dure la prueba cerrada, `play` va VACIO y `prueba` lleva el alta de verificador: la ficha (https://play.google.com/store/apps/details?id=app.raveat) le da 404 a quien todavia no se hizo verificador, y el alta es el paso que lo habilita. El dia que la app salga a produccion, la ficha vuelve a `play`.",
 	"appEnPedido": false,
-	"play": "https://play.google.com/store/apps/details?id=app.raveat",
-	"prueba": "",
+	"play": "",
+	"prueba": "https://play.google.com/apps/testing/app.raveat",
 	"apk": "",
 	"grupo": "https://groups.google.com/g/tuds-apps-avanzadas"
 }

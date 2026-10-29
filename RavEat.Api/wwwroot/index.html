@@ -101,7 +101,8 @@ h2 { margin: clamp(28px, 5vw, 40px) 0 12px; font-size: 1.02rem; letter-spacing: 
    chico lo escribe el script según lo que haya en `distribucion.json`: la ficha publicada, la
    prueba abierta, o ninguna de las dos. */
 .qr_play { display: inline-flex; align-items: center; gap: 9px; padding: 8px 14px;
-           border-radius: 12px; background: #05070b; border: 1px solid rgba(255,255,255,.22); color: #fff; }
+           border-radius: 12px; background: #05070b; border: 1px solid rgba(255,255,255,.22); color: #fff;
+           text-decoration: none; }
 .qr_play svg { width: 20px; height: 20px; }
 .qr_play small { display: block; font-size: .6rem; letter-spacing: 1.2px; color: #9aa3b5; }
 .qr_play b { display: block; font-size: .95rem; line-height: 1.15; }
@@ -184,7 +185,9 @@ h2 { margin: clamp(28px, 5vw, 40px) 0 12px; font-size: 1.02rem; letter-spacing: 
 			<!-- El texto vive en un span propio: el script lo pisa con textContent y un ícono
 			     adentro no sobreviviría al cambio. -->
 			<p class="qr_detalle_linea"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h2.2l1.4-2h8.8l1.4 2H20a1.6 1.6 0 0 1 1.6 1.6V18A1.6 1.6 0 0 1 20 19.6H4A1.6 1.6 0 0 1 2.4 18V9.6A1.6 1.6 0 0 1 4 8z"/><circle cx="12" cy="13.4" r="3.4"/></svg><span id="qr_detalle">Apuntá con la cámara del teléfono.</span></p>
-			<span class="qr_play"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#00c4ff" d="M3.6 1.8c-.4.3-.6.8-.6 1.4v17.6c0 .6.2 1.1.6 1.4l.1.1L13.8 12v-.2L3.7 1.7l-.1.1z"/><path fill="#ffce00" d="M17.1 15.5 13.8 12v-.2l3.3-3.4.1.1 4 2.3c1.1.6 1.1 1.7 0 2.3l-4 2.3-.1.1z"/><path fill="#f43249" d="M17.2 15.4 13.8 12 3.6 22.2c.4.4 1 .4 1.7.1l11.9-6.9"/><path fill="#00e076" d="M17.2 8.5 5.3 1.7c-.7-.4-1.3-.3-1.7.1L13.8 12l3.4-3.5z"/></svg><span><small id="qr_insignia">MUY PRONTO EN</small><b>Google Play</b></span></span>
+			<!-- Un <a> sin href hasta que el script le pone destino: en el teléfono no se puede
+			     escanear la propia pantalla, así que la insignia es el camino que se toca. -->
+			<a class="qr_play" id="qr_play" rel="noopener" target="_blank"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#00c4ff" d="M3.6 1.8c-.4.3-.6.8-.6 1.4v17.6c0 .6.2 1.1.6 1.4l.1.1L13.8 12v-.2L3.7 1.7l-.1.1z"/><path fill="#ffce00" d="M17.1 15.5 13.8 12v-.2l3.3-3.4.1.1 4 2.3c1.1.6 1.1 1.7 0 2.3l-4 2.3-.1.1z"/><path fill="#f43249" d="M17.2 15.4 13.8 12 3.6 22.2c.4.4 1 .4 1.7.1l11.9-6.9"/><path fill="#00e076" d="M17.2 8.5 5.3 1.7c-.7-.4-1.3-.3-1.7.1L13.8 12l3.4-3.5z"/></svg><span><small id="qr_insignia">MUY PRONTO EN</small><b>Google Play</b></span></a>
 		</div>
 		<div class="qr_marco"><img src="/api/publico/qr-descarga" alt="Código QR para descargar RavEat" width="168" height="168"></div>
 	</section>
@@ -195,7 +198,7 @@ h2 { margin: clamp(28px, 5vw, 40px) 0 12px; font-size: 1.02rem; letter-spacing: 
 	<section class="grupo" id="grupo" hidden>
 		<span class="grupo_icono"><svg viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><circle cx="5.3" cy="10.1" r="2.3"/><path d="M5.3 13.2c-2.1 0-3.9 1.1-3.9 2.7v1.4h4.3v-.8c0-1.2.5-2.3 1.4-3.1-.6-.1-1.2-.2-1.8-.2z"/><circle cx="18.7" cy="10.1" r="2.3"/><path d="M18.7 13.2c-.6 0-1.2.1-1.8.2.9.8 1.4 1.9 1.4 3.1v.8h4.3v-1.4c0-1.6-1.8-2.7-3.9-2.7z"/><circle cx="12" cy="8.4" r="3.1"/><path d="M12 12.5c-2.8 0-5.1 1.4-5.1 3.3v2.3h10.2v-2.3c0-1.9-2.3-3.3-5.1-3.3z"/></svg></span>
 		<h2>Unite a la prueba cerrada</h2>
-		<p>Sumate al grupo de prueba y volvé para escanear el código.</p>
+		<p>Sumate al grupo de prueba y volvé para escanear el código o tocar Google Play.</p>
 		<a class="boton secundario" id="grupo_enlace" href="#" rel="noopener" target="_blank">Sumarme al grupo</a>
 	</section>
 
@@ -237,6 +240,9 @@ h2 { margin: clamp(28px, 5vw, 40px) 0 12px; font-size: 1.02rem; letter-spacing: 
 			distribucion.play ? 'DISPONIBLE EN' : distribucion.prueba ? 'EN PRUEBA EN' : 'MUY PRONTO EN';
 		if(distribucion.play || distribucion.prueba){
 			document.getElementById('qr_detalle').textContent = 'Apuntá con la cámara del teléfono y bajá la app.';
+			// El mismo destino que el QR (UrlDescarga en la API): la ficha si existe, si no el alta de
+			// la prueba.
+			document.getElementById('qr_play').href = distribucion.play || distribucion.prueba;
 		}
 		// Play habilita la prueba cerrada SOLO a quien esta en la lista: sin el grupo, el enlace del
 		// QR le contesta "no disponible" al que escanea. Por eso la tarjeta va debajo del panel y no
@@ -249,7 +255,9 @@ h2 { margin: clamp(28px, 5vw, 40px) 0 12px; font-size: 1.02rem; letter-spacing: 
 	}
 
 	function cargar_distribucion(){
-		fetch('/distribucion.json')
+		// `no-cache` obliga a revalidar: el servidor no manda Cache-Control y sin esto el navegador
+		// puede seguir mostrando horas la línea vieja después de cambiar el archivo.
+		fetch('/distribucion.json', {cache: 'no-cache'})
 			.then(function(respuesta){ return respuesta.ok ? respuesta.json() : {}; })
 			.catch(function(){ return {}; })
 			.then(function(distribucion){ dibujar_distribucion(distribucion || {}); });

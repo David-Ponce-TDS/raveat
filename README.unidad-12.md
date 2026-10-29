@@ -125,7 +125,7 @@ lo note. El tipo aparte es la garantía de que publicar es una decisión, no un 
 
 ## 🔗 Una dirección, dos destinos
 
-El QR lleva `https://raveat.tryasp.net/p/<token>`. Con la app instalada y el dominio verificado,
+El QR lleva `https://raveat.runasp.net/p/<token>`. Con la app instalada y el dominio verificado,
 Android la abre en la app; sin la app, la abre el navegador con la página que sirve la API. Los dos
 caminos terminan mostrando el mismo pedido.
 

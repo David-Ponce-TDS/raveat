@@ -427,12 +427,12 @@ Start-Process http://localhost:5080/p/ejemplo
 
 Con la API publicada, el QR apunta a su dominio. Para que lo haga aunque la request llegue por
 otra dirección, y para declarar las huellas de los App Links, en el panel de MonsterASP:
-`Publico__BaseUrl` = `https://raveat.tryasp.net` y una variable por huella,
+`Publico__BaseUrl` = `https://raveat.runasp.net` y una variable por huella,
 `Publico__HuellasSha256__0`, `Publico__HuellasSha256__1`, con el formato `AA:BB:...` que da
 `signingReport`. Lo que publica la API:
 
 ```powershell
-Invoke-RestMethod https://raveat.tryasp.net/.well-known/assetlinks.json | ConvertTo-Json -Depth 5
+Invoke-RestMethod https://raveat.runasp.net/.well-known/assetlinks.json | ConvertTo-Json -Depth 5
 ```
 
 Con la app instalada, si Android verificó el dominio, dice `verified`:
@@ -468,7 +468,7 @@ Set-Location .\android
 
 Queda en `app\build\outputs\bundle\release\app-release.aab`. Cada subida necesita un
 `versionCode` mayor que la anterior, en `android\app\build.gradle`. La política de privacidad que
-pide la ficha es `https://raveat.tryasp.net/privacidad.html`, y los caminos de descarga que
+pide la ficha es `https://raveat.runasp.net/privacidad.html`, y los caminos de descarga que
 muestran la carta y la página del pedido se editan en `RavEat.Api\wwwroot\distribucion.json`, sin
 recompilar. Ahí está también el switch `appEnPedido`: en `false` la página del pedido no ofrece
 abrir ni bajar la app; el día que esté publicada se pone en `true` y se sube solo ese archivo.

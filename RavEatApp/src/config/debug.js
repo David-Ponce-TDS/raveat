@@ -8,7 +8,7 @@ const api_url_debug_predeterminada = 'http://localhost:5080';
 
 // La API publicada. Es una URL publica, no un secreto: va en el codigo para que el APK de release
 // apunte a produccion sin depender de un .env que en otra maquina puede no estar.
-const api_url_produccion = 'https://raveat.tryasp.net';
+const api_url_produccion = 'https://raveat.runasp.net';
 
 export const debug_config = {
 	debug_activado: import.meta.env.VITE_DEBUG_ACTIVADO != 'false',

@@ -13,6 +13,7 @@
 *.keystore
 keystore.properties
 google-services*.json
+GoogleService-Info*.plist
 *firebase-adminsdk*.json
 firebase-cuenta.json
 produccion.local.env

@@ -1,0 +1,280 @@
+PODS:
+  - AparajitaCapacitorBiometricAuth (10.0.0):
+    - Capacitor
+  - AparajitaCapacitorSecureStorage (8.0.0):
+    - Capacitor
+    - KeychainSwift (~> 21.0)
+  - AppAuth (2.1.0):
+    - AppAuth/Core (= 2.1.0)
+    - AppAuth/ExternalUserAgent (= 2.1.0)
+  - AppAuth/Core (2.1.0)
+  - AppAuth/ExternalUserAgent (2.1.0):
+    - AppAuth/Core
+  - AppCheckCore (11.3.2):
+    - GoogleUtilities/Environment (~> 8.0)
+    - GoogleUtilities/UserDefaults (~> 8.0)
+    - PromisesObjC (~> 2.4)
+    - PromisesSwift (~> 2.4)
+    - RecaptchaInterop (~> 101.0)
+  - Capacitor (8.5.3):
+    - CapacitorCordova
+  - CapacitorApp (8.1.2):
+    - Capacitor
+  - CapacitorCamera (8.2.2):
+    - Capacitor
+    - IONCameraLib (~> 1.0.5)
+  - CapacitorCommunitySpeechRecognition (7.0.1):
+    - Capacitor
+  - CapacitorCordova (8.5.3)
+  - CapacitorFilesystem (8.1.2):
+    - Capacitor
+    - IONFilesystemLib (~> 1.1.1)
+  - CapacitorGeolocation (8.2.0):
+    - Capacitor
+    - IONGeolocationLib (= 2.1.0)
+  - CapacitorHaptics (8.0.2):
+    - Capacitor
+  - CapacitorLocalNotifications (8.2.1):
+    - Capacitor
+  - CapacitorMlkitBarcodeScanning (8.1.0):
+    - Capacitor
+    - GoogleMLKit/BarcodeScanning (~> 8.0.0)
+  - CapacitorNetwork (8.0.1):
+    - Capacitor
+  - CapacitorPushNotifications (8.1.2):
+    - Capacitor
+  - CapacitorShare (8.0.1):
+    - Capacitor
+  - CapacitorSplashScreen (8.0.1):
+    - Capacitor
+  - CapacitorStatusBar (8.0.4):
+    - Capacitor
+  - FirebaseCore (12.19.3):
+    - FirebaseCoreInternal (~> 12.19.0)
+    - GoogleUtilities/Environment (~> 8.1)
+    - GoogleUtilities/Logger (~> 8.1)
+  - FirebaseCoreInternal (12.19.0):
+    - "GoogleUtilities/NSData+zlib (~> 8.1)"
+  - FirebaseInstallations (12.19.0):
+    - FirebaseCore (~> 12.19.0)
+    - GoogleUtilities/Environment (~> 8.1)
+    - GoogleUtilities/UserDefaults (~> 8.1)
+    - PromisesObjC (~> 2.4)
+  - FirebaseMessaging (12.19.0):
+    - FirebaseCore (~> 12.19.0)
+    - FirebaseInstallations (~> 12.19.0)
+    - GoogleDataTransport (~> 10.1)
+    - GoogleUtilities/AppDelegateSwizzler (~> 8.1)
+    - GoogleUtilities/Environment (~> 8.1)
+    - GoogleUtilities/Reachability (~> 8.1)
+    - GoogleUtilities/UserDefaults (~> 8.1)
+    - nanopb (~> 3.30910.0)
+  - GoogleDataTransport (10.1.1):
+    - nanopb (~> 3.30910.0)
+    - PromisesObjC (~> 2.4)
+  - GoogleMLKit/BarcodeScanning (8.0.0):
+    - GoogleMLKit/MLKitCore
+    - MLKitBarcodeScanning (~> 7.0.0)
+  - GoogleMLKit/MLKitCore (8.0.0):
+    - MLKitCommon (~> 13.0.0)
+  - GoogleSignIn (9.2.0):
+    - AppAuth (~> 2.1)
+    - AppCheckCore (~> 11.0)
+    - GTMAppAuth (~> 5.0)
+    - GTMSessionFetcher/Core (~> 3.3)
+  - GoogleToolboxForMac/Defines (4.2.1)
+  - GoogleToolboxForMac/Logger (4.2.1):
+    - GoogleToolboxForMac/Defines (= 4.2.1)
+  - "GoogleToolboxForMac/NSData+zlib (4.2.1)":
+    - GoogleToolboxForMac/Defines (= 4.2.1)
+  - GoogleUtilities/AppDelegateSwizzler (8.1.5):
+    - GoogleUtilities/Environment
+    - GoogleUtilities/Logger
+    - GoogleUtilities/Network
+    - GoogleUtilities/Privacy
+  - GoogleUtilities/Environment (8.1.5):
+    - GoogleUtilities/Privacy
+  - GoogleUtilities/Logger (8.1.5):
+    - GoogleUtilities/Environment
+    - GoogleUtilities/Privacy
+  - GoogleUtilities/Network (8.1.5):
+    - GoogleUtilities/Logger
+    - "GoogleUtilities/NSData+zlib"
+    - GoogleUtilities/Privacy
+    - GoogleUtilities/Reachability
+  - "GoogleUtilities/NSData+zlib (8.1.5)":
+    - GoogleUtilities/Privacy
+  - GoogleUtilities/Privacy (8.1.5)
+  - GoogleUtilities/Reachability (8.1.5):
+    - GoogleUtilities/Logger
+    - GoogleUtilities/Privacy
+  - GoogleUtilities/UserDefaults (8.1.5):
+    - GoogleUtilities/Logger
+    - GoogleUtilities/Privacy
+  - GTMAppAuth (5.0.0):
+    - AppAuth/Core (~> 2.0)
+    - GTMSessionFetcher/Core (< 4.0, >= 3.3)
+  - GTMSessionFetcher/Core (3.5.0)
+  - IONCameraLib (1.0.5)
+  - IONFilesystemLib (1.1.4)
+  - IONGeolocationLib (2.1.0)
+  - KeychainSwift (21.0.0)
+  - MLImage (1.0.0-beta7)
+  - MLKitBarcodeScanning (7.0.0):
+    - MLKitCommon (~> 13.0)
+    - MLKitVision (~> 9.0)
+  - MLKitCommon (13.0.0):
+    - GoogleDataTransport (~> 10.0)
+    - GoogleToolboxForMac/Logger (< 5.0, >= 4.2.1)
+    - "GoogleToolboxForMac/NSData+zlib (< 5.0, >= 4.2.1)"
+    - GoogleUtilities/Logger (~> 8.0)
+    - GoogleUtilities/UserDefaults (~> 8.0)
+    - GTMSessionFetcher/Core (< 4.0, >= 3.3.2)
+  - MLKitVision (9.0.0):
+    - GoogleToolboxForMac/Logger (< 5.0, >= 4.2.1)
+    - "GoogleToolboxForMac/NSData+zlib (< 5.0, >= 4.2.1)"
+    - GTMSessionFetcher/Core (< 4.0, >= 3.3.2)
+    - MLImage (= 1.0.0-beta7)
+    - MLKitCommon (~> 13.0)
+  - nanopb (3.30910.0):
+    - nanopb/decode (= 3.30910.0)
+    - nanopb/encode (= 3.30910.0)
+  - nanopb/decode (3.30910.0)
+  - nanopb/encode (3.30910.0)
+  - PromisesObjC (2.4.1)
+  - PromisesSwift (2.4.1):
+    - PromisesObjC (= 2.4.1)
+  - RecaptchaInterop (101.0.0)
+
+DEPENDENCIES:
+  - "AparajitaCapacitorBiometricAuth (from `../../node_modules/@aparajita/capacitor-biometric-auth`)"
+  - "AparajitaCapacitorSecureStorage (from `../../node_modules/@aparajita/capacitor-secure-storage`)"
+  - "Capacitor (from `../../node_modules/@capacitor/ios`)"
+  - "CapacitorApp (from `../../node_modules/@capacitor/app`)"
+  - "CapacitorCamera (from `../../node_modules/@capacitor/camera`)"
+  - "CapacitorCommunitySpeechRecognition (from `../../node_modules/@capacitor-community/speech-recognition`)"
+  - "CapacitorCordova (from `../../node_modules/@capacitor/ios`)"
+  - "CapacitorFilesystem (from `../../node_modules/@capacitor/filesystem`)"
+  - "CapacitorGeolocation (from `../../node_modules/@capacitor/geolocation`)"
+  - "CapacitorHaptics (from `../../node_modules/@capacitor/haptics`)"
+  - "CapacitorLocalNotifications (from `../../node_modules/@capacitor/local-notifications`)"
+  - "CapacitorMlkitBarcodeScanning (from `../../node_modules/@capacitor-mlkit/barcode-scanning`)"
+  - "CapacitorNetwork (from `../../node_modules/@capacitor/network`)"
+  - "CapacitorPushNotifications (from `../../node_modules/@capacitor/push-notifications`)"
+  - "CapacitorShare (from `../../node_modules/@capacitor/share`)"
+  - "CapacitorSplashScreen (from `../../node_modules/@capacitor/splash-screen`)"
+  - "CapacitorStatusBar (from `../../node_modules/@capacitor/status-bar`)"
+  - FirebaseMessaging
+  - GoogleSignIn (~> 9.1)
+
+SPEC REPOS:
+  trunk:
+    - AppAuth
+    - AppCheckCore
+    - FirebaseCore
+    - FirebaseCoreInternal
+    - FirebaseInstallations
+    - FirebaseMessaging
+    - GoogleDataTransport
+    - GoogleMLKit
+    - GoogleSignIn
+    - GoogleToolboxForMac
+    - GoogleUtilities
+    - GTMAppAuth
+    - GTMSessionFetcher
+    - IONCameraLib
+    - IONFilesystemLib
+    - IONGeolocationLib
+    - KeychainSwift
+    - MLImage
+    - MLKitBarcodeScanning
+    - MLKitCommon
+    - MLKitVision
+    - nanopb
+    - PromisesObjC
+    - PromisesSwift
+    - RecaptchaInterop
+
+EXTERNAL SOURCES:
+  AparajitaCapacitorBiometricAuth:
+    :path: "../../node_modules/@aparajita/capacitor-biometric-auth"
+  AparajitaCapacitorSecureStorage:
+    :path: "../../node_modules/@aparajita/capacitor-secure-storage"
+  Capacitor:
+    :path: "../../node_modules/@capacitor/ios"
+  CapacitorApp:
+    :path: "../../node_modules/@capacitor/app"
+  CapacitorCamera:
+    :path: "../../node_modules/@capacitor/camera"
+  CapacitorCommunitySpeechRecognition:
+    :path: "../../node_modules/@capacitor-community/speech-recognition"
+  CapacitorCordova:
+    :path: "../../node_modules/@capacitor/ios"
+  CapacitorFilesystem:
+    :path: "../../node_modules/@capacitor/filesystem"
+  CapacitorGeolocation:
+    :path: "../../node_modules/@capacitor/geolocation"
+  CapacitorHaptics:
+    :path: "../../node_modules/@capacitor/haptics"
+  CapacitorLocalNotifications:
+    :path: "../../node_modules/@capacitor/local-notifications"
+  CapacitorMlkitBarcodeScanning:
+    :path: "../../node_modules/@capacitor-mlkit/barcode-scanning"
+  CapacitorNetwork:
+    :path: "../../node_modules/@capacitor/network"
+  CapacitorPushNotifications:
+    :path: "../../node_modules/@capacitor/push-notifications"
+  CapacitorShare:
+    :path: "../../node_modules/@capacitor/share"
+  CapacitorSplashScreen:
+    :path: "../../node_modules/@capacitor/splash-screen"
+  CapacitorStatusBar:
+    :path: "../../node_modules/@capacitor/status-bar"
+
+SPEC CHECKSUMS:
+  AparajitaCapacitorBiometricAuth: 1ae24ba90d7977dffb4bc9040f374a807a510c98
+  AparajitaCapacitorSecureStorage: 8128d05cafcb13b00448e20fb388a0edccd44b12
+  AppAuth: ef4da5a3fc2e10b90c09a0a94a9baeaedc0341d5
+  AppCheckCore: be8fce5469f68d7f6a29aa94b25f097409ff7fdc
+  Capacitor: 2f67eaeb8ed79909cd35b5e7439a5c2a9ca58e0f
+  CapacitorApp: 7b7e43debe505bc61beedb83796aa1368c86078b
+  CapacitorCamera: a8e5798460aa967d0636d34d3a0bf1f69a5b5a39
+  CapacitorCommunitySpeechRecognition: 3e03566c44c2bb3b52391a33d4518b1adbdeb38f
+  CapacitorCordova: 0b7326439c7a09fc5d20eced5e0dab986327a493
+  CapacitorFilesystem: 2db285a1ac6e475cc27cae2e1bea999000f9e2be
+  CapacitorGeolocation: b36f6287bfc9f2eefa04dc900496f2c8ae666136
+  CapacitorHaptics: 296f771ecd89c7a1bd92a7b6826a7d268e2e70f5
+  CapacitorLocalNotifications: 908a69a3cf7ae345426de3223d4980befb0103c6
+  CapacitorMlkitBarcodeScanning: 31c6af9f39873ff69e16ed5b39ebe2e1915f16fe
+  CapacitorNetwork: 8812ce60d11fb63d8f2e4ba51a49b2e59892ebe2
+  CapacitorPushNotifications: 32a7f840815f319fd9ba1c1c9b0b914be9d95237
+  CapacitorShare: 0c58305114538568059bfc07111f22dcb9cb2a82
+  CapacitorSplashScreen: 4b46c72298db552b3c57ce021ef028b6dc7f1fa7
+  CapacitorStatusBar: ff844df1f126da6c4fbc4028272425fa3a91e7e3
+  FirebaseCore: ab948de5d99e69aeed3cd6f5ace263ce795b2559
+  FirebaseCoreInternal: 656b1c2fd5a1c5976183dc54b73deda78fb26ee3
+  FirebaseInstallations: f70a49eed611f5602f373e40974b3b01556ac217
+  FirebaseMessaging: c15f48126adbe8b4d3238a5e1fa24bab3ad3e472
+  GoogleDataTransport: a24e58982ab3ba2f64d79613e027fe7f57e88539
+  GoogleMLKit: ddd51d7dff36ff28defa69afedd9cdce684fd857
+  GoogleSignIn: e449a40a92e9f2eea56e98b5214d13725dc5a00a
+  GoogleToolboxForMac: d1a2cbf009c453f4d6ded37c105e2f67a32206d8
+  GoogleUtilities: 7dc09b3fa9ecb5c2298b952313d14628b61b9da3
+  GTMAppAuth: 217a876b249c3c585a54fd6f73e6b58c4f5c4238
+  GTMSessionFetcher: 5aea5ba6bd522a239e236100971f10cb71b96ab6
+  IONCameraLib: ecbd8ef0077d481df429cee267bbeb1a7b9bddd0
+  IONFilesystemLib: e6610c2b260d15e4b9cb9d5e37a87095479b669e
+  IONGeolocationLib: 6a7b6f76063fb1b01cfb14fae7d0f526e3c9b271
+  KeychainSwift: 4a71a45c802fd9e73906457c2dcbdbdc06c9419d
+  MLImage: 2ab9c968e75f57911c16f4c9d9e8a8e9604a86a1
+  MLKitBarcodeScanning: 72c6437f13a900833b400136be53a8a5d86f42fa
+  MLKitCommon: 26b779f072a182c1603d4c88a101c350cac837b1
+  MLKitVision: fa8dea9012ac59497c79ddbe9ebf32051047ac4c
+  nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
+  PromisesObjC: 752c3227f599e3467650e47ea36f433eeb10c273
+  PromisesSwift: 217dea0fd5d2ad65222a109c48698add13cc1c5b
+  RecaptchaInterop: 11e0b637842dfb48308d242afc3f448062325aba
+
+PODFILE CHECKSUM: cc2d07551b67a68f2d13865b31c8b5ff6d82a971
+
+COCOAPODS: 1.17.0

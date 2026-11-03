@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>es</string>
+	<key>CFBundleDisplayName</key>
+	<string>RavEat</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<!-- Desde iOS 26 la app tiene que adoptar el ciclo de vida de escenas: sin este manifiesto
+	     UIKit la cierra al crear la escena (EXC_BREAKPOINT, sin adopcion de UIScene). -->
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+		<key>UISceneConfigurations</key>
+		<dict>
+			<key>UIWindowSceneSessionRoleApplication</key>
+			<array>
+				<dict>
+					<key>UISceneConfigurationName</key>
+					<string>Default Configuration</string>
+					<key>UISceneDelegateClassName</key>
+					<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
+					<key>UISceneStoryboardFile</key>
+					<string>Main</string>
+				</dict>
+			</array>
+		</dict>
+	</dict>
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+	<key>UIMainStoryboardFile</key>
+	<string>Main</string>
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>arm64</string>
+	</array>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<true/>
+	<!-- RavEat solo usa HTTPS y el cifrado del sistema: con esto App Store Connect no pregunta por
+	     el cumplimiento de exportacion en cada build. -->
+	<!-- Entrar con Google: el cliente OAuth de tipo iOS y su esquema invertido, por donde Google
+	     devuelve el control a la app. El cliente sale del ajuste GOOGLE_IOS_CLIENT (la parte antes de
+	     .apps.googleusercontent.com): cada uno pone el suyo y no se commitea. -->
+	<key>GIDClientID</key>
+	<string>$(GOOGLE_IOS_CLIENT).apps.googleusercontent.com</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.$(GOOGLE_IOS_CLIENT)</string>
+			</array>
+		</dict>
+	</array>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<!-- Cada permiso dice para que lo pide la app: Apple rechaza los textos genericos y, sin la
+	     clave, iOS cierra la app en el momento en que se pide el permiso. -->
+	<key>NSCameraUsageDescription</key>
+	<string>RavEat usa la cámara para fotografiar los productos y leer el QR de los pedidos.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>RavEat guarda en tu galería las fotos que sacás con la cámara.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>RavEat abre la galería para elegir la foto de un producto.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>RavEat usa Face ID para desbloquear la sesión guardada.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>RavEat usa el micrófono para dictar observaciones del pedido.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>RavEat convierte el dictado en texto para completar el pedido.</string>
+	<!-- La app solo usa la ubicacion con la app abierta. Apple igual pide esta clave porque el SDK
+	     de ubicacion referencia las APIs "siempre" (aviso ITMS-90683): se declara con el mismo alcance. -->
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>RavEat usa la ubicación solo con la app abierta, para marcar el punto de entrega en el mapa.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>RavEat usa la ubicación para marcar el punto de entrega en el mapa.</string>
+</dict>
+</plist>

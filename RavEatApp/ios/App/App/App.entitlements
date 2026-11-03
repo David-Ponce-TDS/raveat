@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Universal Links: el QR del pedido es https://raveat.runasp.net/p/<token>. Con este dominio y
+	     el apple-app-site-association que sirve la API, iOS abre la app en vez del navegador. -->
+	<!-- Push: Xcode lo cambia a "production" solo al exportar para App Store y TestFlight. -->
+	<key>aps-environment</key>
+	<string>development</string>
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:raveat.runasp.net</string>
+	</array>
+</dict>
+</plist>

@@ -76,16 +76,31 @@ function permiso_concedido(estado){
 }
 
 // webPath es una URL que la webview puede leer: este fetch lee el telefono, no la API.
+// La foto se reencoda siempre a JPEG de hasta 1600 px: la API solo acepta JPG, PNG o WEBP de
+// 5 MB, y el iPhone puede entregar HEIC o un original mucho mas grande que ese tope.
 async function foto_a_archivo(foto){
 	const ruta = (foto && foto.webPath) || (foto && foto.path);
 	if(!ruta) throw new Error('La cámara no devolvió ninguna imagen.');
 	const respuesta = await fetch(ruta);
 	const blob = await respuesta.blob();
-	const extension = foto.format || 'jpeg';
-	return new File([blob], `foto_${Date.now()}.${extension}`, {
-		type: blob.type || `image/${extension}`,
+	const jpeg = await reencodar_jpeg(blob, 1600, 0.85);
+	return new File([jpeg], `foto_${Date.now()}.jpg`, {
+		type: 'image/jpeg',
 		lastModified: Date.now()
 	});
+}
+
+async function reencodar_jpeg(blob, lado_maximo, calidad){
+	const bitmap = await createImageBitmap(blob, {imageOrientation: 'from-image'});
+	const escala = Math.min(1, lado_maximo / Math.max(bitmap.width, bitmap.height));
+	const lienzo = document.createElement('canvas');
+	lienzo.width = Math.round(bitmap.width * escala);
+	lienzo.height = Math.round(bitmap.height * escala);
+	lienzo.getContext('2d').drawImage(bitmap, 0, 0, lienzo.width, lienzo.height);
+	bitmap.close();
+	const salida = await new Promise(resolver => lienzo.toBlob(resolver, 'image/jpeg', calidad));
+	if(!salida) throw new Error('No se pudo preparar la imagen.');
+	return salida;
 }
 
 function es_cancelacion(error){

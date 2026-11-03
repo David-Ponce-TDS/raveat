@@ -54,6 +54,32 @@ export async function borrar_sesion(){
 	await SecureStorage.remove(CLAVE_EXPIRA);
 }
 
+// En iPhone el llavero (Keychain) sobrevive a la desinstalacion de la app: sin esto, reinstalar
+// RavEat encontraba la sesion de la instalacion anterior y arrancaba logueado con un token viejo.
+// El localStorage del WebView, en cambio, se borra con la app: si la marca no esta, es una
+// instalacion nueva y lo que haya en el almacenamiento seguro es un resto de la anterior.
+const MARCA_INSTALACION = 'raveat_instalada';
+
+export async function limpiar_restos_de_instalacion_anterior(){
+	try{
+		if(localStorage.getItem(MARCA_INSTALACION)) return;
+		// La marca va primero: si borrar fallara, la proxima apertura no vuelve a borrar una
+		// sesion nueva que el usuario ya haya iniciado.
+		localStorage.setItem(MARCA_INSTALACION, '1');
+	}catch{
+		// Sin localStorage no se puede saber si la instalacion es nueva: no se toca nada.
+		return;
+	}
+	token_en_memoria = null;
+	for(const clave of [CLAVE_TOKEN, CLAVE_REFRESH, CLAVE_EXPIRA, 'raveat_bloqueo_biometrico']){
+		try{
+			await SecureStorage.remove(clave);
+		}catch{
+			// Una clave que no existe no es un error.
+		}
+	}
+}
+
 export function obtener_token(){
 	return token_en_memoria;
 }

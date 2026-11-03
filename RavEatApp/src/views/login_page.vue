@@ -53,10 +53,10 @@
 				</form>
 
 				<!-- Solo aparece si hay una sesión guardada Y el dispositivo tiene biometría. La
-				     huella no reemplaza al login: desbloquea la sesión que ya existe. -->
+				     biometría no reemplaza al login: desbloquea la sesión que ya existe. -->
 				<ion-button v-if="puede_biometria" expand="block" fill="outline" @click="entrar_con_biometria">
-					<ion-icon slot="start" :icon="icono_huella" />
-					Entrar con huella
+					<ion-icon slot="start" :icon="icono_biometria" />
+					Entrar con {{ nombre_biometria }}
 				</ion-button>
 
 				<!-- Google solo aparece con el client id configurado: sin credencial no se muestra un
@@ -88,10 +88,11 @@
 	IonPage,
 	IonSpinner
 } from '@ionic/vue';
-import { fingerPrintOutline, logoGoogle } from 'ionicons/icons';
+import { fingerPrintOutline, logoGoogle, scanOutline } from 'ionicons/icons';
 import comp_aviso from '@/components/base/comp_aviso.vue';
 import comp_vidriera from '@/components/estructura/comp_vidriera.vue';
 import { biometria_disponible, verificar_identidad } from '@/services/biometria_service';
+import { es_biometria_facial, etiqueta_biometria } from '@/services/bloqueo_service';
 import {
 	entrar_con_google_nativo,
 	google_es_nativo,
@@ -126,8 +127,9 @@ export default {
 			google_es_nativo: google_es_nativo(),
 			google_habilitado: google_habilitado(),
 			icono_google: logoGoogle,
-			icono_huella: fingerPrintOutline,
+			icono_biometria: fingerPrintOutline,
 			password: '',
+			nombre_biometria: 'biometría',
 			puede_biometria: false,
 			sesion_store: use_sesion_store()
 		};
@@ -138,6 +140,10 @@ export default {
 		// una sesion guardada para desbloquear. Sin login previo no hay nada que desbloquear.
 		const hay_sesion_guardada = Boolean(await restaurar_sesion());
 		vm.puede_biometria = hay_sesion_guardada && await biometria_disponible();
+		if(vm.puede_biometria){
+			vm.nombre_biometria = await etiqueta_biometria();
+			if(es_biometria_facial(vm.nombre_biometria)) vm.icono_biometria = scanOutline;
+		}
 		if(vm.google_habilitado && !vm.google_es_nativo) renderizar_boton_google(vm.$refs.boton_google, vm.canjear_token_google);
 	},
 	methods: {

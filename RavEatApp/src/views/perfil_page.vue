@@ -39,13 +39,27 @@
 							@ion-change="cambiar_tema"
 						/>
 					</ion-item>
-					<ion-item :lines="'none'">
+					<ion-item :lines="hay_biometria ? 'inset' : 'none'">
 						<ion-icon slot="start" :icon="icono_vibracion" />
 						<ion-label>Vibración</ion-label>
 						<ion-toggle
 							slot="end"
 							:checked="vibracion_activa"
 							@ion-change="cambiar_vibracion"
+						/>
+					</ion-item>
+					<!-- Solo si el dispositivo tiene biometria. Pide la identidad al abrir la app, antes de
+					     restaurar la sesion guardada: la huella no reemplaza al login, lo desbloquea. -->
+					<ion-item v-if="hay_biometria" :lines="'none'">
+						<ion-icon slot="start" :icon="icono_biometria" />
+						<ion-label>
+							Pedir {{ nombre_biometria }} al abrir
+							<p>Bloquea la app al abrirla hasta confirmar tu identidad.</p>
+						</ion-label>
+						<ion-toggle
+							slot="end"
+							:checked="bloqueo_activo"
+							@ion-change="cambiar_bloqueo"
 						/>
 					</ion-item>
 				</ion-card-content>
@@ -98,6 +112,7 @@
 } from '@ionic/vue';
 import {
 	contrastOutline,
+	scanOutline,
 	hourglassOutline,
 	logOutOutline,
 	pulseOutline,
@@ -108,6 +123,8 @@ import { mapActions, mapState } from 'pinia';
 import comp_estado_vacio from '@/components/base/comp_estado_vacio.vue';
 import comp_page from '@/components/estructura/comp_page.vue';
 import { avisar_error, avisar_exito } from '@/services/avisos_service';
+import { biometria_disponible } from '@/services/biometria_service';
+import { activar_bloqueo, bloqueo_activado, etiqueta_biometria, guardar_bloqueo } from '@/services/bloqueo_service';
 import { vaciar_pedidos } from '@/services/mantenimiento_service';
 import { vibrar_toque } from '@/services/vibracion_service';
 import { use_app_store } from '@/stores/app_store';
@@ -134,12 +151,16 @@ export default {
 	},
 	data(){
 		return {
+			bloqueo_activo: false,
+			hay_biometria: false,
+			icono_biometria: scanOutline,
 			icono_borrar: trashBinOutline,
 			icono_espera: hourglassOutline,
 			icono_rol: shieldCheckmarkOutline,
 			icono_salir: logOutOutline,
 			icono_tema: contrastOutline,
 			icono_vibracion: pulseOutline,
+			nombre_biometria: 'la biometría',
 			offline_store: use_offline_store(),
 			pedidos_store: use_pedidos_store(),
 			sesion_store: use_sesion_store(),
@@ -155,6 +176,13 @@ export default {
 			var vm = this;
 			return ((vm.sesion_store.usuario && vm.sesion_store.usuario.nombre) || '?').trim().charAt(0).toUpperCase();
 		}
+	},
+	mounted: async function(){
+		var vm = this;
+		vm.hay_biometria = await biometria_disponible();
+		if(!vm.hay_biometria) return;
+		vm.nombre_biometria = await etiqueta_biometria();
+		vm.bloqueo_activo = await bloqueo_activado();
 	},
 	methods: {
 		...mapActions(use_app_store, {
@@ -173,6 +201,26 @@ export default {
 			vm.alternar_vibracion();
 			// Al encenderla vibra una vez: es la forma de "ver" que funciona.
 			if(vm.vibracion_activa) vibrar_toque();
+		},
+		// Mismo criterio que el tema: el toggle emite en el render inicial, y solo se actua si cambio.
+		// Encender confirma con la biometria; si falla, el toggle vuelve a apagado.
+		cambiar_bloqueo: async function(evento){
+			var vm = this;
+			const quiere = evento.detail.checked;
+			if(quiere == vm.bloqueo_activo) return;
+			if(quiere){
+				const resultado = await activar_bloqueo();
+				if(!resultado.ok){
+					if(resultado.mensaje) avisar_error(resultado.mensaje);
+					evento.target.checked = false;
+					return;
+				}
+				vm.bloqueo_activo = true;
+				avisar_exito(`Se va a pedir ${vm.nombre_biometria} al abrir la app.`);
+				return;
+			}
+			await guardar_bloqueo(false);
+			vm.bloqueo_activo = false;
 		},
 		// Confirmacion escrita: un borrado total detras de un solo toque es un accidente esperando
 		// turno. Escribir BORRAR obliga a leer que se esta por hacer.

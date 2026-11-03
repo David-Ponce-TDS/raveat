@@ -16,8 +16,12 @@ export function google_web_client_id(){
 	return import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID || '';
 }
 
+// En el telefono el boton depende del plugin nativo de la plataforma (GoogleAuthPlugin.java en
+// Android, GoogleAuthPlugin.swift en iOS): sin el, al tocarlo falla con "not implemented". Ahi se
+// entra con email.
 export function google_habilitado(){
-	return Boolean(google_web_client_id());
+	if(!google_web_client_id()) return false;
+	return !google_es_nativo() || Capacitor.isPluginAvailable('GoogleAuth');
 }
 
 export function google_es_nativo(){
@@ -36,7 +40,9 @@ export async function entrar_con_google_nativo(){
 		// El plugin devuelve SIGN_IN_CANCELLED (12501) cuando se cierra la pantalla de cuentas:
 		// eso no se avisa, igual que cancelar la camara.
 		if(error && error.code == '12501') return {ok: false, id_token: null, mensaje: null};
-		return {ok: false, id_token: null, mensaje: (error && error.message) || 'No se pudo entrar con Google.'};
+		// El detalle del plugin (DEVELOPER_ERROR, SIGN_IN_FAILED...) va a la consola, no a la pantalla.
+		console.warn('[google] ingreso nativo fallido:', error);
+		return {ok: false, id_token: null, mensaje: 'Error'};
 	}
 }
 

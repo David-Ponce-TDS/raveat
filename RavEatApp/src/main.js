@@ -2,6 +2,8 @@ import { createApp } from 'vue';
 import { IonicVue } from '@ionic/vue';
 import App from './App.vue';
 import router from './router';
+import { pasar_bloqueo_de_arranque } from './services/bloqueo_service';
+import { limpiar_restos_de_instalacion_anterior } from './services/token_service';
 import { iniciar_deep_links } from './services/deep_links_service';
 import { inicializar_notificaciones_nativas } from './services/notificaciones_nativas_service';
 import { obtener_navegacion_rol } from './config/navegacion';
@@ -32,7 +34,11 @@ const app = createApp(App)
 // que dispara la PRIMERA navegacion, y esa navegacion pasa por el guard una sola vez. Con el
 // router puesto de entrada, el guard decidia sin saber todavia si habia usuario y dejaba pasar:
 // abrir la app sin sesion terminaba dentro de Inicio, mostrando errores, en vez de en el login.
-use_sesion_store().iniciar().finally(function(){
+// Con el bloqueo activado, la biometria se pide antes de restaurar: si falla o se cancela, la sesion
+// no se restaura y la app cae al login, donde el boton de biometria vuelve a ofrecer el desbloqueo.
+limpiar_restos_de_instalacion_anterior().then(pasar_bloqueo_de_arranque).then(function(desbloqueado){
+	return desbloqueado ? use_sesion_store().iniciar() : null;
+}).finally(function(){
 	app.use(router);
 	router.isReady().then(function(){
 		// El index.html ya aplico la clase del tema para evitar el flash inicial; aca el store lee

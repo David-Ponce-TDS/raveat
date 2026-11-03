@@ -52,7 +52,14 @@ public sealed class EnvioPush {
                 Token = dispositivo.Token,
                 Notification = new Notification {Title = notificacion.Titulo, Body = notificacion.Mensaje},
                 Data = new Dictionary<string, string> {["pedido_codigo"] = codigo},
-                Android = new AndroidConfig {Priority = Priority.High, Notification = new AndroidNotification {ChannelId = "avisos"}}
+                Android = new AndroidConfig {Priority = Priority.High, Notification = new AndroidNotification {ChannelId = "avisos"}},
+                // El equivalente en iPhone: prioridad 10 es la entrega inmediata (5 la demora para
+                // ahorrar bateria) y el sonido predeterminado hace que suene como cualquier aviso.
+                // El token tiene que ser el de FCM: la app lo pide con el SDK de Firebase.
+                Apns = new ApnsConfig {
+                    Headers = new Dictionary<string, string> {["apns-priority"] = "10"},
+                    Aps = new Aps {Sound = "default"}
+                }
             }), cancellationToken);
 
             // FCM contesta token por token. El que volvio "no registrado" es de una app

@@ -75,6 +75,32 @@ public sealed class PublicoController(RavEatDbContext db, IConfiguration configu
         });
     }
 
+    // El equivalente de Apple: iOS baja https://<dominio>/.well-known/apple-app-site-association al
+    // instalar la app y, si lista el identificador de la app (EQUIPO.paquete) y la ruta, el enlace
+    // abre la app en vez del navegador. No lleva huella: la identidad de la app es el Team ID de la
+    // cuenta de Apple, que viaja dentro de cualquier app firmada y no es un secreto.
+    //
+    // Va sin extension, y por eso tambien es un endpoint: el contenido tiene que ser JSON, y el
+    // nombre no permite que lo sirva el middleware de archivos estaticos con ese tipo.
+    [HttpGet(".well-known/apple-app-site-association")]
+    public IActionResult AppleAppSiteAssociation() {
+        // El equipo no va en el codigo: cada uno publica el suyo en Publico__TeamIdApple. Sin el,
+        // no hay app que declarar y el archivo no existe.
+        var equipo = Texto("Publico:TeamIdApple");
+        if(equipo is null) return NotFound();
+        // Apple exige las claves exactas ("appIDs", "/") y la API tiene una politica de nombres global
+        // que las pasa a snake_case ("app_i_ds"), tambien en los diccionarios: con eso iOS ignora el
+        // archivo. Por eso se serializa aca, con las opciones por defecto, y se devuelve el texto.
+        var detalle = new Dictionary<string, object> {
+            ["appIDs"] = new[] {$"{equipo}.{Paquete()}"},
+            ["components"] = new[] {new Dictionary<string, string> {["/"] = "/p/*"}}
+        };
+        var json = System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, object> {
+            ["applinks"] = new Dictionary<string, object> {["details"] = new[] {detalle}}
+        });
+        return Content(json, "application/json");
+    }
+
     // El token lo genera el servidor con un generador criptografico, no con Random ni con la hora:
     // un valor predecible tiene la misma debilidad que el codigo correlativo que vino a reemplazar.
     public static string GenerarToken() => Convert.ToHexString(RandomNumberGenerator.GetBytes(16)).ToLowerInvariant();

@@ -36,6 +36,14 @@ if(builder.Environment.IsDevelopment() && corsAllowedOrigins.Length == 0){
     ];
 }
 
+// El WebView de iOS sirve la app desde capacitor://localhost (el de Android, desde http://localhost).
+// Sin este origen en la lista, el iPhone bloquea toda llamada a la API por CORS y la app dice "no se
+// puede conectar" aunque el servidor ande. No es un secreto: es el origen fijo de la app nativa, y
+// CORS solo lo hacen valer los navegadores.
+if(corsAllowedOrigins.Length > 0 && !corsAllowedOrigins.Contains("capacitor://localhost")) {
+    corsAllowedOrigins = [.. corsAllowedOrigins, "capacitor://localhost"];
+}
+
 var jwtOpciones = builder.Configuration.GetSection(JwtOpciones.Seccion).Get<JwtOpciones>() ?? new JwtOpciones();
 if(string.IsNullOrWhiteSpace(jwtOpciones.Key)) {
     // En Production la clave es obligatoria: preferimos no arrancar antes que firmar con un secreto

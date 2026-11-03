@@ -10,14 +10,16 @@
 <link rel="icon" type="image/png" sizes="96x96" href="/marca/favicon-96x96.png">
 <link rel="apple-touch-icon" href="/marca/apple-touch-icon.png">
 <!--
-	La politica de privacidad, exigida por Google Play para publicar (su URL va en la ficha de la
-	tienda y en "Contenido de la app").
+	La politica de privacidad, exigida por Google Play y por App Store Connect para publicar (su URL
+	va en la ficha de cada tienda, en "Contenido de la app" de Play y en TestFlight).
 
 	Es la tercera pagina publica del sitio y se hace como la carta: un estatico sin frameworks, que
-	se edita y se sube en el zip sin recompilar la API. Sirve tambien de material del taller: cada
-	permiso que pide el manifiesto tiene aca su parrafo, y esa correspondencia es la que Play
-	revisa. Si se agrega un permiso o un tercero, se agrega aca — declarar de menos es lo que hace
+	se edita y se sube en el zip sin recompilar la API. Cada permiso que piden el manifiesto de
+	Android y el Info.plist de iOS tiene aca su fila, y esa correspondencia es la que revisan las
+	tiendas. Si se agrega un permiso o un tercero, se agrega aca — declarar de menos es lo que hace
 	que rechacen la app.
+
+	Es la presentacion publica de la app: habla del producto y de nada mas.
 
 	El contenido describe lo que el codigo HACE hoy. No prometer nada que la app no cumpla.
 -->
@@ -57,12 +59,12 @@ td { color: #c8cdd8; }
 	<header>
 		<img src="/marca/logo-raveat.png" alt="RavEat">
 		<h1>Política de privacidad</h1>
-		<p>Última actualización: 18 de octubre de 2026</p>
+		<p>Última actualización: 26 de octubre de 2026</p>
 	</header>
 
 	<section class="resumen">
-		<p><b>RavEat</b> (paquete <b>app.raveat</b>) es la aplicación con la que el personal de un
-		restaurante toma pedidos, los cobra y los reparte. No es una app para el público general:
+		<p><b>RavEat</b> (identificador <b>app.raveat</b>, para Android y iPhone) es la aplicación con
+		la que el personal de un restaurante toma pedidos, los cobra y los reparte. No es una app para el público general:
 		se entra con una cuenta que crea el administrador del local, no hay registro abierto y sin
 		esa cuenta no hay nada que usar.</p>
 		<p>RavEat <b>no muestra publicidad, no usa analítica, no perfila a nadie y no vende ni cede
@@ -71,9 +73,8 @@ td { color: #c8cdd8; }
 	</section>
 
 	<h2>Quién es responsable</h2>
-	<p>RavEat es un proyecto educativo desarrollado y publicado por <b>David Ponce</b> como
-	aplicación de referencia de un taller de desarrollo de aplicaciones móviles. Consultas sobre
-	privacidad o pedidos de eliminación de datos:
+	<p>RavEat es desarrollada y publicada por <b>David Ponce</b>, desarrollador de software.
+	Consultas sobre privacidad o pedidos de eliminación de datos:
 	<a href="mailto:david9.dev@gmail.com">david9.dev@gmail.com</a>.</p>
 
 	<h2>Qué datos se tratan</h2>
@@ -84,7 +85,7 @@ td { color: #c8cdd8; }
 		alta la cuenta.</li>
 		<li><b>Contraseña.</b> No se guarda: se guarda su huella criptográfica (PBKDF2 con sal por
 		usuario). Nadie —tampoco quien administra— puede leerla.</li>
-		<li><b>Ingreso con Google.</b> Si se usa ese botón, Google entrega un identificador firmado
+		<li><b>Ingreso con Google</b> (en Android y en la versión web). Si se usa ese botón, Google entrega un identificador firmado
 		del que la app <b>solo lee el correo</b>, para encontrar la cuenta que ya existe. Si ese
 		correo no está dado de alta, no se crea ninguna cuenta y no se guarda nada.</li>
 	</ul>
@@ -124,21 +125,23 @@ td { color: #c8cdd8; }
 		<tr>
 			<td><b>Micrófono</b></td>
 			<td>Solo al tocar el botón de dictado en una descripción o una observación.</td>
-			<td>El audio lo procesa el servicio de reconocimiento de voz del sistema Android. La app
+			<td>El audio lo procesa el servicio de reconocimiento de voz del sistema: el de Google en
+			Android y el de Apple en iPhone. La app
 			<b>recibe únicamente el texto</b>: no graba, no guarda ni envía audio.</td>
 		</tr>
 		<tr>
-			<td><b>Huella o rostro</b></td>
+			<td><b>Huella, rostro o Face ID</b></td>
 			<td>Solo si se activa el desbloqueo biométrico, y para reabrir una sesión ya iniciada.</td>
-			<td>Lo verifica Android; la app recibe apenas un sí o un no. <b>El dato biométrico nunca
+			<td>Lo verifica el sistema del teléfono (Android o iOS); la app recibe apenas un sí o un no. <b>El dato biométrico nunca
 			sale del teléfono</b> ni llega al servidor. La biometría no reemplaza al inicio de sesión
 			con correo y contraseña, que sigue disponible.</td>
 		</tr>
 		<tr>
 			<td><b>Notificaciones</b></td>
 			<td>Al arrancar, para avisar cambios de estado de los pedidos.</td>
-			<td>Firebase Cloud Messaging asigna un identificador al dispositivo. Los avisos los envía
-			el servidor de la app cuando cambia algo que le toca a esa cuenta.</td>
+			<td>El servicio de notificaciones del sistema —Firebase Cloud Messaging en Android, el de
+			Apple en iPhone— asigna un identificador al dispositivo. Los avisos los envía el servidor
+			de la app cuando cambia algo que le toca a esa cuenta.</td>
 		</tr>
 		<tr>
 			<td><b>Vibración</b>, <b>estado de la red</b></td>
@@ -152,7 +155,8 @@ td { color: #c8cdd8; }
 	<h3>Qué queda guardado en el teléfono</h3>
 	<ul>
 		<li>La <b>sesión</b> (los identificadores que mantienen abierta la cuenta), en el
-		almacenamiento seguro del sistema. Se borra al cerrar sesión.</li>
+		almacenamiento seguro del sistema (el Keystore de Android o el Llavero de iOS). Se borra al
+		cerrar sesión.</li>
 		<li>Las <b>preferencias</b> de tema y vibración.</li>
 		<li>La <b>cola de envíos pendientes</b>: si algo se carga sin señal, queda esperando en el
 		teléfono y se envía solo al volver la conexión. Nunca se guardan ahí contraseñas.</li>
@@ -166,7 +170,8 @@ td { color: #c8cdd8; }
 		<tr><td><b>MonsterASP.NET</b> (hosting)</td><td>Aloja el servidor y la base de datos de la app: ahí viven los pedidos, los clientes y las cuentas.</td></tr>
 		<tr><td><b>Supabase Storage</b></td><td>Las imágenes de los productos.</td></tr>
 		<tr><td><b>Google Firebase Cloud Messaging</b></td><td>El identificador del dispositivo, para poder entregarle una notificación.</td></tr>
-		<tr><td><b>Google</b> (ingreso con Google y reconocimiento de voz)</td><td>El correo de la cuenta elegida al ingresar; el audio del dictado, cuando se usa esa función.</td></tr>
+		<tr><td><b>Google</b> (ingreso con Google y reconocimiento de voz en Android)</td><td>El correo de la cuenta elegida al ingresar; el audio del dictado, cuando se usa esa función.</td></tr>
+		<tr><td><b>Apple</b> (reconocimiento de voz y notificaciones en iPhone)</td><td>El audio del dictado, cuando se usa esa función; el identificador del dispositivo, para entregarle una notificación.</td></tr>
 		<tr><td><b>OpenStreetMap</b></td><td>Al abrir el mapa se descargan sus imágenes, lo que le revela la dirección IP del teléfono y la zona que se está mirando. No se le envía ningún dato del cliente ni del pedido.</td></tr>
 	</table>
 	</div>

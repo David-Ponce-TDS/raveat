@@ -4,11 +4,11 @@
 
 # RavEat
 
-### U12 · Identidad, acceso público y publicación
+### U13 · iOS: la misma app en el iPhone y en TestFlight
 
-*La app frente a alguien de afuera: se entra con Google, el pedido se mira sin cuenta por su QR y la app se publica en Google Play.*
+*La misma app, ahora en el iPhone: el proyecto de Xcode, los permisos que pide iOS, la firma con una cuenta paga y la prueba interna en TestFlight.*
 
-`version-12` &nbsp;·&nbsp; Ionic Vue 3 &nbsp;·&nbsp; Capacitor 8 &nbsp;·&nbsp; ASP.NET Core (.NET 10) &nbsp;·&nbsp; EF Core 9 &nbsp;·&nbsp; MySQL 8
+`version-13` &nbsp;·&nbsp; Ionic Vue 3 &nbsp;·&nbsp; Capacitor 8 (Android + iOS) &nbsp;·&nbsp; ASP.NET Core (.NET 10) &nbsp;·&nbsp; EF Core 9 &nbsp;·&nbsp; MySQL 8
 
 </div>
 
@@ -22,7 +22,7 @@ Tres documentos, en este orden:
 |---|---|---|
 | 1 | [**Requisitos**](README.requisitos.md) | qué tiene que estar instalado, cómo saber qué te falta y cómo dejarlo listo |
 | 2 | [**Comandos**](README.comandos.md) | todo lo que se tipea para poner la app a andar, en orden, con su «si algo falla» |
-| 3 | [**La unidad**](README.unidad-12.md) | qué es esta versión, qué cambia desde la anterior y por qué está hecha así |
+| 3 | [**La unidad**](README.unidad-13.md) | qué es esta versión, qué cambia desde la anterior y por qué está hecha así |
 
 Los dos primeros te dejan **corriendo**; el tercero te deja **entendiendo**.
 

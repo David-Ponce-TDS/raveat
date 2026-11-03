@@ -1,15 +1,16 @@
 <template>
 	<comp-page titulo="RavEat" :mostrar_actualizar="true" @actualizar="cargar">
 		<div class="ion-padding raveat-page-stack">
-			<comp-vidriera lema="Nuestra carta, servida por la API" />
+			<comp-vidriera lema="Tu carta, siempre lista" />
 
 			<comp-vitrina ref="vitrina" />
 		</div>
 
 		<!-- El borrador del pedido, siempre a la vista mientras se recorre la carta. Sin este
 		     cartel el carrito era invisible: se sumaban productos sin saber cuantos ni cuanto.
-		     Tocarlo abre el formulario ya cargado; no hay previsualizacion intermedia. -->
-		<div v-if="carrito_store.hay_items && puede_pedir" class="raveat-borrador">
+		     Tocarlo abre el formulario ya cargado; no hay previsualizacion intermedia. slot="fixed"
+		     lo saca del contenedor que scrollea: en iOS un fixed adentro del scroll se iba con la carta. -->
+		<div v-if="carrito_store.hay_items && puede_pedir" slot="fixed" class="raveat-borrador">
 			<button type="button" class="raveat-borrador__info" @click="abrir_pedido">
 				<strong>{{ carrito_store.cantidad_total }} {{ carrito_store.cantidad_total == 1 ? 'producto' : 'productos' }}</strong>
 				<span>{{ formatear_importe(carrito_store.subtotal_estimado) }}</span>

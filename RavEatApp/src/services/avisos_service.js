@@ -13,7 +13,19 @@ export function avisar_exito(mensaje){
 }
 
 export function avisar_error(mensaje){
-	return mostrar(mensaje, 'danger', 3500);
+	return mostrar(texto_para_el_usuario(mensaje), 'danger', 3500);
+}
+
+// Un codigo de plugin o una excepcion del sistema ("DEVELOPER_ERROR (10)", "TypeError: ...") no le
+// dice nada a quien usa la app: se avisa solo "Error" y el detalle queda en la consola. Los
+// mensajes que escribimos nosotros, en castellano, pasan tal cual.
+const patron_tecnico = /_ERROR|[A-Z]{3,}_[A-Z_]{2,}|\(\d+\)\s*$|Exception|TypeError|ReferenceError|SyntaxError|undefined|\[object|not implemented|Failed to|is not a function|Network ?Error/;
+
+function texto_para_el_usuario(mensaje){
+	const texto = String(mensaje == null ? '' : mensaje).trim();
+	if(texto && !patron_tecnico.test(texto)) return texto;
+	if(texto) console.warn('[aviso] mensaje tecnico oculto:', texto);
+	return 'Error';
 }
 
 async function mostrar(mensaje, color, duracion){

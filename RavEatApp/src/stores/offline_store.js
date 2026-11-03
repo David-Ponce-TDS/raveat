@@ -64,7 +64,7 @@ export const use_offline_store = defineStore('offline', {
 				vm.guardar_cola(vm.cola.filter(item => item.id != cambio.id));
 			}
 			vm.sincronizando = false;
-			if(rechazados.length > 0) avisar_error(`La API no aceptó ${rechazados.length} de los cambios guardados: ${rechazados[0]}`);
+			if(rechazados.length > 0) avisar_error(`No se pudieron guardar ${rechazados.length} de los cambios pendientes: ${rechazados[0]}`);
 			// Algo salio de la cola: llego a la API, o la API no lo acepto. La lista se pide una
 			// sola vez, al terminar el envio, y muestra lo que de verdad quedo.
 			if(vm.cola.length < en_cola) await use_pedidos_store().cargar();

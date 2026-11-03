@@ -1,5 +1,5 @@
 import $ from 'jquery';
-import { obtener_api_url } from '@/config/debug';
+import { debug_config, obtener_api_url } from '@/config/debug';
 import { guardar_copia, obtener_copia } from '@/services/copia_local_service';
 import {
 	cabecera_autorizacion,
@@ -48,11 +48,14 @@ function normalizar_error(xhr, text_status, error_thrown){
 		};
 	}
 	// Un status 0 no es "error 0": es que la request nunca llegó. API apagada, IP equivocada o CORS.
+	// En desarrollo se nombra la API, que es lo que hay que revisar; en la app publicada, la conexión.
 	if(!xhr.status){
 		return {
 			estado_http: 0,
 			codigo: 'sin_conexion',
-			mensaje: 'No se pudo conectar con la API. Revisá que esté levantada y que la URL sea la correcta.',
+			mensaje: debug_config.debug_activado
+				? 'No se pudo conectar con la API. Revisá que esté levantada y que la URL sea la correcta.'
+				: 'No se pudo conectar. Revisá tu conexión a internet y probá de nuevo.',
 			respuesta
 		};
 	}

@@ -4,7 +4,7 @@ Todo lo que se tipea para poner esta versión a andar, en orden. Los comandos so
 **PowerShell en Windows** y se ejecutan **desde la raíz del repositorio**, salvo que se indique
 otra cosa.
 
-Qué es esta versión y por qué está hecha así: [`README.unidad-12.md`](README.unidad-12.md).
+Qué es esta versión y por qué está hecha así: [`README.unidad-13.md`](README.unidad-13.md).
 
 ## 1 · Instalar
 

@@ -11,7 +11,7 @@
 		v-else-if="!productos_store.hay_productos"
 		:icono="icono_carta"
 		titulo="Todavía no hay productos"
-		mensaje="La API respondió, pero la carta está vacía."
+		mensaje="La carta todavía no tiene productos."
 	/>
 	<template v-else>
 		<div class="raveat-chips">

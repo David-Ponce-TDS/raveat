@@ -432,7 +432,9 @@ ion-button {
     text-transform: none;
 }
 
-ion-button:not(.button-small):not(.in-toolbar) {
+/* Los de solo icono quedan afuera: los redondos fijan ancho y alto iguales, y con este minimo
+   pasaban a medir 40 x 48 y se veian ovalados. */
+ion-button:not(.button-small):not(.in-toolbar):not(.button-has-icon-only) {
     min-height: 3rem;
 }
 
